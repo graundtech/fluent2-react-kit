@@ -1,0 +1,44 @@
+{
+  "name": "fluent2-react-kit-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Workspace for @graundtech/fluent2-react-kit, a Fluent 2-inspired shadcn-style React component registry.",
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/graundtech/fluent2-react-kit.git"
+  },
+  "homepage": "https://github.com/graundtech/fluent2-react-kit#readme",
+  "bugs": {
+    "url": "https://github.com/graundtech/fluent2-react-kit/issues"
+  },
+  "keywords": [
+    "fluent",
+    "fluent2",
+    "react",
+    "components",
+    "design-system",
+    "shadcn",
+    "registry"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm --filter @graundtech/fluent2-react-kit build && pnpm --filter fluent2-react-kit-demo build",
+    "build:demo": "pnpm --filter fluent2-react-kit-demo build",
+    "build:package": "pnpm --filter @graundtech/fluent2-react-kit build",
+    "clean": "pnpm --filter @graundtech/fluent2-react-kit clean",
+    "demo:dev": "pnpm --filter fluent2-react-kit-demo dev",
+    "typecheck": "pnpm --filter @graundtech/fluent2-react-kit typecheck && pnpm --filter fluent2-react-kit-demo typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "26.0.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3"
+  }
+}

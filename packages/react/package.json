@@ -1,0 +1,43 @@
+{
+  "name": "@graundtech/fluent2-react-kit",
+  "version": "0.0.0",
+  "description": "Fluent 2-inspired React components built with shadcn-style APIs and registry-first distribution.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/graundtech/fluent2-react-kit.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/graundtech/fluent2-react-kit#readme",
+  "bugs": {
+    "url": "https://github.com/graundtech/fluent2-react-kit/issues"
+  },
+  "keywords": [
+    "fluent2",
+    "react",
+    "components",
+    "shadcn",
+    "tailwind",
+    "registry"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  }
+}
