@@ -42,14 +42,13 @@ const REGISTRY_NAME = "fluent2-react-kit";
 const REGISTRY_ITEM_SCHEMA = "https://ui.shadcn.com/schema/registry-item.json";
 const REGISTRY_SCHEMA = "https://ui.shadcn.com/schema/registry.json";
 
-// The registry origin the shadcn CLI resolves items against.
-// TODO(integration): update to the real Vercel production domain once this
-// project has a deployment. Kept identical to the placeholder in
-// apps/demo/app/page.tsx. registryDependencies are rewritten to absolute URLs
-// under this origin (see rewriteRegistryDependency) so the CLI resolves them
-// against OUR registry — a bare name like "utils" would otherwise resolve
-// against ui.shadcn.com (verified in the CLI's resolveRegistryTree).
-const REGISTRY_BASE_URL = "https://fluent2-react-kit.vercel.app";
+// The registry origin the shadcn CLI resolves items against. Kept identical
+// to the constant in apps/demo/app/page.tsx. registryDependencies are
+// rewritten to absolute URLs under this origin (see
+// rewriteRegistryDependency) so the CLI resolves them against OUR registry —
+// a bare name like "utils" would otherwise resolve against ui.shadcn.com
+// (verified in the CLI's resolveRegistryTree).
+const REGISTRY_BASE_URL = "https://fluent2-react-kit.graund.io";
 
 // Read the homepage from the root package.json instead of hardcoding it — the
 // old duplicated literal already drifted (it was missing package.json's

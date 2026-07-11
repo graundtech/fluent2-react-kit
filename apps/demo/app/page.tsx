@@ -41,10 +41,9 @@ const PREVIEWS = [
   "spinner",
 ] as const;
 
-// TODO(integration): swap for the real Vercel production domain once this
-// project has a deployment. Left as a clearly-labeled placeholder so the
-// registry install snippet below is copy-pasteable but not misleading.
-const REGISTRY_BASE_URL = "https://fluent2-react-kit.vercel.app";
+// Kept identical to the constant in scripts/build-registry.mjs — see
+// docs/registry.md for why these two must stay in sync.
+const REGISTRY_BASE_URL = "https://fluent2-react-kit.graund.io";
 
 export default function DemoPage() {
   return (

@@ -53,18 +53,18 @@ The `utils` item (the `cn()` helper) is pulled in automatically as a `registryDe
 
 Swap `button` / `card` for any item name in the [component status table](../README.md#component-status).
 
-## The `REGISTRY_BASE_URL` placeholder caveat
+## The `REGISTRY_BASE_URL` constant
 
-**The registry is not yet deployed to a stable production URL.** Two source files each hardcode the same placeholder as an identically-named constant, and both must be updated together the moment a real Vercel production domain exists:
+The registry is deployed at **`https://fluent2-react-kit.graund.io`**. Two source files each hardcode this value as an identically-named constant, and both must be updated together if the production domain ever changes:
 
 | File | Constant | Used for |
 | --- | --- | --- |
-| `apps/demo/app/page.tsx` | `REGISTRY_BASE_URL` (currently `"https://fluent2-react-kit.vercel.app"`) | The copy-paste `npx shadcn add …` snippet shown on the demo's landing page |
-| `scripts/build-registry.mjs` | `REGISTRY_BASE_URL` (same placeholder value) | Rewriting bare `registryDependencies` names to absolute URLs at build time (step 4 above) |
+| `apps/demo/app/page.tsx` | `REGISTRY_BASE_URL` (`"https://fluent2-react-kit.graund.io"`) | The copy-paste `npx shadcn add …` snippet shown on the demo's landing page |
+| `scripts/build-registry.mjs` | `REGISTRY_BASE_URL` (same value) | Rewriting bare `registryDependencies` names to absolute URLs at build time (step 4 above) |
 
-Both are marked `// TODO(integration)` in place. They are **not** wired to a shared config or env var today — updating one without the other will desync the install snippet shown on the demo page from the URLs actually baked into the generated registry JSON, so treat them as a single coordinated edit. See [`docs/status-and-backlog.md`](status-and-backlog.md) for this tracked as a backlog item.
+They are **not** wired to a shared config or env var today — updating one without the other will desync the install snippet shown on the demo page from the URLs actually baked into the generated registry JSON, so treat them as a single coordinated edit.
 
-Until that domain exists, the `<registry-url>` placeholders above (and in the README) are illustrative, not copy-pasteable — clone the repo and run `pnpm demo:dev` to install from a local registry (`http://localhost:3000/r/<name>.json`) instead.
+For local development, `pnpm demo:dev` still installs from a local registry (`http://localhost:3000/r/<name>.json`) — only the deployed constants above point at the production domain.
 
 ## Adding a new registry item
 
