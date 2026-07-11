@@ -1,0 +1,15 @@
+{
+  "name": "avatar",
+  "type": "registry:ui",
+  "title": "Avatar",
+  "description": "Fluent 2-styled avatar with shadcn APIs. Built on @base-ui/react's Avatar primitive for genuine image-loading state; renders brand-tinted initials as a fallback while the image loads or if it fails.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/avatar.tsx",
+      "target": "components/ui/avatar.tsx"
+    }
+  ]
+}

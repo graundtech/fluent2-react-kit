@@ -1,0 +1,13 @@
+{
+  "name": "utils",
+  "type": "registry:lib",
+  "title": "Utils",
+  "description": "Class name helper that composes clsx and tailwind-merge for conflict-free Tailwind class composition. The canonical shadcn-style cn() utility.",
+  "dependencies": ["clsx", "tailwind-merge"],
+  "files": [
+    {
+      "path": "packages/react/src/lib/utils.ts",
+      "target": "lib/utils.ts"
+    }
+  ]
+}

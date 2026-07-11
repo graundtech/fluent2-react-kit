@@ -1,0 +1,14 @@
+{
+  "name": "separator",
+  "type": "registry:ui",
+  "title": "Separator",
+  "description": "Fluent 2-styled 1px divider with shadcn APIs. Horizontal or vertical orientation, decorative by default with native WAI-ARIA separator semantics when set to non-decorative.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/separator.tsx",
+      "target": "components/ui/separator.tsx"
+    }
+  ]
+}

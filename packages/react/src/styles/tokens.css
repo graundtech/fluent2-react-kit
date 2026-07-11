@@ -1,0 +1,446 @@
+/* -------------------------------------------------------------------------- */
+/* @graundtech/fluent2-react-kit — design tokens                              */
+/*                                                                            */
+/* Fluent 2-inspired token layer expressed in the shadcn/ui variable          */
+/* contract (CSS custom properties + Tailwind v4 utilities). Values are       */
+/* derived from publicly documented Fluent 2 design constants; hex is the     */
+/* source of truth. See docs/design/tokens-research.md for provenance.        */
+/*                                                                            */
+/* Consumers own `@import "tailwindcss";` — this file must NOT import it.      */
+/* Import order in the consumer app:                                          */
+/*   @import "tailwindcss";                                                    */
+/*   @import "@graundtech/fluent2-react-kit/tokens.css";                       */
+/* -------------------------------------------------------------------------- */
+
+/* shadcn v4 dark-mode convention: `.dark` on any ancestor enables dark.
+   The `:not(.light *)` guard stops `dark:` utilities from firing inside a
+   `.light` scope that sits under a `.dark` ancestor — the `.light` re-scope
+   class (see the light theme block below) forces light mode locally, so its
+   subtree must not keep emitting dark-mode overrides. */
+@custom-variant dark (&:is(.dark *):not(.light *));
+
+/* ========================================================================== */
+/* LIGHT theme — the default. All values authored in HEX.                     */
+/* ========================================================================== */
+/* `:root, .light` — `.light` re-scopes light mode onto any subtree, letting a
+   consumer/demo force light inside a `.dark` ancestor. It carries the same
+   declarations as `:root` (zero duplication), and because an element's own
+   variable declarations beat inherited ones, a `.light` block overrides the
+   dark values it inherits. The dark `@custom-variant` above is guarded so
+   `dark:` utilities don't fire inside this scope. */
+:root,
+.light {
+  /* Native UA chrome (form controls, scrollbars, spellcheck underlines) reads
+     `color-scheme` to pick its light/dark rendering — set it at the token
+     layer so it tracks the theme without a separate consumer opt-in. */
+  color-scheme: light;
+
+  /* --- radius base (Fluent "large" = 6px; drives the rounded-* scale) ----- */
+  --radius: 6px;
+
+  /* --- shadcn core set (light) ------------------------------------------- */
+  --background: #ffffff;
+  --foreground: #242424;
+  --card: #ffffff;
+  --card-foreground: #242424;
+  --popover: #ffffff;
+  --popover-foreground: #242424;
+  --primary: #0f6cbd;              /* brand[80] */
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;            /* grey[96] */
+  --secondary-foreground: #242424;
+  --muted: #f5f5f5;                /* grey[96] */
+  --muted-foreground: #616161;     /* grey[38] */
+  --accent: #f0f0f0;               /* grey[94] — neutral (brand tint lives on sidebar-accent) */
+  --accent-foreground: #242424;
+  --destructive: #d13438;          /* red primary */
+  --destructive-foreground: #ffffff;
+  --border: #d1d1d1;               /* grey[82] */
+  --input: #d1d1d1;                /* grey[82] */
+  --ring: #0f6cbd;                 /* brand[80] */
+
+  /* --- chart palette ------------------------------------------------------ */
+  --chart-1: #0f6cbd;              /* brand blue */
+  --chart-2: #038387;              /* teal */
+  --chart-3: #107c10;              /* green */
+  --chart-4: #da3b01;              /* darkOrange */
+  --chart-5: #5c2e91;              /* purple */
+
+  /* --- sidebar ------------------------------------------------------------ */
+  --sidebar: #fafafa;              /* grey[98] */
+  --sidebar-foreground: #242424;
+  --sidebar-primary: #0f6cbd;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ebf3fc;       /* brand[160] — Fluent "selected nav" tint */
+  --sidebar-accent-foreground: #115ea3; /* brand[70] */
+  --sidebar-border: #e0e0e0;       /* grey[88] */
+  --sidebar-ring: #0f6cbd;
+
+  /* --- brand ramp (full 16 stops; buttons need hover/pressed/selected) ---- */
+  --brand-10: #061724;
+  --brand-20: #082338;
+  --brand-30: #0a2e4a;
+  --brand-40: #0c3b5e;
+  --brand-50: #0e4775;
+  --brand-60: #0f548c;
+  --brand-70: #115ea3;
+  --brand-80: #0f6cbd;
+  --brand-90: #2886de;
+  --brand-100: #479ef5;
+  --brand-110: #62abf5;
+  --brand-120: #77b7f7;
+  --brand-130: #96c6fa;
+  --brand-140: #b4d6fa;
+  --brand-150: #cfe4fa;
+  --brand-160: #ebf3fc;
+
+  /* --- status extensions (shadcn ships only --destructive) ---------------- */
+  --success: #107c10;
+  --success-foreground: #ffffff;
+  --success-subtle: #f1faf1;
+  --success-border: #9fd89f;
+  --warning: #da3b01;              /* Fluent darkOrange (not yellow) */
+  --warning-foreground: #ffffff;
+  --warning-text: #c43501;         /* AA-safe warning text on light surfaces */
+  --warning-subtle: #fdf6f3;
+  --warning-border: #f4bfab;
+  --destructive-subtle: #fdf6f6;
+  --destructive-border: #f1bbbc;
+
+  /* --- elevation / shadows ------------------------------------------------ */
+  --shadow-ambient: rgba(0, 0, 0, 0.12);
+  --shadow-key: rgba(0, 0, 0, 0.14);
+  --shadow-brand-ambient: rgba(15, 108, 189, 0.30);
+  --shadow-brand-key: rgba(15, 108, 189, 0.25);
+  --shadow-2: 0 0 2px var(--shadow-ambient), 0 1px 2px var(--shadow-key);
+  --shadow-4: 0 0 2px var(--shadow-ambient), 0 2px 4px var(--shadow-key);
+  --shadow-8: 0 0 2px var(--shadow-ambient), 0 4px 8px var(--shadow-key);
+  --shadow-16: 0 0 2px var(--shadow-ambient), 0 8px 16px var(--shadow-key);
+  --shadow-28: 0 0 8px var(--shadow-ambient), 0 14px 28px var(--shadow-key);
+  --shadow-64: 0 0 8px var(--shadow-ambient), 0 32px 64px var(--shadow-key);
+
+  /* --- typography: font stacks -------------------------------------------- */
+  --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Roboto",
+    "Helvetica Neue", sans-serif;
+  --font-mono: "Cascadia Code", Consolas, "Courier New", Courier, monospace;
+  --font-numeric: Bahnschrift, "Segoe UI", -apple-system, sans-serif;
+
+  /* --- typography: weights ------------------------------------------------ */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* --- stroke widths ------------------------------------------------------ */
+  --stroke-thin: 1px;
+  --stroke-thick: 2px;
+  --stroke-thicker: 3px;
+  --stroke-thickest: 4px;
+
+  /* --- focus (Fluent-authentic double-stroke variant) --------------------- */
+  --stroke-focus-outer: #000000;
+  --stroke-focus-inner: #ffffff;
+
+  /* --- motion: durations -------------------------------------------------- */
+  --duration-ultra-fast: 50ms;
+  --duration-faster: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-gentle: 250ms;
+  --duration-slow: 300ms;
+  --duration-slower: 400ms;
+  --duration-ultra-slow: 500ms;
+
+  /* --- motion: easing curves ---------------------------------------------- */
+  --ease-accelerate-max: cubic-bezier(0.9, 0.1, 1, 0.2);
+  --ease-accelerate-mid: cubic-bezier(1, 0, 1, 1);
+  --ease-accelerate-min: cubic-bezier(0.8, 0, 0.78, 1);
+  --ease-decelerate-max: cubic-bezier(0.1, 0.9, 0.2, 1);
+  --ease-decelerate-mid: cubic-bezier(0, 0, 0, 1);
+  --ease-decelerate-min: cubic-bezier(0.33, 0, 0.1, 1);
+  --ease-max: cubic-bezier(0.8, 0, 0.2, 1);
+  --ease-ease: cubic-bezier(0.33, 0, 0.67, 1);
+  --ease-linear: cubic-bezier(0, 0, 1, 1);
+}
+
+/* ========================================================================== */
+/* DARK theme — re-points aliases at Fluent's published dark slots.           */
+/* (Not a hex inversion.) Brand ramp is global and unchanged.                 */
+/* ========================================================================== */
+.dark {
+  /* Match native UA chrome to the dark surface (see :root note). */
+  color-scheme: dark;
+
+  /* --- shadcn core set (dark) — tonal elevation delta --------------------- */
+  --background: #242424;           /* grey[14] canvas */
+  --foreground: #ffffff;
+  --card: #292929;                 /* grey[16] — raised above canvas */
+  --card-foreground: #ffffff;
+  --popover: #292929;
+  --popover-foreground: #ffffff;
+  --primary: #115ea3;              /* brand[70] — Fluent dark filled-brand */
+  --primary-foreground: #ffffff;
+  --secondary: #333333;            /* grey[20] */
+  --secondary-foreground: #ffffff;
+  --muted: #1f1f1f;                /* grey[12] */
+  --muted-foreground: #adadad;     /* grey[68] */
+  --accent: #333333;               /* grey[20] */
+  --accent-foreground: #ffffff;
+  --destructive: #d13438;          /* red primary (kept) */
+  --destructive-foreground: #ffffff;
+  --border: #525252;               /* grey[32] */
+  --input: #525252;                /* grey[32] */
+  --ring: #479ef5;                 /* brand[100] */
+
+  /* --- chart palette (lightened for dark surfaces) ------------------------ */
+  --chart-1: #479ef5;
+  --chart-2: #4bb6b9;
+  --chart-3: #54b054;
+  --chart-4: #ff8f6b;
+  --chart-5: #a97fd6;
+
+  /* --- sidebar ------------------------------------------------------------ */
+  --sidebar: #1f1f1f;              /* grey[12] */
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #479ef5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #333333;       /* grey[20] */
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #333333;       /* grey[20] */
+  --sidebar-ring: #479ef5;
+
+  /* --- status extensions (dark) ------------------------------------------- */
+  --success: #54b054;
+  --success-foreground: #0a0a0a;
+  --success-subtle: #0c1c0c;
+  --success-border: #2f7a2f;
+  --warning: #ff8f6b;
+  --warning-foreground: #1a0a02;
+  --warning-text: #ffb59a;
+  --warning-subtle: #22120a;
+  --warning-border: #a62d01;
+  --destructive-subtle: #3b1212;
+  --destructive-border: #9f282b;
+
+  /* --- elevation primitives (composite strings inherit via var()) --------- */
+  --shadow-ambient: rgba(0, 0, 0, 0.24);
+  --shadow-key: rgba(0, 0, 0, 0.28);
+
+  /* --- focus double-stroke (inverted for dark) ---------------------------- */
+  --stroke-focus-outer: #ffffff;
+  --stroke-focus-inner: #000000;
+}
+
+/* ========================================================================== */
+/* High contrast (a): Windows / forced-colors — hand control to the system.   */
+/* ========================================================================== */
+@media (forced-colors: active) {
+  :root {
+    --ring: Highlight;
+    --border: CanvasText;
+    --input: CanvasText;
+  }
+  /* Focus must stay visible and survive forced-color-adjust. */
+  :where(button, a, [role="button"], input, select, textarea):focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  /* Preserve brand fill only where meaning depends on it. */
+  .btn-primary {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+/* ========================================================================== */
+/* High contrast (b): explicit `.high-contrast` theme class (cross-platform). */
+/* Mirrors Fluent's highContrast theme via CSS system-color keywords.         */
+/* ========================================================================== */
+.high-contrast {
+  /* This theme paints entirely in CSS system colors (Canvas / CanvasText /
+     Highlight …), which resolve against whatever forced-colors theme the OS is
+     showing — it is neither inherently light nor dark. Advertise both so native
+     chrome resolves to the OS's current scheme. */
+  color-scheme: light dark;
+
+  --background: Canvas;
+  --foreground: CanvasText;
+  --card: Canvas;
+  --card-foreground: CanvasText;
+  --popover: Canvas;
+  --popover-foreground: CanvasText;
+  --primary: Highlight;
+  --primary-foreground: HighlightText;
+  --secondary: ButtonFace;
+  --secondary-foreground: ButtonText;
+  --muted: Canvas;
+  --muted-foreground: GrayText;
+  --accent: Highlight;
+  --accent-foreground: HighlightText;
+  --destructive: LinkText;
+  --destructive-foreground: Canvas;
+  --border: CanvasText;
+  --input: CanvasText;
+  --ring: Highlight;
+  --success: CanvasText;
+  --warning: CanvasText;
+}
+
+/* ========================================================================== */
+/* Reduced motion: collapse durations so utilities/vars settle instantly.     */
+/* ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-ultra-fast: 0.01ms;
+    --duration-faster: 0.01ms;
+    --duration-fast: 0.01ms;
+    --duration-normal: 0.01ms;
+    --duration-gentle: 0.01ms;
+    --duration-slow: 0.01ms;
+    --duration-slower: 0.01ms;
+    --duration-ultra-slow: 0.01ms;
+  }
+}
+
+/* ========================================================================== */
+/* Tailwind v4 bridge: re-export semantic vars as utilities.                  */
+/* `inline` resolves var() at use-site, so `.dark` re-pointing works without  */
+/* regenerating utilities. Inline theme vars are NOT re-emitted to :root, so  */
+/* the `--x: var(--x)` self-references below are safe (no circular refs).      */
+/* ========================================================================== */
+@theme inline {
+  /* colors → bg-*, text-*, border-*, ring-* */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* chart */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* status extensions */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-text: var(--warning-text);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-border: var(--warning-border);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-border: var(--destructive-border);
+
+  /* brand ramp → bg-brand-80, text-brand-160, etc. */
+  --color-brand-10: var(--brand-10);
+  --color-brand-20: var(--brand-20);
+  --color-brand-30: var(--brand-30);
+  --color-brand-40: var(--brand-40);
+  --color-brand-50: var(--brand-50);
+  --color-brand-60: var(--brand-60);
+  --color-brand-70: var(--brand-70);
+  --color-brand-80: var(--brand-80);
+  --color-brand-90: var(--brand-90);
+  --color-brand-100: var(--brand-100);
+  --color-brand-110: var(--brand-110);
+  --color-brand-120: var(--brand-120);
+  --color-brand-130: var(--brand-130);
+  --color-brand-140: var(--brand-140);
+  --color-brand-150: var(--brand-150);
+  --color-brand-160: var(--brand-160);
+
+  /* radius → rounded-* (derived from a single --radius base) */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-full: 9999px;
+
+  /* shadows → shadow-* (composite strings live in :root, adapt via primitives) */
+  --shadow-2: var(--shadow-2);
+  --shadow-4: var(--shadow-4);
+  --shadow-8: var(--shadow-8);
+  --shadow-16: var(--shadow-16);
+  --shadow-28: var(--shadow-28);
+  --shadow-64: var(--shadow-64);
+
+  /* fonts → font-sans, font-mono, font-numeric */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-numeric: var(--font-numeric);
+
+  /* custom type sizes Tailwind's default scale misses (paired line-heights) */
+  --text-caption2: 10px;
+  --text-caption2--line-height: 14px;
+  --text-title2: 28px;
+  --text-title2--line-height: 36px;
+  --text-title1: 32px;
+  --text-title1--line-height: 40px;
+  --text-large-title: 40px;
+  --text-large-title--line-height: 52px;
+  --text-display: 68px;
+  --text-display--line-height: 92px;
+
+  /* motion durations → duration-* utilities (Tailwind reads --transition-duration-*) */
+  --transition-duration-ultra-fast: var(--duration-ultra-fast);
+  --transition-duration-faster: var(--duration-faster);
+  --transition-duration-fast: var(--duration-fast);
+  --transition-duration-normal: var(--duration-normal);
+  --transition-duration-gentle: var(--duration-gentle);
+  --transition-duration-slow: var(--duration-slow);
+  --transition-duration-slower: var(--duration-slower);
+  --transition-duration-ultra-slow: var(--duration-ultra-slow);
+
+  /* motion easings → ease-* utilities */
+  --ease-accelerate-max: var(--ease-accelerate-max);
+  --ease-accelerate-mid: var(--ease-accelerate-mid);
+  --ease-accelerate-min: var(--ease-accelerate-min);
+  --ease-decelerate-max: var(--ease-decelerate-max);
+  --ease-decelerate-mid: var(--ease-decelerate-mid);
+  --ease-decelerate-min: var(--ease-decelerate-min);
+  --ease-max: var(--ease-max);
+  --ease-ease: var(--ease-ease);
+  --ease-linear: var(--ease-linear);
+}
+
+/* ========================================================================== */
+/* Base layer: shadcn v4 defaults (border/outline color + body surface).      */
+/* ========================================================================== */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

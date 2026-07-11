@@ -1,0 +1,14 @@
+{
+  "name": "label",
+  "type": "registry:ui",
+  "title": "Label",
+  "description": "Fluent 2-styled form label with shadcn APIs. Native <label> (no JS primitive needed), 14px/600 Fluent type ramp, peer/group disabled ergonomics, and an optional required-field asterisk indicator.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/label.tsx",
+      "target": "components/ui/label.tsx"
+    }
+  ]
+}

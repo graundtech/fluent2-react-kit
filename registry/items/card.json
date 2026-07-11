@@ -1,0 +1,14 @@
+{
+  "name": "card",
+  "type": "registry:ui",
+  "title": "Card",
+  "description": "Fluent 2-styled card with shadcn APIs. Seven composable parts (Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter), Fluent resting elevation (shadow-4) and rounded-lg border.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/card.tsx",
+      "target": "components/ui/card.tsx"
+    }
+  ]
+}

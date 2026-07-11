@@ -1,0 +1,15 @@
+{
+  "name": "button",
+  "type": "registry:ui",
+  "title": "Button",
+  "description": "Fluent 2-styled button with shadcn APIs. Six variants (default, secondary, outline, ghost, destructive, link) and six sizes, brand state ramp, asChild support, and a Fluent double-stroke focus ring.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["class-variance-authority", "@radix-ui/react-slot"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/button.tsx",
+      "target": "components/ui/button.tsx"
+    }
+  ]
+}

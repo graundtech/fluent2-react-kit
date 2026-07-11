@@ -24,11 +24,13 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "pnpm --filter @graundtech/fluent2-react-kit build && pnpm --filter fluent2-react-kit-demo build",
+    "build": "pnpm --filter @graundtech/fluent2-react-kit build && pnpm build:registry && pnpm --filter fluent2-react-kit-demo build",
     "build:demo": "pnpm --filter fluent2-react-kit-demo build",
     "build:package": "pnpm --filter @graundtech/fluent2-react-kit build",
+    "build:registry": "node scripts/build-registry.mjs",
     "clean": "pnpm --filter @graundtech/fluent2-react-kit clean",
     "demo:dev": "pnpm --filter fluent2-react-kit-demo dev",
+    "test": "pnpm --filter @graundtech/fluent2-react-kit test",
     "typecheck": "pnpm --filter @graundtech/fluent2-react-kit typecheck && pnpm --filter fluent2-react-kit-demo typecheck"
   },
   "devDependencies": {

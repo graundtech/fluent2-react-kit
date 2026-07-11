@@ -6,7 +6,9 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@graundtech/fluent2-react-kit": ["../../packages/react/src/index.tsx"]
+      "@graundtech/fluent2-react-kit": ["../../packages/react/src/index.ts"],
+      "@kit/*": ["../../packages/react/src/*"],
+      "@/*": ["./*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

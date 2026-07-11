@@ -1,6 +1,6 @@
 {
   "name": "@graundtech/fluent2-react-kit",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Fluent 2-inspired React components built with shadcn-style APIs and registry-first distribution.",
   "type": "module",
   "private": false,
@@ -26,18 +26,45 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./tokens.css": "./src/styles/tokens.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/styles"
   ],
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.6.0",
+    "@fluentui/react-icons": "2.0.333",
+    "@radix-ui/react-slot": "1.3.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "tailwind-merge": "3.6.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "@vitest/coverage-v8": "4.1.10",
+    "axe-core": "4.12.1",
+    "jsdom": "29.1.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "vitest": "4.1.10"
   }
 }

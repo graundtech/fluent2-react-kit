@@ -1,25 +1,7 @@
-* {
-  box-sizing: border-box;
-}
+@import "tailwindcss";
+@import "@graundtech/fluent2-react-kit/tokens.css";
 
-html {
-  color-scheme: light dark;
-  font-family:
-    "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-}
-
-.demo-shell {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 64px 24px;
-  line-height: 1.5;
-}
-
-.demo-muted {
-  opacity: 0.7;
-}
+/* Turbopack's native Tailwind integration only scans this app's own files.
+   The kit's components live in the workspace package, so their utilities
+   must be pulled in explicitly or previews render half-styled. */
+@source "../../../packages/react/src";

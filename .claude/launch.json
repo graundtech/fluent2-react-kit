@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "demo",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "fluent2-react-kit-demo", "dev"],
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

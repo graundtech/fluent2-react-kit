@@ -1,0 +1,15 @@
+{
+  "name": "link",
+  "type": "registry:ui",
+  "title": "Link",
+  "description": "Fluent 2-styled link with shadcn APIs. Brand-colored text with a hover-only underline for standalone use or a persistent underline for links inline in prose, aria-disabled support, and asChild for wrapping framework router links.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["class-variance-authority", "@radix-ui/react-slot"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/link.tsx",
+      "target": "components/ui/link.tsx"
+    }
+  ]
+}

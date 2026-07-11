@@ -1,0 +1,15 @@
+{
+  "name": "spinner",
+  "type": "registry:ui",
+  "title": "Spinner",
+  "description": "Fluent 2-styled loading indicator: a rotating brand-colored arc (not a full ring) over an optional faint track, four sizes, and an optional visible label that becomes the accessible name.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["class-variance-authority"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/spinner.tsx",
+      "target": "components/ui/spinner.tsx"
+    }
+  ]
+}

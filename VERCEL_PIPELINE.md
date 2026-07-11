@@ -26,7 +26,7 @@ The pipeline will only build if all of this is present and intact:
 └── packages/
     └── react/                  # the workspace package the demo imports
         ├── package.json        # name: @graundtech/fluent2-react-kit
-        └── src/index.tsx       # built by tsup into dist/
+        └── src/index.ts        # built by tsup into dist/
 ```
 
 Key invariants:
@@ -48,10 +48,18 @@ Key invariants:
 | --- | --- | --- |
 | `framework` | `nextjs` | So Vercel treats the output as a Next.js app |
 | `installCommand` | `pnpm install --frozen-lockfile` | Installs the whole workspace |
-| `buildCommand` | `pnpm build` | Builds the package, then the demo |
+| `buildCommand` | `pnpm build` | Builds the package, then the registry, then the demo |
 | `outputDirectory` | `apps/demo/.next` | Where the deployed Next.js build lands |
 
-`pnpm build` = `pnpm --filter @graundtech/fluent2-react-kit build && pnpm --filter fluent2-react-kit-demo build`.
+`pnpm build` = `pnpm --filter @graundtech/fluent2-react-kit build && pnpm build:registry && pnpm --filter fluent2-react-kit-demo build`.
+
+`pnpm build:registry` (`node scripts/build-registry.mjs`) reads the registry item fragments in
+`registry/items/*.json`, inlines each item's source file, and writes the static JSON the shadcn
+CLI consumes to `apps/demo/public/r/` (`registry.json` plus one `<name>.json` per item). This
+**must** run before `next build` — Next.js only serves what's already in `apps/demo/public/` at
+build time, so if the registry step ran after (or was skipped), `/r/*.json` would 404 in
+production. `apps/demo/public/r/` is a generated, gitignored directory; nothing there is
+committed. See `registry/items/README.md` for the fragment format.
 
 ## Reestablishing the pipeline from scratch
 
@@ -80,7 +88,8 @@ If the Vercel project is gone or disconnected:
 ```bash
 pnpm install --frozen-lockfile
 pnpm build
-# builds packages/react (tsup) then apps/demo (next build) -> apps/demo/.next
+# builds packages/react (tsup), then the registry (apps/demo/public/r/*.json),
+# then apps/demo (next build) -> apps/demo/.next
 ```
 
 If that succeeds locally, the Vercel build will succeed too.

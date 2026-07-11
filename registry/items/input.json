@@ -1,0 +1,14 @@
+{
+  "name": "input",
+  "type": "registry:ui",
+  "title": "Input",
+  "description": "Fluent 2-styled text input with shadcn APIs. 32px medium field, file-input styling, and the signature Fluent bottom brand accent on focus (inset box-shadow, no layout shift).",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/input.tsx",
+      "target": "components/ui/input.tsx"
+    }
+  ]
+}

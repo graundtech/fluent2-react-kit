@@ -1,0 +1,15 @@
+{
+  "name": "badge",
+  "type": "registry:ui",
+  "title": "Badge",
+  "description": "Fluent 2-styled badge with shadcn APIs. Six variants (default, secondary, destructive, outline, success, warning) as a compact pill, with icon support and asChild support.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["class-variance-authority", "@radix-ui/react-slot"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/badge.tsx",
+      "target": "components/ui/badge.tsx"
+    }
+  ]
+}
