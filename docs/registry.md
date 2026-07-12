@@ -119,17 +119,17 @@ Instead of the full `<registry-url>/r/{name}.json` in every command, configure t
 // components.json
 {
   "registries": {
-    "@fluent2": "https://fluent2-react-kit.graund.io/r/{name}.json"
+    "@fluent2-react-kit": "https://fluent2-react-kit.graund.io/r/{name}.json"
   }
 }
 ```
 
 ```bash
-npx shadcn@latest add @fluent2/theme --yes --overwrite
-npx shadcn@latest add @fluent2/button --yes --overwrite
+npx shadcn@latest add @fluent2-react-kit/theme --yes --overwrite
+npx shadcn@latest add @fluent2-react-kit/button --yes --overwrite
 ```
 
-The `{name}` placeholder is substituted by the CLI with the resource name after the `@fluent2/` prefix — `@fluent2/button` resolves to `https://fluent2-react-kit.graund.io/r/button.json`, the same URL you'd otherwise type out by hand.
+The `{name}` placeholder is substituted by the CLI with the resource name after the `@fluent2/` prefix — `@fluent2-react-kit/button` resolves to `https://fluent2-react-kit.graund.io/r/button.json`, the same URL you'd otherwise type out by hand.
 
 ### Troubleshooting: TS5101 on Vite (`baseUrl` deprecation)
 

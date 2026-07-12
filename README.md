@@ -48,20 +48,20 @@ npx shadcn@latest add <registry-url>/r/button.json --yes --overwrite
 > [!WARNING]
 > **Using Fluent icons in your own components?** Any `@fluentui/react-icons` import must live inside a `"use client"` module. The icons package calls a client-only Griffel styling API at module scope, so importing an icon into a Server Component (e.g. dropping one inside your own `<Alert>` on a Next.js App Router page) fails `next build`. Kit components that ship with icons already carry `"use client"` — this only bites icons *you* import directly.
 
-**Named registry alias.** Configure a short alias once in `components.json` so you can install with `npx shadcn add @fluent2/<name>` instead of the full URL:
+**Named registry alias.** Configure a short alias once in `components.json` so you can install with `npx shadcn add @fluent2-react-kit/<name>` instead of the full URL:
 
 ```json
 // components.json
 {
   "registries": {
-    "@fluent2": "https://fluent2-react-kit.graund.io/r/{name}.json"
+    "@fluent2-react-kit": "https://fluent2-react-kit.graund.io/r/{name}.json"
   }
 }
 ```
 
 ```bash
-npx shadcn@latest add @fluent2/theme --yes --overwrite
-npx shadcn@latest add @fluent2/button --yes --overwrite
+npx shadcn@latest add @fluent2-react-kit/theme --yes --overwrite
+npx shadcn@latest add @fluent2-react-kit/button --yes --overwrite
 ```
 
 **Option B — npm package.** Install `@graundtech/fluent2-react-kit` and import the token stylesheet:
