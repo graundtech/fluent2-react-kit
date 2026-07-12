@@ -27,9 +27,30 @@ Run from the repo root:
 | `pnpm build:demo` | Builds only the demo app (`next build`) |
 | `pnpm demo:dev` | Runs the demo app locally (`next dev`) — browse component previews at `/preview/<name>` |
 | `pnpm test` | Runs the package's Vitest suite |
+| `pnpm test:e2e` | Runs the Playwright browser suite against the demo (see below) |
+| `pnpm test:e2e:ui` | Same, in Playwright's interactive UI mode |
 | `pnpm typecheck` | Typechecks the package and the demo app |
 
 Component-local scripts (run inside `packages/react`, or via the root scripts above): `test:watch` for interactive test runs.
+
+## End-to-end tests (Playwright)
+
+Vitest + `axe-core` cover components in jsdom, which has no layout or paint engine. A small Playwright suite covers the paths that need a real browser — currently the Select component's popup positioning, collision handling, close/hide behavior, list scrolling, and computed visual states, plus a home-page smoke test. Config is `playwright.config.ts` (root); specs live in `e2e/`.
+
+One-time browser install (Chromium only — the suite runs a single project, kept lean):
+
+```bash
+pnpm exec playwright install chromium
+```
+
+Then, from the repo root:
+
+```bash
+pnpm test:e2e         # headless run
+pnpm test:e2e:ui      # interactive UI mode
+```
+
+The config's `webServer` **builds the demo and serves it in production mode** (`pnpm --filter fluent2-react-kit-demo build`, then `next start`) on a dedicated port (`3210`) — production `next start` is used over `next dev` for determinism. It reuses an already-running server locally (`reuseExistingServer`), so `pnpm demo:dev`-style iteration isn't interrupted; in CI it always starts fresh. Playwright is a **root devDependency only** and touches no app/package build script, `vercel.json`, or `pnpm-workspace.yaml`, so the Vercel deploy is unaffected. Artifacts (`test-results/`, `playwright-report/`) are gitignored.
 
 ## How to add a component
 

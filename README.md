@@ -84,10 +84,11 @@ Full theming details: [`docs/tokens.md`](docs/tokens.md).
 pnpm install
 pnpm build        # builds the package, the registry, then the demo
 pnpm test          # runs the component test suite (Vitest + axe)
+pnpm test:e2e      # runs the Playwright browser suite (builds + serves the demo)
 pnpm demo:dev      # runs the demo/showcase app locally
 ```
 
-See [`docs/contributing.md`](docs/contributing.md) for the full contributor workflow, including how to add a new component.
+The Playwright suite needs a one-time Chromium install (`pnpm exec playwright install chromium`). See [`docs/contributing.md`](docs/contributing.md) for the full contributor workflow, including how to add a new component and how the e2e tests run.
 
 ## Component status
 

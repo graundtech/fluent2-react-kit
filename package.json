@@ -31,9 +31,12 @@
     "clean": "pnpm --filter @graundtech/fluent2-react-kit clean",
     "demo:dev": "pnpm --filter fluent2-react-kit-demo dev",
     "test": "pnpm --filter @graundtech/fluent2-react-kit test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "typecheck": "pnpm --filter @graundtech/fluent2-react-kit typecheck && pnpm --filter fluent2-react-kit-demo typecheck"
   },
   "devDependencies": {
+    "@playwright/test": "1.61.1",
     "@types/node": "26.0.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
