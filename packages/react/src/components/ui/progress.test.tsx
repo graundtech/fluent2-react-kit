@@ -160,4 +160,12 @@ describe("Progress", () => {
     const { container } = render(<Progress aria-label="Loading" />);
     await expect(container).toHaveNoAxeViolations();
   });
+
+  it("supports the Fluent Large size (4px track) via the size prop", () => {
+    render(<Progress aria-label="Sized" value={10} size="lg" />);
+    const root = document.querySelector('[data-slot="progress"]');
+    expect(root).toHaveAttribute("data-size", "lg");
+    expect(root).toHaveClass("h-1");
+    expect(root?.className).not.toContain("h-0.5");
+  });
 });

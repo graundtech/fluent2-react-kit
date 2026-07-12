@@ -113,6 +113,32 @@ function PanelBody({ idPrefix }: { idPrefix: string }) {
         </Select>
       </Field>
 
+      {/* Sizes — Fluent field sizes on the Button height scale (sm/default/lg) */}
+      {(["sm", "lg"] as const).map((size) => (
+        <Field
+          key={size}
+          labelId={id(`size-${size}`)}
+          label={`Size ${size} (${size === "sm" ? "24px" : "40px"})`}
+        >
+          <Select items={FRUITS}>
+            <SelectTrigger
+              size={size}
+              id={id(`size-${size}-trigger`)}
+              aria-labelledby={`${id(`size-${size}`)} ${id(`size-${size}-trigger`)}`}
+            >
+              <SelectValue placeholder="Select a fruit" />
+            </SelectTrigger>
+            <SelectContent>
+              {FRUITS.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+      ))}
+
       {/* Grouped — GroupLabel headings + a Separator between groups */}
       <Field labelId={id("grouped")} label="Produce">
         <Select>

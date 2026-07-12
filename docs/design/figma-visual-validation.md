@@ -445,10 +445,11 @@ components shipped after pass 1. Same disclaimer applies.
   only).
 - Dialog explicit size variants (Figma ships 600px/320px; kit is `max-w-lg` =
   512px, between the two).
-- Dropdown Menu / Select item **rest** text as `NeutralForeground2`
-  (`#424242`) darkening to `#242424` on hover — kit currently uses uniform
-  `popover-foreground`; now expressible via `--foreground-2`, deferred to keep
-  Menu/Select consistent until both are changed together.
+- ~~Dropdown Menu / Select item **rest** text as `NeutralForeground2`~~ —
+  RESOLVED in the small-items pass: all list-item rows across the family
+  (Select, Dropdown Menu's four item types, Combobox, Command) now rest at
+  `text-foreground-2` and darken to `accent-foreground` on highlight, changed
+  together to avoid intra-kit drift.
 - Breadcrumb size axis (Large 16px / Medium 14px / Small 12px).
 
 ---

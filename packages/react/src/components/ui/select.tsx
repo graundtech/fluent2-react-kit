@@ -65,9 +65,10 @@ import { cn } from "../../lib/utils";
  *    `items={[{ value: "apple", label: "Apple" }]}` — or pass a render function
  *    as `SelectValue`'s child: `<SelectValue>{(v) => labels[v]}</SelectValue>`.
  *    This is Base UI's model; the wrapper stays thin and does not paper over it.
- * 3. **No `size` prop on `SelectTrigger`.** Current shadcn ships `sm`/`default`
- *    (h-8/h-9); the kit standardizes on the Fluent medium field height (h-8) to
- *    match `Input`, so there is a single trigger height and no `data-size` hook.
+ * 3. **`SelectTrigger` sizes follow the kit's Button scale, not shadcn's.**
+ *    shadcn ships `sm`/`default` at h-8/h-9; this kit maps Fluent's field sizes
+ *    onto the Button height scale instead — `sm` 24px (`h-6`), `default` 32px
+ *    (`h-8`, matches `Input`), `lg` 40px (`h-10`) — surfaced as `data-size`.
  * 4. **`SelectContent` positions below the trigger (`alignItemWithTrigger=false`).**
  *    Base UI defaults to overlapping the trigger so the selected item's text lines
  *    up with the value (native-select behavior). A shadcn-style dropdown that opens
@@ -142,17 +143,26 @@ function SelectValue({
 function SelectTrigger({
   className,
   children,
+  size = "default",
   ...props
-}: ComponentProps<typeof SelectPrimitive.Trigger>) {
+}: ComponentProps<typeof SelectPrimitive.Trigger> & {
+  /** Fluent field sizes on the Button height scale — see divergence 3. */
+  size?: "sm" | "default" | "lg";
+}) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
+      data-size={size}
       className={cn(
-        // layout — Fluent medium field, 32px, matches Input. Resting bottom
+        // layout — Fluent field on the Button height scale (divergence 3);
+        // default is the 32px medium that matches Input. Resting bottom
         // edge uses the darker NeutralStrokeAccessible (#616161) accent while
         // the other sides stay border-input; focus (border-primary + inset
         // underline) and aria-invalid (border-destructive) both override it.
-        "flex h-8 w-full items-center justify-between gap-2 rounded-md border border-input border-b-stroke-accessible bg-background px-3 py-1 text-sm whitespace-nowrap",
+        "flex w-full items-center justify-between gap-2 rounded-md border border-input border-b-stroke-accessible bg-background py-1 whitespace-nowrap",
+        size === "sm" && "h-6 px-2 text-xs",
+        size === "default" && "h-8 px-3 text-sm",
+        size === "lg" && "h-10 px-4 text-base",
         // placeholder text muted (Base UI sets data-placeholder when no value)
         "data-[placeholder]:text-muted-foreground",
         // keep a long value on one line, left-aligned
@@ -279,8 +289,9 @@ function SelectItem({
         // layout — Fluent 32px row, 4px list radius, px-2 with room on the
         // right for the check
         "relative flex h-8 w-full cursor-default items-center rounded-md pr-8 pl-2 text-sm outline-none select-none",
-        // highlighted — keyboard focus / hover (Base UI data attribute)
-        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        // rest text is NeutralForeground2, darkening to accent-foreground on
+        // highlight (Figma validation: Fluent list rows rest at #424242)
+        "text-foreground-2 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         // disabled item — muted + non-interactive
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         // icons that a consumer puts inside the item text

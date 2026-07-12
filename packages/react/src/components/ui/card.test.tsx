@@ -161,4 +161,18 @@ describe("Card", () => {
     );
     await expect(container).toHaveNoAxeViolations();
   });
+
+  it("interactive raises hover elevation and sets the data hook", () => {
+    render(<Card interactive>hi</Card>);
+    const el = document.querySelector('[data-slot="card"]');
+    expect(el).toHaveAttribute("data-interactive");
+    expect(el).toHaveClass("cursor-pointer", "hover:shadow-8");
+  });
+
+  it("is static by default (no interactive classes)", () => {
+    render(<Card>hi</Card>);
+    const el = document.querySelector('[data-slot="card"]');
+    expect(el).not.toHaveAttribute("data-interactive");
+    expect(el?.className).not.toContain("hover:shadow-8");
+  });
 });

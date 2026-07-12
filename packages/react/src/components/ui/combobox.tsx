@@ -355,8 +355,9 @@ function ComboboxItem({
       className={cn(
         // layout — Fluent 32px row, 4px list radius, room on the right for check
         "relative flex h-8 w-full cursor-default items-center rounded-md pr-8 pl-2 text-sm outline-none select-none",
-        // highlighted — keyboard focus / hover (Base UI data attribute)
-        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        // rest text is NeutralForeground2, darkening to accent-foreground on
+        // highlight (Figma validation: Fluent list rows rest at #424242)
+        "text-foreground-2 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         // disabled item — muted + non-interactive
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         // icons a consumer puts inside the item text

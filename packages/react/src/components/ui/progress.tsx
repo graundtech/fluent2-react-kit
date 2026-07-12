@@ -101,6 +101,7 @@ function Progress({
   className,
   value,
   variant = "default",
+  size = "default",
   ...props
 }: Omit<ComponentProps<typeof ProgressPrimitive.Root>, "value"> &
   VariantProps<typeof progressVariants> & {
@@ -110,14 +111,21 @@ function Progress({
      * `aria-valuenow` and this wrapper renders the pulsing stand-in indicator.
      */
     value?: number | null;
+    /**
+     * Fluent ProgressBar `Size` axis: `default` = Medium (2px track),
+     * `lg` = Large (4px) — surfaced by the pass-1 Figma validation.
+     */
+    size?: "default" | "lg";
   }) {
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
       data-variant={variant}
+      data-size={size}
       value={value ?? null}
       className={cn(
-        "relative h-0.5 w-full overflow-hidden rounded-full bg-secondary",
+        "relative w-full overflow-hidden rounded-full bg-secondary",
+        size === "lg" ? "h-1" : "h-0.5",
         className
       )}
       {...props}

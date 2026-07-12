@@ -66,6 +66,10 @@ function PanelBody() {
         <Progress value={100} aria-label="100 percent complete" />
       </Row>
 
+      <Row label="Large (4px)">
+        <Progress value={50} size="lg" aria-label="Large size, 50 percent" />
+      </Row>
+
       <TickingDemo />
 
       <Row label="Intent variants (Fluent State axis)">

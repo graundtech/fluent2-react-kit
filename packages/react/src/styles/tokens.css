@@ -101,7 +101,7 @@
   --success-border: #9fd89f;
   --warning: #da3b01;              /* Fluent darkOrange (not yellow) */
   --warning-foreground: #ffffff;
-  --warning-text: #c43501;         /* AA-safe warning text on light surfaces */
+  --warning-text: #bc4b09;         /* AA-safe warning text on light surfaces (4.74:1 on --warning-subtle) — exact Fluent Figma Message-bar value (validation pass 1 precision fix) */
   --warning-subtle: #fdf6f3;
   --warning-border: #f4bfab;
   --destructive-subtle: #fdf6f6;

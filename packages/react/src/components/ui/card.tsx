@@ -29,18 +29,32 @@ import { cn } from "../../lib/utils";
  *
  * No `variant`/`size` props: shadcn's Card ships none, so there is no `cva`
  * table here (unlike Button) — every part is a plain function component.
- * Interactive/selectable card states (Fluent has them) are intentionally not
- * implemented — see the component's test file / PR notes for backlog.
+ *
+ * `interactive` (kit extension): Fluent cards have hover/pressed states when
+ * clickable; passing `interactive` raises the resting `shadow-4` to `shadow-8`
+ * on hover (Fluent's interactive-card elevation step) with a pointer cursor
+ * and `data-interactive` hook. Visual-only — semantics/focus come from what
+ * you compose it with (wrap in an `<a>`/`<button>` or add role/tabIndex).
  *
  * Server-safe: no `"use client"`, no hooks — the React import is type-only.
  */
 
-function Card({ className, ...props }: ComponentProps<"div">) {
+function Card({
+  className,
+  interactive = false,
+  ...props
+}: ComponentProps<"div"> & {
+  /** Fluent interactive-card elevation states (hover raises to shadow-8). */
+  interactive?: boolean;
+}) {
   return (
     <div
       data-slot="card"
+      data-interactive={interactive || undefined}
       className={cn(
         "flex flex-col gap-4 rounded-lg border bg-card py-4 text-card-foreground shadow-4",
+        interactive &&
+          "cursor-pointer transition-shadow duration-fast ease-ease hover:shadow-8 active:shadow-4",
         className
       )}
       {...props}

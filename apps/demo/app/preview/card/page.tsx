@@ -60,6 +60,23 @@ function PanelBody() {
         </Card>
       </div>
 
+      {/* Interactive — hover raises elevation to shadow-8 (Fluent clickable card) */}
+      <div className="space-y-3">
+        <span className="text-sm text-muted-foreground">interactive</span>
+        <Card interactive className="max-w-sm">
+          <CardHeader>
+            <CardTitle>Open project</CardTitle>
+            <CardDescription>Hover to see the elevation raise</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm">
+              Visual-only states — compose with an anchor or button for
+              semantics.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* With CardAction — plain styled button, no sibling components */}
       <div className="space-y-3">
         <span className="text-sm text-muted-foreground">with card action</span>

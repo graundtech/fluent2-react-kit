@@ -216,8 +216,9 @@ function DropdownMenuItem({
       className={cn(
         // layout — Fluent 32px row, 4px list radius
         "relative flex h-8 cursor-default items-center gap-2 rounded-md px-2 text-sm outline-none select-none",
-        // highlighted — keyboard focus / hover (Base UI data attribute)
-        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        // rest text is NeutralForeground2, darkening to accent-foreground on
+        // highlight (Figma validation: Fluent list rows rest at #424242)
+        "text-foreground-2 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         // disabled item — muted + non-interactive
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         // inset — leading gutter to align with indicator rows
@@ -253,7 +254,7 @@ function DropdownMenuCheckboxItem({
       checked={checked}
       className={cn(
         "relative flex h-8 cursor-default items-center gap-2 rounded-md py-1.5 pr-2 pl-8 text-sm outline-none select-none",
-        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        "text-foreground-2 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
@@ -299,7 +300,7 @@ function DropdownMenuRadioItem({
       data-slot="dropdown-menu-radio-item"
       className={cn(
         "relative flex h-8 cursor-default items-center gap-2 rounded-md py-1.5 pr-2 pl-8 text-sm outline-none select-none",
-        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        "text-foreground-2 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
@@ -372,7 +373,7 @@ function DropdownMenuSubTrigger({
       data-inset={inset || undefined}
       className={cn(
         "relative flex h-8 cursor-default items-center gap-2 rounded-md px-2 text-sm outline-none select-none",
-        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        "text-foreground-2 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "data-[popup-open]:bg-accent data-[popup-open]:text-accent-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "data-[inset]:pl-8",

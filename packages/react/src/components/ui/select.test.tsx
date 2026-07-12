@@ -421,4 +421,32 @@ describe("Select", () => {
       rules: { region: { enabled: false } },
     });
   });
+
+  it("supports sm/default/lg trigger sizes on the Button height scale", () => {
+    const { rerender } = render(
+      <Select>
+        <SelectTrigger aria-label="Sized" size="sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="a">A</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+    const trigger = screen.getByRole("combobox");
+    expect(trigger).toHaveAttribute("data-size", "sm");
+    expect(trigger).toHaveClass("h-6", "text-xs");
+    rerender(
+      <Select>
+        <SelectTrigger aria-label="Sized" size="lg">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="a">A</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+    expect(screen.getByRole("combobox")).toHaveClass("h-10", "text-base");
+    expect(screen.getByRole("combobox")).toHaveAttribute("data-size", "lg");
+  });
 });
