@@ -1,0 +1,16 @@
+{
+  "name": "tabs",
+  "type": "registry:ui",
+  "title": "Tabs",
+  "description": "Fluent 2-styled tabs with shadcn APIs. Built on @base-ui/react's Tabs for roving-tabindex keyboard navigation and a layout-measured sliding active-tab indicator; the list is a transparent hairline row with an animated brand underline (not shadcn's muted pill).",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/tabs.tsx",
+      "target": "components/ui/tabs.tsx"
+    }
+  ],
+  "docs": "Fluent 2's TabList is a transparent underline control, not shadcn's muted-pill segmented control — `TabsList` renders no background/pill, only a hairline `border-b` plus a 2px brand bar (`Tabs.Indicator`) that slides under the active `TabsTrigger`. The indicator's sliding motion relies on real layout (`getBoundingClientRect`), so it only animates in a browser, not in a zero-layout test environment. Base UI's `Tabs.List` also defaults to *manual* tab activation (arrow keys move focus; `Enter`/`Space` or click selects) rather than Radix's automatic-on-arrow-focus — pass `activateOnFocus` on `TabsList` to opt back into automatic activation. See `tabs.tsx`'s doc comment for the full divergence list."
+}

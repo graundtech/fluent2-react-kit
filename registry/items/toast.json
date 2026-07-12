@@ -1,0 +1,16 @@
+{
+  "name": "toast",
+  "type": "registry:ui",
+  "title": "Toast",
+  "description": "Fluent 2-styled, shadcn-API toast notifications on Base UI's toast manager. A Provider + portalled Viewport with a stacked, swipeable, auto-dismissing toast surface. Five variants (default, destructive, success, warning, info) reuse the status-extension tokens, with a useToast() hook (Base UI's manager) to fire toasts.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons", "class-variance-authority"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/toast.tsx",
+      "target": "components/ui/toast.tsx"
+    }
+  ],
+  "docs": "Toast follows Base UI's manager model, not shadcn's global `toast()`. Wrap your app (or a subtree) in `<ToastProvider>`, render `<ToastViewport>` once with a map over `useToast().toasts` inside it, and fire toasts imperatively with `useToast().add({ title, description, data: { variant } })`. The `variant` (default | destructive | success | warning | info) is your own payload on `data`, read back in the map as `<Toast variant={toast.data?.variant}>`. `useToast` is Base UI's `useToastManager` re-exported ({ toasts, add, close, update, promise }); `createToastManager` builds a manager for firing outside React (pass it as `<ToastProvider toastManager={…}>`). Empty `<ToastTitle />`/`<ToastDescription />` fall back to the toast's title/description strings. See `toast.tsx`'s doc comment for the full firing recipe and Base UI mapping."
+}

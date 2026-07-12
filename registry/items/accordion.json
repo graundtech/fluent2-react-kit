@@ -1,0 +1,16 @@
+{
+  "name": "accordion",
+  "type": "registry:ui",
+  "title": "Accordion",
+  "description": "Fluent 2-styled accordion (expand/collapse groups) with a shadcn API. Built on @base-ui/react's Accordion for open/close state and a height-animated collapsible panel; the trigger rotates a ChevronDownRegular chevron and the panel animates height via Base UI's --accordion-panel-height CSS variable.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/accordion.tsx",
+      "target": "components/ui/accordion.tsx"
+    }
+  ],
+  "docs": "Base UI's Accordion has no `type=\"single\" | \"multiple\"` prop like Radix — it exposes a single `multiple?: boolean` prop (default `false`) and always represents the open set as an array (`value`/`defaultValue` are `Value[]`, even in single mode). `<Accordion>` passes `Accordion.Root`'s props straight through rather than papering over that difference; see `accordion.tsx`'s doc comment for the full divergence list, the exact `--accordion-panel-height` height-animation mechanism, and why arrow keys no longer move focus between triggers (Base UI dropped the roving-tabindex pattern per the updated ARIA APG guidance)."
+}

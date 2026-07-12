@@ -1,0 +1,15 @@
+{
+  "name": "breadcrumb",
+  "type": "registry:ui",
+  "title": "Breadcrumb",
+  "description": "Fluent 2-styled breadcrumb with shadcn APIs. Seven composable parts (Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis), inline SVG chevron/ellipsis glyphs to stay a Server Component.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@radix-ui/react-slot"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/breadcrumb.tsx",
+      "target": "components/ui/breadcrumb.tsx"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "pagination",
+  "type": "registry:ui",
+  "title": "Pagination",
+  "description": "Fluent 2-styled pagination with shadcn APIs. Seven composable parts (Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis), page links styled via buttonVariants (outline when active, ghost otherwise).",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["class-variance-authority"],
+  "registryDependencies": ["utils", "button"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/pagination.tsx",
+      "target": "components/ui/pagination.tsx"
+    }
+  ]
+}

@@ -1,8 +1,23 @@
 export { cn } from "./lib/utils";
 
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "./components/ui/accordion";
 export { Alert, AlertTitle, AlertDescription, alertVariants } from "./components/ui/alert";
 export { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 export { Badge, badgeVariants } from "./components/ui/badge";
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from "./components/ui/breadcrumb";
 export { Button, buttonVariants } from "./components/ui/button";
 export {
   Card,
@@ -45,6 +60,15 @@ export {
 export { Input } from "./components/ui/input";
 export { Label } from "./components/ui/label";
 export { Link, linkVariants } from "./components/ui/link";
+export {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "./components/ui/pagination";
 export { Popover, PopoverTrigger, PopoverContent } from "./components/ui/popover";
 export { Progress } from "./components/ui/progress";
 export { RadioGroup, RadioGroupItem } from "./components/ui/radio-group";
@@ -57,7 +81,20 @@ export { Separator } from "./components/ui/separator";
 export { Skeleton } from "./components/ui/skeleton";
 export { Spinner, spinnerVariants } from "./components/ui/spinner";
 export { Switch } from "./components/ui/switch";
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs";
 export { Textarea } from "./components/ui/textarea";
+export {
+  Toast,
+  ToastProvider,
+  ToastViewport,
+  ToastTitle,
+  ToastDescription,
+  ToastAction,
+  ToastClose,
+  useToast,
+  createToastManager,
+  toastVariants,
+} from "./components/ui/toast";
 export {
   Tooltip,
   TooltipContent,
@@ -66,4 +103,4 @@ export {
 } from "./components/ui/tooltip";
 
 /** Current version of the @graundtech/fluent2-react-kit component library. */
-export const version = "0.3.0";
+export const version = "0.4.0";

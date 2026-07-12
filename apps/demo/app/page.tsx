@@ -30,9 +30,11 @@ import { ThemeToggle } from "../components/theme-toggle";
  */
 
 const PREVIEWS = [
+  "accordion",
   "alert",
   "avatar",
   "badge",
+  "breadcrumb",
   "button",
   "card",
   "checkbox",
@@ -41,6 +43,7 @@ const PREVIEWS = [
   "input",
   "label",
   "link",
+  "pagination",
   "popover",
   "progress",
   "radio-group",
@@ -49,7 +52,9 @@ const PREVIEWS = [
   "skeleton",
   "spinner",
   "switch",
+  "tabs",
   "textarea",
+  "toast",
   "tooltip",
 ] as const;
 

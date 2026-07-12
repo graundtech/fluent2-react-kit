@@ -16,10 +16,10 @@ test("home page renders the hero and every component preview link", async ({
     page.getByRole("heading", { level: 1, name: "Fluent 2 React Kit" })
   ).toBeVisible();
 
-  // The component grid links to all 21 /preview/<name> routes. (Scoped to the
+  // The component grid links to all 26 /preview/<name> routes. (Scoped to the
   // grid so the "Compare plans" inline link elsewhere on the page isn't counted.)
   const grid = page.locator('section[aria-labelledby="previews-heading"]');
-  await expect(grid.locator('a[href^="/preview/"]')).toHaveCount(21);
+  await expect(grid.locator('a[href^="/preview/"]')).toHaveCount(26);
   await expect(grid.getByRole("link", { name: "select" })).toHaveAttribute(
     "href",
     "/preview/select"
