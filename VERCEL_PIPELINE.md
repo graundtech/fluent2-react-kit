@@ -42,24 +42,35 @@ Key invariants:
 
 ## How the build runs
 
-`vercel.json` drives it:
+The Vercel project's **Root Directory is set to `apps/demo`** (project setting in the
+dashboard, not in the repo). Commands therefore run inside `apps/demo`, and `vercel.json`
+paths are relative to it:
 
 | Setting | Value | Why |
 | --- | --- | --- |
 | `framework` | `nextjs` | So Vercel treats the output as a Next.js app |
-| `installCommand` | `pnpm install --frozen-lockfile` | Installs the whole workspace |
-| `buildCommand` | `pnpm build` | Builds the package, then the registry, then the demo |
-| `outputDirectory` | `apps/demo/.next` | Where the deployed Next.js build lands |
+| `installCommand` | `pnpm install --frozen-lockfile` | pnpm walks up and installs the whole workspace |
+| `buildCommand` | `pnpm build` | Runs **`apps/demo`'s** build script (see below) |
+| `outputDirectory` | `.next` | Relative to the Root Directory (`apps/demo/.next`) |
 
-`pnpm build` = `pnpm --filter @graundtech/fluent2-react-kit build && pnpm build:registry && pnpm --filter fluent2-react-kit-demo build`.
+Because the build command runs in `apps/demo`, the demo's own `build` script is the release
+build: `node ../../scripts/build-registry.mjs && next build`. The registry step is part of the
+demo build precisely so it can never be skipped on Vercel — Next.js only serves what's already
+in `apps/demo/public/` at build time, so if the registry JSON isn't generated before
+`next build`, every `/r/*.json` 404s in production (this happened once; that's why the step
+lives here and not only in the root `pnpm build` chain). The demo imports the workspace
+package from source via `transpilePackages` + the tsconfig path alias, so `tsup` output is not
+required for the deploy.
 
-`pnpm build:registry` (`node scripts/build-registry.mjs`) reads the registry item fragments in
-`registry/items/*.json`, inlines each item's source file, and writes the static JSON the shadcn
-CLI consumes to `apps/demo/public/r/` (`registry.json` plus one `<name>.json` per item). This
-**must** run before `next build` — Next.js only serves what's already in `apps/demo/public/` at
-build time, so if the registry step ran after (or was skipped), `/r/*.json` would 404 in
-production. `apps/demo/public/r/` is a generated, gitignored directory; nothing there is
-committed. See `registry/items/README.md` for the fragment format.
+`node scripts/build-registry.mjs` reads the registry item fragments in `registry/items/*.json`,
+inlines each item's source file, and writes the static JSON the shadcn CLI consumes to
+`apps/demo/public/r/` (`registry.json` plus one `<name>.json` per item). The script resolves
+all paths from its own file location, so it works from any working directory.
+`apps/demo/public/r/` is a generated, gitignored directory; nothing there is committed. See
+`registry/items/README.md` for the fragment format.
+
+The root `pnpm build` (package → registry → demo) remains the local full-chain build; the
+registry step running twice there is harmless (idempotent).
 
 ## Reestablishing the pipeline from scratch
 
@@ -67,10 +78,10 @@ If the Vercel project is gone or disconnected:
 
 1. **Create/import the project** at <https://vercel.com/new>, selecting the
    `graundtech/fluent2-react-kit` GitHub repo.
-2. **Root Directory:** leave it as the **repository root** (`./`). This is required for the
-   committed `vercel.json` to take effect and for `pnpm build` to see the whole workspace.
-   > If you instead set Root Directory to `apps/demo`, Vercel ignores this root
-   > `vercel.json` and looks for `apps/demo/vercel.json`. Prefer keeping it at the repo root.
+2. **Root Directory:** set it to **`apps/demo`** (this is how the live project is configured;
+   `vercel.json`'s `outputDirectory: ".next"` and the demo-level build script assume it).
+   Enable "Include files outside the Root Directory" so the workspace install can see the
+   whole monorepo.
 3. **Build & install:** Vercel reads them from `vercel.json`, so the dashboard fields can be
    left on "override off" / default. If you configure them manually instead, match the table
    above.
