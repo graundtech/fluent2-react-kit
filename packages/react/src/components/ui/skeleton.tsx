@@ -34,16 +34,15 @@ import { cn } from "../../lib/utils";
  * dimmer than the `#242424` `--background` it sits on, i.e. *less* visible
  * exactly where contrast matters most.
  *
- * **Animation — `animate-pulse`, not a wave shimmer.** Fluent 2's own
+ * **Animation — the Fluent wave shimmer (`animate-shimmer`).** Fluent 2's
  * Skeleton uses a moving gradient "wave" sweep
  * (https://storybooks.fluentui.dev/react/?path=/docs/components-skeleton--docs),
- * not a pulse. Reproducing that needs a `@keyframes` gradient-position
- * animation, which belongs in the shared `tokens.css` token layer (owned by
- * the maintainers, not editable by a single component's agent — conventions
- * §10). `animate-pulse` (Tailwind's built-in opacity keyframes) stands in for
- * now and is the same substitution shadcn itself ships. Backlog: add a
- * `--animate-shimmer` keyframe to `tokens.css` and switch this file over in a
- * follow-up pass once that token exists.
+ * not shadcn's opacity pulse. The keyframes live in the token layer
+ * (`tokens.css` `--animate-shimmer`, sweeping `background-position` across a
+ * 200%-wide gradient); this file paints the gradient — `--secondary` base
+ * with an `--input`-grey crest, both theme-aware (the secondary/accent pair
+ * was rejected for the crest because those two are the SAME hex in dark
+ * mode, which would erase the wave exactly where it's hardest to see).
  *
  * **Reduced motion — `motion-reduce:animate-none`, full stop (not a slowed
  * animation).** This deliberately *contrasts* with `Spinner`, which slows to
@@ -83,7 +82,12 @@ function Skeleton({ className, ...props }: ComponentProps<"div">) {
     <div
       data-slot="skeleton"
       className={cn(
-        "animate-pulse rounded-md bg-secondary motion-reduce:animate-none",
+        // Fluent wave: a 200%-wide gradient (secondary base, input-grey crest)
+        // swept by the token-layer shimmer keyframes. bg-secondary stays as
+        // the fallback fill (and the forced-colors surface, where gradients
+        // are stripped by forced-color-adjust).
+        "animate-shimmer rounded-md bg-secondary motion-reduce:animate-none",
+        "bg-[linear-gradient(90deg,var(--secondary)_25%,var(--input)_50%,var(--secondary)_75%)] bg-[length:200%_100%]",
         className
       )}
       {...props}

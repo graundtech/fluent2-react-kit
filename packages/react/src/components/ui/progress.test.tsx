@@ -103,7 +103,7 @@ describe("Progress", () => {
   it("renders the pulsing stand-in indicator when indeterminate", () => {
     const { container } = render(<Progress aria-label="Loading" />);
     const indicator = container.querySelector('[data-slot="progress-indicator"]');
-    expect(indicator).toHaveClass("animate-pulse", "w-1/3");
+    expect(indicator).toHaveClass("animate-progress-indeterminate", "w-1/3");
   });
 
   it("stops the indeterminate pulse under prefers-reduced-motion (motion-reduce:animate-none)", () => {
@@ -115,7 +115,7 @@ describe("Progress", () => {
   it("does not render the pulsing stand-in when determinate", () => {
     const { container } = render(<Progress aria-label="Upload" value={33} />);
     const indicator = container.querySelector('[data-slot="progress-indicator"]');
-    expect(indicator).not.toHaveClass("animate-pulse");
+    expect(indicator).not.toHaveClass("animate-progress-indeterminate");
   });
 
   // --- className merge -----------------------------------------------------

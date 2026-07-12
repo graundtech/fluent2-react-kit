@@ -56,15 +56,13 @@ import { cn } from "../../lib/utils";
  * value changes; reduced motion is handled automatically by the token layer
  * (conventions §3.5) since `duration-normal`/`ease-ease` are token-driven.
  *
- * Indeterminate (`value` is `null`/undefined): Fluent's real indeterminate
- * ProgressBar slides a segment back and forth via `@keyframes`, which this
- * kit cannot add (no editing `tokens.css`/`globals.css` — conventions §10).
- * As a stand-in, the indicator renders a static `w-1/3` segment with
- * `animate-pulse` (a Tailwind v4 default-theme utility/keyframe — ships in
- * `tailwindcss/theme.css` already, so this adds zero custom CSS). The real
- * sliding animation is backlog, flagged alongside this component.
+ * Indeterminate (`value` is `null`/undefined): Fluent's sliding segment. The
+ * indicator renders a `w-1/3` segment driven by the token-layer
+ * `--animate-progress-indeterminate` keyframes (tokens.css): it travels from
+ * fully off-track left (`translate: -100%` of its own width) to fully
+ * off-track right (`300%`), clipped by the root's `overflow-hidden`.
  *
- * Under `prefers-reduced-motion` the pulse is fully stopped via
+ * Under `prefers-reduced-motion` the slide is fully stopped via
  * `motion-reduce:animate-none` (same call as `skeleton.tsx`, not `spinner.tsx`'s
  * slow-down): the pulse carries no information a reduced-motion user would
  * lose by holding it still — the indeterminate/busy state is conveyed by the
@@ -138,7 +136,10 @@ function Progress({
           data-slot="progress-indicator"
           className={cn(
             progressVariants({ variant }),
-            value == null && "w-1/3 animate-pulse motion-reduce:animate-none"
+            // Fluent indeterminate: the token-layer keyframes slide the 1/3
+            // segment from off-track left to off-track right (root clips).
+            value == null &&
+              "w-1/3 animate-progress-indeterminate motion-reduce:animate-none"
           )}
         />
       </ProgressPrimitive.Track>

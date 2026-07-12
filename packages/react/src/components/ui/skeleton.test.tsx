@@ -15,7 +15,7 @@ describe("Skeleton", () => {
   it("applies the base pulse/radius/fill classes", () => {
     render(<Skeleton data-testid="sk" />);
     expect(screen.getByTestId("sk")).toHaveClass(
-      "animate-pulse",
+      "animate-shimmer",
       "rounded-md",
       "bg-secondary"
     );
@@ -31,7 +31,7 @@ describe("Skeleton", () => {
   it("merges a caller-provided className without dropping base classes", () => {
     render(<Skeleton className="my-4 custom-x" data-testid="sk" />);
     const sk = screen.getByTestId("sk");
-    expect(sk).toHaveClass("my-4", "custom-x", "bg-secondary", "animate-pulse");
+    expect(sk).toHaveClass("my-4", "custom-x", "bg-secondary", "animate-shimmer");
   });
 
   it("lets a shape override (e.g. a circular avatar block) replace rounded-md via tailwind-merge", () => {
