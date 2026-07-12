@@ -162,7 +162,7 @@ describe("Breadcrumb", () => {
     expect(
       document.querySelector('[data-slot="breadcrumb-separator"]')
     ).toHaveClass("sep-x");
-    expect(screen.getByText("Current")).toHaveClass("page-x", "font-medium");
+    expect(screen.getByText("Current")).toHaveClass("page-x", "font-semibold");
   });
 
   // --- ref forwarding ------------------------------------------------------------

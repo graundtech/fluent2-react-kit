@@ -349,3 +349,104 @@ New items surfaced by this validation and added to
   `--warning-text` `#c43501` vs. the Figma instance's `#bc4b09`. Small,
   same-hue drift; not a contrast or functional issue, flagged for future
   precision-tightening.
+
+---
+
+# Pass 2 — v0.3.0 overlays + v0.4.0 batch (2026-07-12)
+
+**Method:** identical to pass 1 (per-component `get_metadata`/`get_screenshot`/
+`get_variable_defs` via the Figma desktop Dev Mode MCP against the same Fluent 2
+Web Community kit), run by four parallel validation agents over the nine
+components shipped after pass 1. Same disclaimer applies.
+
+## Summary
+
+| Component | Figma page | Verdict (pre-fix) | MAJOR findings | Status |
+|---|---|---|---|---|
+| Dialog | `8911:3191` "Dialog" | MINOR | — | Title 18→20px fixed; radius 10 vs 8px + shadow-alpha drift documented |
+| Popover | `8934:11` "Popover" | MATCH | — | Documented deviation (visible border vs Figma's `TransparentStroke`) |
+| Dropdown Menu | `8934:7` "Menu" | MAJOR (1) | Section header was `font-medium`/muted vs Fluent Caption-1-Stronger Bold/`NeutralForeground2` | **Fixed** (P2-M1) |
+| Tooltip | `8934:25` "Tooltip" | MAJOR (2) | Visible border where Fluent's stroke is transparent; `shadow-16` where Fluent specs `Shadow 08` | **Fixed** (P2-M2) |
+| Tabs | `8934:19` "Tablist" | MAJOR (3) | Tab height 36 vs 44px; indicator 2 vs 3px; full-bleed bar vs 12px-inset pill | **Fixed** (P2-M3) |
+| Accordion | `8911:3184` "Accordion" | MAJOR (1) | Title `font-medium` (500) vs Fluent Body-1 Regular (400) | **Fixed** (P2-M4; header also tightened to Fluent's 44px) |
+| Toast | `8934:22` "Toast" | MAJOR (structural) | Fluent Toast is a flat white card + colored leading status icon; kit ships Alert-mirrored tinted variants | **Documented deviation** + backlog (see below) |
+| Breadcrumb | `8911:3187` "Breadcrumb" | MAJOR (2) | Items are button-like hover/pressed pills (`Type=Button` symbols); current page emphasized by weight only, same `NeutralForeground2` color | **Fixed** (P2-M5) |
+| Pagination | — | N/A | No Fluent 2 Web counterpart exists; the component is a shadcn-pattern composite styled entirely via the (pass-1-validated) `buttonVariants` | No change |
+
+**9/9 components validated. 9 MAJOR findings: 7 fixed, 1 documented deviation
+(Toast), 1 N/A (Pagination).**
+
+## Fixes applied (P2-M1…M5)
+
+- **P2-M1 Dropdown Menu section header** — `DropdownMenuLabel` now
+  `font-bold text-foreground-2` (Fluent Caption 1 Stronger in
+  `NeutralForeground2`), replacing the SelectLabel-parity muted caption. Node
+  evidence `9121:6394`/`9121:6395`.
+- **P2-M2 Tooltip surface** — dropped the `border` class (Fluent binds the
+  tooltip stroke to `TransparentStroke.Rest`; edge is elevation-only) and
+  swapped `shadow-16` → `shadow-8` (Fluent's tooltip is the Shadow-08 tier —
+  `0 0 2px` + `0 4px 8px`, node `9014:2662`); also `px-2.5` → `px-3`
+  (`spacingHorizontalM` = 12px).
+- **P2-M3 Tabs geometry** — trigger `py-2` → `py-3` (44px Fluent Medium tab,
+  node `9116:18471`); indicator `h-0.5` → `h-[3px] rounded-full` inset 12px
+  from each tab edge via `calc()` on Base UI's `--active-tab-left/width`
+  (Fluent's indicator is a short inset pill, node `9116:18476`), sliding
+  behavior unchanged.
+- **P2-M4 Accordion title** — `font-medium` → `font-normal` (Fluent Body 1
+  Regular, node `9074:921`; same root cause as pass 1's Label M6) and
+  `py-4` → `py-3` (44px Fluent Medium header, node `9074:915`).
+- **P2-M5 Breadcrumb items** — `BreadcrumbLink` is now a button-like pill
+  (`rounded-md px-1.5 py-0.5 hover:bg-accent active:bg-accent/80` — Figma's
+  item symbols are literally `Type=Button` with `SubtleBackground`
+  hover/pressed fills, node `9077:5740`; the `--accent` fill carries the same
+  one-grey-step drift accepted for Select/Menu highlights); trail base color
+  `text-muted-foreground` → `text-foreground-2` (`NeutralForeground2`
+  `#424242`, node `9077:5763`); `BreadcrumbPage` emphasizes by **weight only**
+  (`font-semibold`, same trail color — node `9077:5783`), replacing the
+  weight+color jump.
+
+## New token
+
+- **`--foreground-2`** (`NeutralForeground2`): light `#424242` (grey[26]),
+  dark `#d6d6d6` (grey[84]), high-contrast `CanvasText`; bridged as
+  `text-foreground-2` etc. Three independent pass-2 findings resolved to this
+  exact value (Menu section header, Breadcrumb trail, Menu item rest text) —
+  same systemic-gap pattern that produced `--stroke-accessible` in pass 1.
+
+## Documented deviations (deliberate, not fixed)
+
+- **Toast tinted status variants.** Every status instance on Fluent's Toast
+  page (`9472:13071`–`13396`) is a flat white `NeutralBackground1` card whose
+  status semantics live entirely in a colored leading icon — titles stay
+  `#242424` regardless of intent. The kit's tinted `*-subtle`/`*-border`
+  variants (mirroring Alert) are kept as the kit's deliberate design: they keep
+  Toast/Alert visually consonant and the status tokens already ship. A
+  Fluent-exact alternative (flat surface + leading status-icon slot) is on the
+  backlog.
+- **Popover border.** Figma's Default popover binds `TransparentStroke.Rest`
+  (shadow-only edge); the kit keeps a 1px `border-border` line for edge
+  definition on flat renders (`9087:454`).
+- **Dialog radius/shadow.** `rounded-xl` = 10px vs `Corner-radius/Modal/Large`
+  = 8px (the kit's radius scale has no 8px step; a global `--radius-xl` change
+  would ripple to Card); shadow alphas are the same generic-vs-local-instance
+  drift already documented for `--shadow-4` in pass 1.
+- **Tabs resting hairline.** The kit's `TabsList` keeps a `border-b` rule the
+  Figma symbols don't show (Fluent relies on the indicator alone) — kept for
+  list delineation, documented here.
+
+## New backlog items from pass 2
+
+- Toast Fluent-exact appearance: flat `NeutralBackground1` surface + leading
+  status-icon slot (structural; see deviation note above).
+- Tabs `size` axis (Fluent Small 32px / Medium 44px with per-size indicator
+  geometry), vertical orientation, and the hover-state grey indicator bar.
+- Accordion size axis (Small/Medium/Large/Extra-large), optional leading-icon
+  slot, 20px chevron (kit uses 16px), panel padding 12px h/v (kit: `pb-4`
+  only).
+- Dialog explicit size variants (Figma ships 600px/320px; kit is `max-w-lg` =
+  512px, between the two).
+- Dropdown Menu / Select item **rest** text as `NeutralForeground2`
+  (`#424242`) darkening to `#242424` on hover — kit currently uses uniform
+  `popover-foreground`; now expressible via `--foreground-2`, deferred to keep
+  Menu/Select consistent until both are changed together.
+- Breadcrumb size axis (Large 16px / Medium 14px / Small 12px).

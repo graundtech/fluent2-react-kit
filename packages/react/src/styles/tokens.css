@@ -108,6 +108,14 @@
   --destructive-border: #f1bbbc;
   --destructive-text: #b10e1c;     /* AA-safe destructive text on light surfaces (Fluent red foreground) */
 
+  /* --- second-tier neutral foreground (Fluent NeutralForeground2) ---------
+     One grey step lighter than --foreground (#242424), one darker than
+     --muted-foreground (#616161). Fluent uses it for secondary-but-still-
+     primary-ish text: menu section headers, breadcrumb trail items, list
+     item rest text. Added in the v0.3.0/v0.4.0 Figma validation pass, where
+     three independent components resolved to this exact value. */
+  --foreground-2: #424242;               /* NeutralForeground2.Rest (grey[26]) */
+
   /* --- accessible interactive stroke (Fluent NeutralStrokeAccessible ramp) -
      The signature outline for interactive controls: checkbox/radio/switch
      rest borders and the input/select resting bottom edge. Kept as a SEPARATE
@@ -244,6 +252,9 @@
   --destructive-border: #9f282b;
   --destructive-text: #ff9a90;     /* AA-safe destructive text on dark surfaces (lightened red) */
 
+  /* --- second-tier neutral foreground (dark) ------------------------------ */
+  --foreground-2: #d6d6d6;               /* NeutralForeground2 dark (grey[84]) */
+
   /* --- accessible interactive stroke (dark) — no dark Figma frame exists for
      these, so hover/pressed are derived: dark neutrals brighten on
      interaction, so each step is lighter than rest (rest = --muted-foreground
@@ -321,6 +332,7 @@
   --secondary-foreground: ButtonText;
   --muted: Canvas;
   --muted-foreground: GrayText;
+  --foreground-2: CanvasText;
   --accent: Highlight;
   --accent-foreground: HighlightText;
   --destructive: LinkText;
@@ -425,6 +437,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-foreground-2: var(--foreground-2);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);

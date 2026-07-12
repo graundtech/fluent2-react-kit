@@ -152,7 +152,10 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          "group flex flex-1 items-center justify-between gap-2 py-4 text-left text-sm font-medium outline-none",
+          // py-3 + 20px line-height = Fluent's 44px Medium header; title is
+          // Body 1 Regular (400), not Medium — same fix class as Label (M6).
+          // (Figma validation pass 2, nodes 9074:915/9074:921.)
+          "group flex flex-1 items-center justify-between gap-2 py-3 text-left text-sm font-normal outline-none",
           "transition-colors duration-fast ease-ease hover:underline",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "disabled:pointer-events-none disabled:opacity-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",

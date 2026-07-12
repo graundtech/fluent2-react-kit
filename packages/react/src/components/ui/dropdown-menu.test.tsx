@@ -337,7 +337,7 @@ describe("DropdownMenu", () => {
     );
     expect(labels).toHaveLength(2);
     expect(labels[0]).toHaveTextContent("Actions");
-    expect(labels[0]).toHaveClass("text-xs", "text-muted-foreground");
+    expect(labels[0]).toHaveClass("text-xs", "font-bold", "text-foreground-2");
 
     expect(
       document.querySelector('[data-slot="dropdown-menu-separator"]')

@@ -158,7 +158,11 @@ function TooltipContent({
           data-slot="tooltip-content"
           role="tooltip"
           className={cn(
-            "relative max-w-60 origin-[var(--transform-origin)] text-balance rounded-md border bg-popover px-2.5 py-1.5 text-xs text-popover-foreground shadow-16 outline-none",
+            // Borderless by spec: Fluent's tooltip stroke is TransparentStroke
+            // (edge defined by elevation alone) and its elevation tier is
+            // Shadow 08, one step below flyouts (Figma validation pass 2,
+            // node 9014:2662). px-3 = Fluent spacingHorizontalM (12px).
+            "relative max-w-60 origin-[var(--transform-origin)] text-balance rounded-md bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-8 outline-none",
             // motion — subtle scale + fade on open (enter) / close (exit)
             "transition-[opacity,scale] duration-fast ease-decelerate-mid",
             "data-starting-style:scale-95 data-starting-style:opacity-0",

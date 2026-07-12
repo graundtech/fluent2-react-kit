@@ -10,7 +10,8 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
  * `getBoundingClientRect`/`offsetLeft` to drive its position — always reads `0`
  * and stays `hidden` there (see divergence 3 in tabs.tsx). The sliding-underline
  * motion is therefore only verifiable in a real browser and was deferred here:
- *   a. the 2px `bg-primary` indicator painted under the active tab, positioned
+ *   a. the 3px `bg-primary` pill indicator painted under the active tab (inset
+ *      12px per Fluent's Medium spec — Figma validation pass 2), positioned
  *      from real `--active-tab-left`/`--active-tab-width` values
  *   b. clicking another tab MOVES the indicator to align with the new tab
  *   c. `transition-[left,width]` wired so the move animates (not a snap)
@@ -75,8 +76,10 @@ function cssVar(el: Locator, name: string): Promise<string> {
   );
 }
 
-// ── a. the indicator is a 2px brand bar under the active tab ──────────────────
-test("a: the indicator paints a 2px brand bar aligned under the active tab", async ({
+// ── a. the indicator is a 3px brand pill inset under the active tab ───────────
+// (Figma validation pass 2: Fluent's Medium indicator is 3px, rounded-full,
+// inset 12px from each edge of the active tab — node 9116:18476.)
+test("a: the indicator paints a 3px brand pill inset 12px under the active tab", async ({
   page,
 }) => {
   const list = basicList(page, "light");
@@ -85,19 +88,20 @@ test("a: the indicator paints a 2px brand bar aligned under the active tab", asy
 
   await expect(indicator).toBeVisible();
   await expect(indicator).toHaveCSS("background-color", LIGHT_PRIMARY);
-  await expect(indicator).toHaveCSS("height", "2px");
+  await expect(indicator).toHaveCSS("height", "3px");
+  await expect(indicator).toHaveCSS("border-radius", "9999px");
 
   // Real measured position vars, written inline on the indicator element.
   expect(await cssVar(indicator, "--active-tab-left")).toBe("0px"); // first tab
   const width = await cssVar(indicator, "--active-tab-width");
   expect(parseFloat(width)).toBeGreaterThan(0);
 
-  // The painted bar lines up horizontally with the active tab.
+  // The painted pill sits 12px inside each edge of the active tab.
   const bar = await indicator.boundingBox();
   const tab = await activeTab.boundingBox();
   if (!bar || !tab) throw new Error("missing bounding boxes");
-  expect(Math.abs(bar.x - tab.x)).toBeLessThanOrEqual(2);
-  expect(Math.abs(bar.width - tab.width)).toBeLessThanOrEqual(2);
+  expect(Math.abs(bar.x - (tab.x + 12))).toBeLessThanOrEqual(2);
+  expect(Math.abs(bar.width - (tab.width - 24))).toBeLessThanOrEqual(2);
 });
 
 // ── b + c. clicking another tab MOVES the indicator (animated) + switches panel
@@ -123,8 +127,9 @@ test("b+c: clicking another tab slides the indicator to it and switches the pane
   );
 
   // The indicator settled onto the Activity tab: its box shifts right and lands
-  // aligned with Activity. Poll the alignment so the assertion waits through the
-  // ~200ms slide transition rather than reading a mid-flight frame.
+  // on Activity's 12px-inset pill position (Fluent Medium spec). Poll the
+  // alignment so the assertion waits through the ~200ms slide transition rather
+  // than reading a mid-flight frame.
   const activityTab = await list
     .getByRole("tab", { name: "Activity" })
     .boundingBox();
@@ -132,13 +137,13 @@ test("b+c: clicking another tab slides the indicator to it and switches the pane
   await expect
     .poll(async () => {
       const b = await indicator.boundingBox();
-      return b ? Math.abs(b.x - activityTab.x) : 999;
+      return b ? Math.abs(b.x - (activityTab.x + 12)) : 999;
     })
     .toBeLessThanOrEqual(2);
   await expect
     .poll(async () => {
       const b = await indicator.boundingBox();
-      return b ? Math.abs(b.width - activityTab.width) : 999;
+      return b ? Math.abs(b.width - (activityTab.width - 24)) : 999;
     })
     .toBeLessThanOrEqual(2);
   // And it genuinely moved rightward off the Overview position (not a no-op).

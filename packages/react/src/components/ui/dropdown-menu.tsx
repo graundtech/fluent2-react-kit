@@ -179,7 +179,10 @@ function DropdownMenuLabel({
       data-slot="dropdown-menu-label"
       data-inset={inset || undefined}
       className={cn(
-        "px-2 py-1.5 text-xs font-medium text-muted-foreground select-none",
+        // Fluent Menu section header — Caption 1 Stronger (12px bold) in
+        // NeutralForeground2, per the Figma "Menu section" symbol; deliberately
+        // heavier than SelectLabel's muted caption (Figma validation pass 2).
+        "px-2 py-1.5 text-xs font-bold text-foreground-2 select-none",
         "data-[inset]:pl-8",
         className
       )}

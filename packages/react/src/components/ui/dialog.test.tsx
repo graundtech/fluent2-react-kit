@@ -286,7 +286,7 @@ describe("Dialog", () => {
     expect(header).toHaveClass("flex", "flex-col", "gap-1.5");
     expect(footer).toHaveClass("flex", "flex-col-reverse", "gap-2");
     expect(title?.tagName).toBe("H2");
-    expect(title).toHaveClass("text-lg", "font-semibold");
+    expect(title).toHaveClass("text-xl", "font-semibold");
     expect(description?.tagName).toBe("P");
     expect(description).toHaveClass("text-sm", "text-muted-foreground");
   });

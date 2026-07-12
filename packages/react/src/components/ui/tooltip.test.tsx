@@ -139,7 +139,7 @@ describe("Tooltip", () => {
       expect(screen.getByRole("tooltip")).toHaveClass(
         "custom-content",
         "bg-popover",
-        "shadow-16"
+        "shadow-8"
       )
     );
   });

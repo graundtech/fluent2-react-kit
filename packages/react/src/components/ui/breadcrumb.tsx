@@ -59,7 +59,9 @@ function BreadcrumbList({ className, ...props }: ComponentProps<"ol">) {
     <ol
       data-slot="breadcrumb-list"
       className={cn(
-        "flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground sm:gap-2.5",
+        // Trail text is Fluent NeutralForeground2 (#424242), one grey step
+        // darker than muted-foreground (Figma validation pass 2, 9077:5763).
+        "flex flex-wrap items-center gap-1.5 text-sm text-foreground-2 sm:gap-2.5",
         className
       )}
       {...props}
@@ -88,7 +90,12 @@ function BreadcrumbLink({
     <Comp
       data-slot="breadcrumb-link"
       className={cn(
-        "rounded-xs outline-none transition-colors duration-fast ease-ease hover:text-foreground",
+        // Fluent breadcrumb items are button-like pills — SubtleBackground
+        // hover/pressed fills on a 4px radius (the Figma item symbols are
+        // literally Type=Button; validation pass 2, node 9077:5740). The fill
+        // uses the kit's standard subtle-hover pair (--accent), the same
+        // one-grey-step drift already accepted for Select/Menu highlights.
+        "rounded-md px-1.5 py-0.5 outline-none transition-colors duration-fast ease-ease hover:bg-accent hover:text-foreground active:bg-accent/80",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className
       )}
@@ -104,7 +111,10 @@ function BreadcrumbPage({ className, ...props }: ComponentProps<"span">) {
       role="link"
       aria-disabled="true"
       aria-current="page"
-      className={cn("font-medium text-foreground", className)}
+      // Current page is emphasized by WEIGHT ONLY (Body 1 -> Body 1 Strong,
+      // same NeutralForeground2 trail color) — Figma validation pass 2, node
+      // 9077:5783. Padding mirrors the link pill so items align.
+      className={cn("px-1.5 py-0.5 font-semibold", className)}
       {...props}
     />
   );

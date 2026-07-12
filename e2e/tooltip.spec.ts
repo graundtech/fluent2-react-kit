@@ -14,7 +14,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
  *   b. opening on keyboard focus (the `:focus-visible` path)
  *   c. Escape closing, with the popup hidden (not `toHaveCount(0)`) afterward
  *   d. the flyout positioned above the trigger by default (side=top, offset 4)
- *   e. the neutral Fluent surface (bg-popover, dark text, 12px, shadow-16),
+ *   e. the neutral Fluent surface (bg-popover, dark text, 12px, shadow-8),
  *      NOT shadcn's inverted brand bubble
  *
  * ── Real-browser findings ──
@@ -35,7 +35,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
  * 2. **The surface is a NEUTRAL flyout, not shadcn's inverted brand bubble.**
  *    The popup computes to `bg-popover` (white in light) with dark
  *    `popover-foreground` text — NOT `bg-primary` (#0f6cbd) with white text.
- *    (e) pins this: white background + dark text + 12px + shadow-16 + the
+ *    (e) pins this: white background + dark text + 12px + shadow-8 + the
  *    240px (`max-w-60`) cap is the headline Fluent divergence (tooltip.tsx
  *    divergence 1).
  * 3. **The preview-page triggers carry `data-slot="button"`, NOT
@@ -158,10 +158,12 @@ test("e: the tooltip is a neutral popover surface (not shadcn's inverted brand b
     PRIMARY
   );
   await expect(content).toHaveCSS("color", POPOVER_FG);
-  // Compact type + capped width + flyout elevation.
+  // Compact type + capped width + Shadow-08 elevation (Fluent's tooltip tier,
+  // one step below flyouts — Figma validation pass 2) with no border stroke.
   await expect(content).toHaveCSS("font-size", "12px"); // text-xs
   await expect(content).toHaveCSS("max-width", "240px"); // max-w-60
   const shadow = await content.evaluate((el) => getComputedStyle(el).boxShadow);
-  expect(shadow).toContain("8px 16px"); // shadow-16 key layer
+  expect(shadow).toContain("4px 8px"); // shadow-8 key layer
   expect(shadow).not.toBe("none");
+  await expect(content).toHaveCSS("border-width", "0px"); // TransparentStroke by spec
 });

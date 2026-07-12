@@ -119,7 +119,10 @@ function TabsList({
       {children}
       <TabsPrimitive.Indicator
         data-slot="tabs-indicator"
-        className="absolute bottom-0 left-[var(--active-tab-left)] h-0.5 w-[var(--active-tab-width)] bg-primary transition-[left,width] duration-normal ease-ease"
+        // Fluent's Medium indicator is a 3px rounded pill inset 12px from
+        // each edge of the active tab — not an edge-to-edge bar (Figma
+        // validation pass 2, node 9116:18476).
+        className="absolute bottom-0 left-[calc(var(--active-tab-left)+12px)] h-[3px] w-[calc(var(--active-tab-width)-24px)] rounded-full bg-primary transition-[left,width] duration-normal ease-ease"
       />
     </TabsPrimitive.List>
   );
@@ -141,7 +144,9 @@ function TabsTrigger({
       data-slot="tabs-trigger"
       className={cn(
         // layout
-        "cursor-pointer px-3 py-2 text-sm font-medium whitespace-nowrap select-none",
+        // py-3 + 20px line-height = Fluent's 44px Medium tab height (Figma
+        // validation pass 2, node 9116:18471).
+        "cursor-pointer px-3 py-3 text-sm font-medium whitespace-nowrap select-none",
         // motion
         "outline-none transition-colors duration-fast ease-ease",
         // rest / hover — muted until active
