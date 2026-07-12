@@ -36,9 +36,12 @@ const PREVIEWS = [
   "button",
   "card",
   "checkbox",
+  "dialog",
+  "dropdown-menu",
   "input",
   "label",
   "link",
+  "popover",
   "progress",
   "radio-group",
   "select",
@@ -47,6 +50,7 @@ const PREVIEWS = [
   "spinner",
   "switch",
   "textarea",
+  "tooltip",
 ] as const;
 
 // Kept identical to the constant in scripts/build-registry.mjs — see

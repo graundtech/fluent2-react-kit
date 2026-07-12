@@ -1,6 +1,6 @@
 {
   "name": "@graundtech/fluent2-react-kit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Fluent 2-inspired React components built with shadcn-style APIs and registry-first distribution.",
   "type": "module",
   "private": false,

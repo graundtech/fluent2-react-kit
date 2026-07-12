@@ -1,0 +1,16 @@
+{
+  "name": "dialog",
+  "type": "registry:ui",
+  "title": "Dialog",
+  "description": "Fluent 2-styled modal dialog with shadcn APIs. Built on @base-ui/react's Dialog for focus trapping, portalling, scroll locking and Escape/outside-press dismissal; the popup is a centered bg-background surface with Fluent shadow-64 elevation and rounded-xl radius over a theme-invariant black/40 smoke backdrop, with a built-in DismissRegular close button.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/dialog.tsx",
+      "target": "components/ui/dialog.tsx"
+    }
+  ],
+  "docs": "`DialogContent` composes Base UI's `Portal` + `Backdrop` + `Popup` and appends a top-right close button (pass `showCloseButton={false}` to omit it). There is no `asChild` — Base UI composes via the `render` prop instead, e.g. `<DialogTrigger render={<Button variant=\"secondary\" />}>Open</DialogTrigger>`. `DialogTitle`/`DialogDescription` are wired to the popup's `aria-labelledby`/`aria-describedby` automatically; always render a `DialogTitle` so the dialog has an accessible name. See `dialog.tsx`'s doc comment for the full Base UI mapping and divergence notes."
+}

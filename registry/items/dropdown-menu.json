@@ -1,0 +1,16 @@
+{
+  "name": "dropdown-menu",
+  "type": "registry:ui",
+  "title": "Dropdown Menu",
+  "description": "Fluent 2-styled dropdown menu with shadcn APIs. Built on @base-ui/react's Menu for portalled positioning, focus management, keyboard navigation, type-ahead and submenus; the flyout matches the kit's Select surface (Fluent shadow-16 elevation, 32px rows) and check/radio indicators use CheckmarkRegular plus a filled-circle marker on brand-neutral accent states.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/dropdown-menu.tsx",
+      "target": "components/ui/dropdown-menu.tsx"
+    }
+  ],
+  "docs": "Composition uses Base UI's `render` prop, not shadcn's `asChild`. To use the kit `Button` as the trigger, pass it via `render`:\n\n```tsx\n<DropdownMenuTrigger render={<Button variant=\"outline\">Open</Button>} />\n```\n\n`DropdownMenuLabel` is a group heading (Base UI `Menu.GroupLabel`) — place it inside a `DropdownMenuGroup`. `DropdownMenuSub` wraps a `DropdownMenuSubTrigger` and a `DropdownMenuSubContent` (which re-composes its own portal/positioner/popup). See `dropdown-menu.tsx`'s doc comment for the full Base UI mapping table and the numbered divergences from the shadcn/Radix API."
+}

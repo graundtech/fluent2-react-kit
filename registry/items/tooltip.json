@@ -1,0 +1,16 @@
+{
+  "name": "tooltip",
+  "type": "registry:ui",
+  "title": "Tooltip",
+  "description": "Fluent 2-styled tooltip with shadcn APIs. Built on @base-ui/react's Tooltip for hover/focus delay, portalled positioning and dismiss-on-Escape; the flyout is a neutral bg-popover surface with Fluent shadow-16 elevation rather than shadcn's inverted brand bubble, and ships with no arrow by default.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/tooltip.tsx",
+      "target": "components/ui/tooltip.tsx"
+    }
+  ],
+  "docs": "Base UI's Tooltip is intentionally \"visual-only\": it does not set `role=\"tooltip\"` on the popup or wire `aria-describedby` from the trigger to it (confirmed against base-ui.com's own docs, which recommend an `aria-label` on the trigger instead). This component sets `role=\"tooltip\"` on `TooltipContent` for you, but does not synthesize `aria-describedby` — that would need id-sharing plumbing Base UI doesn't expose and would force a client boundary onto an otherwise server-safe wrapper. If you need that explicit association, give `TooltipContent` an `id` and pass the same value as `aria-describedby` on `TooltipTrigger` (mirrors the `aria-labelledby` recipe documented in the `select` item). For icon-only triggers, prefer an `aria-label` on the trigger — Base UI's own recommendation.\n\nCompose the trigger with another element (e.g. this kit's `Button`) via Base UI's `render` prop rather than an `asChild` boolean: `<TooltipTrigger render={<Button>Hover me</Button>} />`.\n\nWrap tooltips in a `TooltipProvider` (defaults `delay` to 600ms) so adjacent tooltips in the same tree open instantly once one is shown."
+}
