@@ -1,0 +1,16 @@
+{
+  "name": "combobox",
+  "type": "registry:ui",
+  "title": "Combobox",
+  "description": "Fluent 2-styled filterable select with shadcn-style composable APIs. Built on @base-ui/react's Combobox for portalled positioning, focus management, keyboard navigation and built-in filtering; the field matches the kit's Input (bottom brand-accent focus, Clear + chevron), the flyout uses Fluent shadow-16 elevation, and selected/highlighted items use CheckmarkRegular + brand-neutral accent states. Passes Base UI's `multiple` prop through for a future Multi Select.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/combobox.tsx",
+      "target": "components/ui/combobox.tsx"
+    }
+  ],
+  "docs": "Base UI does the filtering, so pass `items` to `<Combobox>` and render the list with a render-function child:\n\n```tsx\n<Combobox items={fruits}>\n  <ComboboxInput placeholder=\"Search a fruit\" />\n  <ComboboxContent>\n    <ComboboxEmpty>No fruits found.</ComboboxEmpty>\n    <ComboboxList>\n      {(item) => (\n        <ComboboxItem key={item.value} value={item}>\n          {item.label}\n        </ComboboxItem>\n      )}\n    </ComboboxList>\n  </ComboboxContent>\n</Combobox>\n```\n\nBase UI's control-level `Combobox.Label` is intentionally not exposed — pair `ComboboxInput` with the kit's own `Label` item (not pulled in automatically; `combobox`'s only registryDependency is `utils`). Install it separately:\n\n```bash\nnpx shadcn@latest add <registry-url>/r/label.json\n```\n\nThe `<input>` is a labelable form field, so a plain `htmlFor`/`id` pairing works (unlike Select's button trigger). See `combobox.tsx`'s doc comment for the combobox-vs-autocomplete boundary and the Multi Select extension points."
+}

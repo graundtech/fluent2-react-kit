@@ -13,7 +13,7 @@ Fluent 2-inspired, shadcn-style React components — copy the source via a regis
 - **Registry-first distribution** — every component is a [shadcn registry](https://ui.shadcn.com/docs/registry) item. Install via `npx shadcn add` and get the source copied straight into your project — no runtime dependency required. A traditional npm package is also available.
 - **Tailwind v4 + CSS variables** — one token layer (`tokens.css`) drives everything through a Tailwind v4 `@theme inline` bridge. No config-file theming; override CSS custom properties instead.
 - **Light, dark, and high-contrast themes** — `.dark` and `.high-contrast` classes, plus automatic `forced-colors` support for Windows high-contrast mode.
-- **Tested** — every component ships with Vitest + Testing Library unit tests and an `axe-core` accessibility check (442 tests across the kit today).
+- **Tested** — every component ships with Vitest + Testing Library unit tests and an `axe-core` accessibility check (494 tests across the kit today).
 
 Read the full product vision in [`docs/vision.md`](docs/vision.md).
 
@@ -92,7 +92,7 @@ The Playwright suite needs a one-time Chromium install (`pnpm exec playwright in
 
 ## Component status
 
-All items below are at **v0.4.0**.
+All items below are at **v0.5.0**.
 
 | Item | Type | Notes |
 | --- | --- | --- |
@@ -106,11 +106,14 @@ All items below are at **v0.4.0**.
 | `button` | component | 6 variants × 6 sizes, brand state ramp, `asChild` |
 | `card` | component | 7-part composable card (`Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`) |
 | `checkbox` | component | Checked/unchecked/indeterminate, built on `@base-ui/react/checkbox` |
+| `combobox` | component | Filterable select — real 10-part family (no Popover+Command recipe), built on `@base-ui/react/combobox` |
+| `command` | component | cmdk-style palette without the cmdk dep, built on `@base-ui/react/autocomplete` (inline mode) |
 | `dialog` | component | 10-part modal dialog (smoke backdrop, built-in ✕, header/footer), built on `@base-ui/react/dialog` |
 | `dropdown-menu` | component | 14-part menu (checkbox/radio items, submenus, shortcuts), built on `@base-ui/react/menu` |
 | `input` | component | Text field with the Fluent bottom-accent focus treatment |
 | `label` | component | Native `<label>`, optional `required` asterisk |
 | `link` | component | 2 variants (default, inline), `asChild` |
+| `multi-select` | component | Tags-picker combobox with a chips field, reuses the `combobox` popup parts |
 | `pagination` | component | Page navigation styled via `buttonVariants`, Server Component-safe |
 | `popover` | component | Anchored non-modal surface (`w-72`, `shadow-16`), built on `@base-ui/react/popover` |
 | `progress` | component | Fluent-thin (2px) determinate/indeterminate bar, built on `@base-ui/react/progress` |
@@ -125,7 +128,7 @@ All items below are at **v0.4.0**.
 | `toast` | component | Manager-driven notifications, 5 status variants, built on `@base-ui/react/toast` |
 | `tooltip` | component | Neutral elevated surface (Fluent style, not an inverted bubble), built on `@base-ui/react/tooltip` |
 
-That's **26 components + `utils` + `theme`**, all documented in the live demo (`pnpm demo:dev` → `/preview/<name>`). Naming and API conventions are normative in [`docs/component-conventions.md`](docs/component-conventions.md).
+That's **29 components + `utils` + `theme`**, all documented in the live demo (`pnpm demo:dev` → `/preview/<name>`). Naming and API conventions are normative in [`docs/component-conventions.md`](docs/component-conventions.md).
 
 For what's planned next — more components, known TODOs, and open backlog — see [`docs/status-and-backlog.md`](docs/status-and-backlog.md).
 

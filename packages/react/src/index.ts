@@ -30,6 +30,29 @@ export {
 } from "./components/ui/card";
 export { Checkbox } from "./components/ui/checkbox";
 export {
+  Combobox,
+  ComboboxValue,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxGroup,
+  ComboboxLabel,
+  ComboboxSeparator,
+} from "./components/ui/combobox";
+export {
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandSeparator,
+  CommandShortcut,
+} from "./components/ui/command";
+export {
   Dialog,
   DialogTrigger,
   DialogPortal,
@@ -60,6 +83,18 @@ export {
 export { Input } from "./components/ui/input";
 export { Label } from "./components/ui/label";
 export { Link, linkVariants } from "./components/ui/link";
+export {
+  MultiSelect,
+  MultiSelectInput,
+  MultiSelectChip,
+  MultiSelectContent,
+  MultiSelectList,
+  MultiSelectItem,
+  MultiSelectGroup,
+  MultiSelectLabel,
+  MultiSelectEmpty,
+  MultiSelectSeparator,
+} from "./components/ui/multi-select";
 export {
   Pagination,
   PaginationContent,
@@ -103,4 +138,4 @@ export {
 } from "./components/ui/tooltip";
 
 /** Current version of the @graundtech/fluent2-react-kit component library. */
-export const version = "0.4.0";
+export const version = "0.5.0";

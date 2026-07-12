@@ -1,0 +1,16 @@
+{
+  "name": "multi-select",
+  "type": "registry:ui",
+  "title": "Multi Select",
+  "description": "Fluent 2-styled multiple-selection combobox with a chips field, built on the kit's Combobox. Selected values render as removable secondary chips in a wrapping token field (min-h-8, flex-wrap, bottom brand-accent focus); Base UI supplies multiple selection, built-in filtering, Backspace-removes-last-chip, arrow-key chip navigation, and a popup that stays open while picking. Popup-side parts (Content, List, Item, Group, Label, Empty, Separator) are re-exported from Combobox unchanged; only the chips field (MultiSelectInput, MultiSelectChip) is new.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils", "combobox"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/multi-select.tsx",
+      "target": "components/ui/multi-select.tsx"
+    }
+  ],
+  "docs": "Pass `items` to `<MultiSelect>` (multiple selection is on by default) and render the list with a render-function child, exactly like Combobox. Selected values appear as chips inside `MultiSelectInput`:\n\n```tsx\n<MultiSelect items={fruits}>\n  <MultiSelectInput placeholder=\"Pick fruits\" />\n  <MultiSelectContent>\n    <MultiSelectEmpty>No fruits found.</MultiSelectEmpty>\n    <MultiSelectList>\n      {(item) => (\n        <MultiSelectItem key={item} value={item}>\n          {item}\n        </MultiSelectItem>\n      )}\n    </MultiSelectList>\n  </MultiSelectContent>\n</MultiSelect>\n```\n\nWith no children, each selected value renders as a `MultiSelectChip` showing `String(value)`. For `{ value, label }` items or custom chip styling, pass a render function to `MultiSelectInput` — it receives each selected value: `<MultiSelectInput>{(v) => <MultiSelectChip key={v.value}>{v.label}</MultiSelectChip>}</MultiSelectInput>`. The chips field bakes in NO clear-all or chevron (Backspace clears the last chip; each chip is removable); compose `@base-ui/react/combobox`'s `Clear`/`Trigger` directly if you want them. The popup-side parts are re-exports of the `combobox` item's parts (installed automatically via `registryDependencies`), so they keep their `data-slot=\"combobox-…\"` values. See `multi-select.tsx`'s doc comment for the full reuse model and the Base UI chips keyboard contract."
+}

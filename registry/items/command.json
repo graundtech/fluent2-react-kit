@@ -1,0 +1,16 @@
+{
+  "name": "command",
+  "type": "registry:ui",
+  "title": "Command",
+  "description": "Fluent 2-styled command palette (cmdk surface) with shadcn-style composable APIs, built on @base-ui/react's Autocomplete with NO cmdk dependency. An always-visible, filtered list whose items fire actions (onClick, firing on click and Enter-when-highlighted) rather than persist a selection — Autocomplete's inline-open + selectionMode:'none' model. Includes a Command palette panel, a search input with a leading SearchRegular icon, filtered List/Empty, grouped items with headings, separators, shortcut hints, and a CommandDialog that wraps the kit Dialog.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils", "dialog"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/command.tsx",
+      "target": "components/ui/command.tsx"
+    }
+  ],
+  "docs": "A command palette is an always-open, filtered list. Base UI does the filtering, so pass `items` to `<Command>` and render the list with a render-function child. `CommandEmpty` is a SIBLING of `CommandList` (not a child), and items fire a native `onClick` (which also fires on Enter when the item is highlighted):\n\n```tsx\n<Command items={commands}>\n  <CommandInput placeholder=\"Type a command…\" />\n  <CommandEmpty>No results found.</CommandEmpty>\n  <CommandList>\n    {(cmd) => (\n      <CommandItem key={cmd.value} onClick={cmd.run}>\n        {cmd.label}\n        <CommandShortcut>{cmd.shortcut}</CommandShortcut>\n      </CommandItem>\n    )}\n  </CommandList>\n</Command>\n```\n\nUse `CommandGroup heading=\"…\"` for labelled sections and `CommandSeparator` between them. `CommandDialog` composes the kit `Dialog` (hence the `dialog` registry dependency) — pass a `trigger` element for an uncontrolled palette, or `open`/`onOpenChange` to control it. See `command.tsx`'s doc comment for the autocomplete-vs-combobox architecture decision and the full cmdk divergences."
+}
