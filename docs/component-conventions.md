@@ -124,6 +124,11 @@ the component (not passed in by the caller — a caller's `onClick` does not for
 `"use client"`). If you reach for a Base UI primitive that manages state
 (§9), that file needs `"use client"`.
 
+One non-obvious extra trigger: **importing from `@fluentui/react-icons` forces
+`"use client"`** even when the component has no hooks/handlers of its own and
+every Base UI part it wraps already carries its own directive. See §9 for the
+root cause; `select.tsx` and `checkbox.tsx` are the precedents.
+
 ---
 
 ## 3. Token usage rules
@@ -187,6 +192,13 @@ aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-inval
   control that can be form-invalid (inputs, selects, etc.); harmless on others.
 - **Pressed** — use `active:` (not a data attribute).
 - **Motion** — `transition-colors duration-fast ease-ease` for color/hover/press.
+- **Data-attribute variants** — when a Base UI primitive exposes state as a
+  presence data attribute (`data-checked`, `data-disabled`, `data-highlighted`,
+  `data-placeholder`, …), target it with the **bracketed** Tailwind form
+  (`data-[checked]:`, `data-[disabled]:`, `data-[highlighted]:`), never the bare
+  `data-checked:` shorthand. Both compile identically in Tailwind v4; the
+  bracket form is the kit's canonical spelling (checkbox, radio-group, switch,
+  and select all use it) so class strings read the same across every component.
 
 **Brand-filled interactive state ramp** (primary buttons, filled brand
 surfaces). The ramp is global, so hover/press differ per theme (spec §2.5):
@@ -344,6 +356,22 @@ client boundary and bundle weight for nothing.
 
 `@fluentui/react-icons` is also available in `packages/react` if a component needs
 built-in icons — but do not add it to the demo app.
+
+**Icons force `"use client"`.** Any component that imports from
+`@fluentui/react-icons` **must** start with `"use client"`, even if it has no
+hooks/handlers and every Base UI part it uses is already its own client
+boundary. Root cause: the icons package's shared sizing module
+(`createFluentIcon.styles.js`) calls `@griffel/react`'s `__styles()` at *module
+scope* without its own `"use client"` directive, even though `__styles` is
+client-only. Importing any icon into a Server Component pulls that module into
+the server's RSC graph, and `next build` (Turbopack) then fails collecting page
+data with "Attempted to call `__styles()` from the server but `__styles` is on
+the client" — reproduced against `@fluentui/react-icons@2.0.333` /
+`@griffel/react@1.7.5`, and it poisons every route sharing Turbopack's chunk for
+those icons, not just the offending one. Declaring `"use client"` at the top of
+the component keeps the icon imports inside a client boundary so they're never
+evaluated on the server. Precedents: `select.tsx` and `checkbox.tsx` both carry
+this fix (their doc comments explain it inline).
 
 ---
 

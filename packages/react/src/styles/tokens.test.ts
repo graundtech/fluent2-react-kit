@@ -101,6 +101,57 @@ describe("tokens.css structure", () => {
     expect(css).toContain(".high-contrast");
   });
 
+  it("remaps the status-extension tokens Alert consumes under .high-contrast", () => {
+    // The core set is covered above; these are the status extensions Alert's
+    // destructive/success/warning variants paint with. Subtle fills collapse
+    // to Canvas, borders + AA-safe text tokens to CanvasText.
+    const hcBlock = firstBlock(".high-contrast");
+    for (const surface of [
+      "--destructive-subtle",
+      "--success-subtle",
+      "--warning-subtle"
+    ]) {
+      expect(hcBlock, `.high-contrast missing ${surface}`).toContain(
+        `${surface}: Canvas;`
+      );
+    }
+    for (const inked of [
+      "--destructive-border",
+      "--success-border",
+      "--warning-border",
+      "--destructive-text",
+      "--warning-text"
+    ]) {
+      expect(hcBlock, `.high-contrast missing ${inked}`).toContain(
+        `${inked}: CanvasText;`
+      );
+    }
+  });
+
+  it("remaps the brand stops Alert's info variant + Avatar's fallback consume under .high-contrast", () => {
+    // Info Alert / Avatar tint with the raw brand ramp, so the consumed stops
+    // must be system-colored here too. Surfaces -> Canvas; text + border ->
+    // CanvasText. The dual-role stops --brand-70/--brand-140 (Avatar initials
+    // text AND Alert-info border) must be CanvasText, not Canvas, or Avatar's
+    // initials would vanish against their own fallback background.
+    const hcBlock = firstBlock(".high-contrast");
+    for (const surface of ["--brand-160", "--brand-30", "--brand-40"]) {
+      expect(hcBlock, `.high-contrast missing ${surface}`).toContain(
+        `${surface}: Canvas;`
+      );
+    }
+    for (const ink of [
+      "--brand-70",
+      "--brand-80",
+      "--brand-100",
+      "--brand-140"
+    ]) {
+      expect(hcBlock, `.high-contrast missing ${ink}`).toContain(
+        `${ink}: CanvasText;`
+      );
+    }
+  });
+
   it("declares the radius base and derived scale", () => {
     expect(rootBlock).toContain("--radius: 6px");
     expect(css).toContain("--radius-md: calc(var(--radius) - 2px)");

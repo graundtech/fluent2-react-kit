@@ -1,0 +1,14 @@
+{
+  "name": "textarea",
+  "type": "registry:ui",
+  "title": "Textarea",
+  "description": "Fluent 2-styled multi-line text field with shadcn APIs. Grows with content (field-sizing-content) and shares the signature Fluent bottom brand accent on focus (inset box-shadow, no layout shift) with Input.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/textarea.tsx",
+      "target": "components/ui/textarea.tsx"
+    }
+  ]
+}

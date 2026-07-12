@@ -1,0 +1,15 @@
+{
+  "name": "switch",
+  "type": "registry:ui",
+  "title": "Switch",
+  "description": "Fluent 2-styled on/off toggle with shadcn APIs. Built on @base-ui/react's Switch primitive for real form participation, keyboard behavior, and label association; renders Fluent's outlined/transparent unchecked track and brand-filled checked track with a sliding thumb.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/switch.tsx",
+      "target": "components/ui/switch.tsx"
+    }
+  ]
+}

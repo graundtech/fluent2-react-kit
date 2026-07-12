@@ -1,0 +1,15 @@
+{
+  "name": "select",
+  "type": "registry:ui",
+  "title": "Select",
+  "description": "Fluent 2-styled select (dropdown listbox) with shadcn APIs. Built on @base-ui/react's Select for portalled positioning, focus management, keyboard navigation and type-ahead; the trigger matches the kit's Input field, the flyout uses Fluent shadow-16 elevation, and selected/highlighted items use CheckmarkRegular + brand-neutral accent states.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/select.tsx",
+      "target": "components/ui/select.tsx"
+    }
+  ]
+}

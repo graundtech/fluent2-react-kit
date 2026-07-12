@@ -1,0 +1,14 @@
+{
+  "name": "skeleton",
+  "type": "registry:ui",
+  "title": "Skeleton",
+  "description": "Fluent 2-styled loading placeholder: a pulsing bg-accent block with rounded-md corners, resized/reshaped via className (line, avatar circle, card block).",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/skeleton.tsx",
+      "target": "components/ui/skeleton.tsx"
+    }
+  ]
+}

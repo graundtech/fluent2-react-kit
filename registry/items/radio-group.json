@@ -1,0 +1,15 @@
+{
+  "name": "radio-group",
+  "type": "registry:ui",
+  "title": "Radio Group",
+  "description": "Fluent 2-styled radio group with shadcn APIs. Built on @base-ui/react's RadioGroup and Radio primitives for roving-tabindex keyboard navigation and native form participation; checked items show a brand ring with a centered brand dot.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/radio-group.tsx",
+      "target": "components/ui/radio-group.tsx"
+    }
+  ]
+}

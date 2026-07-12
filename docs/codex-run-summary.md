@@ -104,3 +104,27 @@ None at run end. (During the run, Figma MCP access required user-side authentica
 4. Submit the registry to the shadcn Registry Directory.
 5. Next component batch (Textarea, Select, Checkbox, Radio Group, Switch, Tabs, Dialog, Tooltip, Dropdown Menu) reusing the same orchestration pattern — conventions doc + parallel agents + integration + review.
 6. Add Playwright smoke tests against the deployed demo.
+
+---
+
+# Addendum — Batch 2 (same day, second orchestrated run)
+
+**Scope:** 8 form/feedback components on top of the v0.1.0 foundation → **v0.2.0, 17 components, 278 tests / 20 files.**
+
+## Delivered
+- **Components:** Textarea (13 tests), Select (18 — the kit's first popup/overlay; establishes the portal→positioner→popup pattern, `shadow-16` flyout elevation, open/close motion, and the jsdom popup-testing recipe for future Dialog/Tooltip/Dropdown), Checkbox (14), Radio Group (11), Switch (16), Alert (21 — first consumer of the status-extension tokens), Skeleton (8), Progress (19). Same parallel-agent model as batch 1 (Opus for Select, Sonnet for the rest); zero cross-agent conflicts again.
+- **Registry:** 19 items served from the live registry at `https://fluent2-react-kit.graund.io/r/` (deployment URL was resolved by the maintainer between batches).
+
+## Key decisions / discoveries
+- **`@fluentui/react-icons` forces `"use client"`** — the icons package calls `@griffel/react`'s client-only `__styles()` at module scope, so any component importing it breaks `next build` as a Server Component. Select and Checkbox carry the directive; the rule is now normative in `component-conventions.md` §2/§9.
+- **`--destructive-text` token added** (light `#b10e1c` 6.68:1, dark `#ff9a90` 8.02:1 on the destructive-subtle surfaces): Alert's contrast math exposed that `--destructive` (same hex both themes) fails AA (≈3.3:1) as text on the dark subtle background. Mirrors the pre-existing `--warning-text` approach.
+- **Base UI adaptation conventions:** span-based controls use `data-[checked]:`/`data-[disabled]:` (bracket form now canonical, conventions §4) instead of `:disabled`/`data-state`; generics pinned to `string` to keep shadcn's string-only `onValueChange` API; `onCheckedChange` carries Base UI's extra event argument (documented deviation).
+
+## Review (4 angles + orchestrator manual pass) → 12 findings, 11 fixed, 1 accepted
+Highlights: `.high-contrast` was missing overrides for the status-extension tokens and the brand stops Alert/Avatar consume (now mapped to `Canvas`/`CanvasText`; the fix agent corrected the orchestrator's own proposed mapping for the dual-role brand-140/70 stops); Skeleton's `bg-accent` mapped to the system `Highlight` (selection) color in HC — switched to `bg-secondary` (`ButtonFace`); Alert's `role="alert"` is now an overridable default with polite `role="status"` documented; Progress indeterminate gained `motion-reduce:animate-none`; Select preview labeling now composes `aria-labelledby="label-id trigger-id"` so the selected value stays in the accessible name (recipe documented in select.tsx). Accepted tradeoff: Progress's accessible-name requirement stays JSDoc-only (shadcn parity).
+
+## Verification
+Full chain green and orchestrator-verified: `pnpm build` (20/20 routes), `pnpm typecheck`, `pnpm test` (278), frozen lockfile clean; Select open/select/close and the Alert contrast fix verified live in the browser; `.high-contrast` token remaps verified via computed styles at document level.
+
+## Next steps
+Commit + push (deploys v0.2.0 to the live registry); then the overlay batch (Dialog, Tooltip, Dropdown Menu, Popover) reusing Select's popup pattern, plus Tabs/Accordion/Breadcrumb/Pagination/Toast.

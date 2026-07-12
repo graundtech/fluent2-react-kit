@@ -1,0 +1,15 @@
+{
+  "name": "alert",
+  "type": "registry:ui",
+  "title": "Alert",
+  "description": "Fluent 2 MessageBar-styled alert with shadcn APIs. Three composable parts (Alert, AlertTitle, AlertDescription), five variants (default, destructive, success, warning, info) with subtle intent backgrounds, intent borders, and an optional icon slot.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["class-variance-authority"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/alert.tsx",
+      "target": "components/ui/alert.tsx"
+    }
+  ]
+}

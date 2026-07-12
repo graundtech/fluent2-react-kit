@@ -13,7 +13,7 @@ Fluent 2-inspired, shadcn-style React components — copy the source via a regis
 - **Registry-first distribution** — every component is a [shadcn registry](https://ui.shadcn.com/docs/registry) item. Install via `npx shadcn add` and get the source copied straight into your project — no runtime dependency required. A traditional npm package is also available.
 - **Tailwind v4 + CSS variables** — one token layer (`tokens.css`) drives everything through a Tailwind v4 `@theme inline` bridge. No config-file theming; override CSS custom properties instead.
 - **Light, dark, and high-contrast themes** — `.dark` and `.high-contrast` classes, plus automatic `forced-colors` support for Windows high-contrast mode.
-- **Tested** — every component ships with Vitest + Testing Library unit tests and an `axe-core` accessibility check (155 tests across the kit today).
+- **Tested** — every component ships with Vitest + Testing Library unit tests and an `axe-core` accessibility check (278 tests across the kit today).
 
 Read the full product vision in [`docs/vision.md`](docs/vision.md).
 
@@ -60,23 +60,31 @@ See [`docs/contributing.md`](docs/contributing.md) for the full contributor work
 
 ## Component status
 
-All items below are at **v0.1.0**.
+All items below are at **v0.2.0**.
 
 | Item | Type | Notes |
 | --- | --- | --- |
 | `theme` | tokens | Light, dark, and high-contrast CSS variable layer + Tailwind v4 bridge |
 | `utils` | lib | The `cn()` class-merging helper (`clsx` + `tailwind-merge`) |
+| `alert` | component | 5 variants (default, destructive, success, warning, info), MessageBar-style icon + title accent |
 | `avatar` | component | Image-with-fallback, built on `@base-ui/react/avatar` |
 | `badge` | component | 6 variants: default, secondary, destructive, outline, success, warning |
 | `button` | component | 6 variants × 6 sizes, brand state ramp, `asChild` |
 | `card` | component | 7-part composable card (`Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`) |
+| `checkbox` | component | Checked/unchecked/indeterminate, built on `@base-ui/react/checkbox` |
 | `input` | component | Text field with the Fluent bottom-accent focus treatment |
 | `label` | component | Native `<label>`, optional `required` asterisk |
 | `link` | component | 2 variants (default, inline), `asChild` |
+| `progress` | component | Fluent-thin (2px) determinate/indeterminate bar, built on `@base-ui/react/progress` |
+| `radio-group` | component | Roving-tabindex radio group (`RadioGroup`, `RadioGroupItem`), built on `@base-ui/react/radio-group` |
+| `select` | component | 9-part composable select (trigger, popup, groups, scroll buttons), built on `@base-ui/react/select` |
 | `separator` | component | Horizontal/vertical divider |
+| `skeleton` | component | Loading placeholder, `animate-pulse` fill |
 | `spinner` | component | Fluent arc-style loading indicator, 4 sizes |
+| `switch` | component | Fluent Toggle Switch look (outlined unchecked track), built on `@base-ui/react/switch` |
+| `textarea` | component | Multi-line text field, matches `input`'s focus treatment |
 
-That's **9 components + `utils` + `theme`**, all documented in the live demo (`pnpm demo:dev` → `/preview/<name>`). Naming and API conventions are normative in [`docs/component-conventions.md`](docs/component-conventions.md).
+That's **17 components + `utils` + `theme`**, all documented in the live demo (`pnpm demo:dev` → `/preview/<name>`). Naming and API conventions are normative in [`docs/component-conventions.md`](docs/component-conventions.md).
 
 For what's planned next — more components, known TODOs, and open backlog — see [`docs/status-and-backlog.md`](docs/status-and-backlog.md).
 

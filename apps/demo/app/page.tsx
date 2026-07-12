@@ -30,15 +30,23 @@ import { ThemeToggle } from "../components/theme-toggle";
  */
 
 const PREVIEWS = [
+  "alert",
   "avatar",
   "badge",
   "button",
   "card",
+  "checkbox",
   "input",
   "label",
   "link",
+  "progress",
+  "radio-group",
+  "select",
   "separator",
+  "skeleton",
   "spinner",
+  "switch",
+  "textarea",
 ] as const;
 
 // Kept identical to the constant in scripts/build-registry.mjs — see

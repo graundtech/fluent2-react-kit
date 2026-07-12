@@ -106,6 +106,7 @@
   --warning-border: #f4bfab;
   --destructive-subtle: #fdf6f6;
   --destructive-border: #f1bbbc;
+  --destructive-text: #b10e1c;     /* AA-safe destructive text on light surfaces (Fluent red foreground) */
 
   /* --- elevation / shadows ------------------------------------------------ */
   --shadow-ambient: rgba(0, 0, 0, 0.12);
@@ -221,6 +222,7 @@
   --warning-border: #a62d01;
   --destructive-subtle: #3b1212;
   --destructive-border: #9f282b;
+  --destructive-text: #ff9a90;     /* AA-safe destructive text on dark surfaces (lightened red) */
 
   /* --- elevation primitives (composite strings inherit via var()) --------- */
   --shadow-ambient: rgba(0, 0, 0, 0.24);
@@ -240,6 +242,15 @@
     --border: CanvasText;
     --input: CanvasText;
   }
+  /* No explicit brand-ramp / status-extension remap is needed here (unlike the
+     `.high-contrast` class below, which must remap them by hand). Under
+     forced-colors the UA applies `forced-color-adjust: auto` to every element,
+     so hex-valued utilities like `bg-brand-160`, `bg-destructive-subtle`, and
+     `text-warning-text` are already forced to the system palette automatically.
+     The three tokens above are remapped only to steer specific roles to a
+     *chosen* system color (Highlight ring, CanvasText border/input) rather than
+     the UA default — the brand/status surfaces have no such preference, so the
+     automatic override is exactly right and re-declaring them would be noise. */
   /* Focus must stay visible and survive forced-color-adjust. */
   :where(button, a, [role="button"], input, select, textarea):focus-visible {
     outline: 2px solid Highlight;
@@ -285,6 +296,54 @@
   --ring: Highlight;
   --success: CanvasText;
   --warning: CanvasText;
+
+  /* Status-extension surfaces/borders/text that Alert consumes. The core set
+     above covers shadcn's tokens but NOT these, so a destructive/success/
+     warning Alert would otherwise keep its raw hex tint in an HC theme.
+     Subtle fills collapse to Canvas; borders and the AA-safe *-text tokens go
+     to CanvasText — so a status Alert renders as a Canvas panel with a
+     CanvasText border and CanvasText icon + title (status still conveyed by
+     icon + title text, never color alone — checklist §5). `--success` is
+     already CanvasText above, which is what the success icon/title read from,
+     so only `--warning-text`/`--destructive-text` need explicit entries. */
+  --destructive-subtle: Canvas;
+  --success-subtle: Canvas;
+  --warning-subtle: Canvas;
+  --destructive-border: CanvasText;
+  --success-border: CanvasText;
+  --warning-border: CanvasText;
+  --destructive-text: CanvasText;
+  --warning-text: CanvasText;
+
+  /* Alert's `info` variant and Avatar's initials fallback tint with the raw
+     brand ramp (no dedicated status token), so the specific stops they use as
+     surfaces vs. text/border must be remapped here too — otherwise real brand
+     blue leaks into an HC theme. Only the consumed stops are redefined:
+       surfaces -> Canvas:  --brand-160 (Alert-info + Avatar light bg),
+                            --brand-30 (Alert-info dark bg),
+                            --brand-40 (Avatar dark bg).
+       text + border -> CanvasText:  --brand-80 / --brand-100 (Alert-info
+                            icon+title, light/dark), plus the two DUAL-ROLE
+                            stops --brand-70 and --brand-140. Each of those is
+                            both an Avatar initials-text color (light text=70,
+                            dark text=140) AND an Alert-info border (light
+                            border=140, dark border=70). Mapping them to
+                            CanvasText — not Canvas as a naive "border stop"
+                            reading would suggest — is deliberate: Canvas would
+                            paint Avatar's initials the same color as their
+                            fallback background and make them vanish. CanvasText
+                            keeps the initials legible in both themes and still
+                            renders the info border as a visible stroke.
+                            --brand-110 is unused today but remapped defensively
+                            to keep the consumed-text band internally consistent. */
+  --brand-160: Canvas;
+  --brand-30: Canvas;
+  --brand-40: Canvas;
+  --brand-70: CanvasText;
+  --brand-80: CanvasText;
+  --brand-100: CanvasText;
+  --brand-110: CanvasText;
+  --brand-140: CanvasText;
 }
 
 /* ========================================================================== */
@@ -360,6 +419,7 @@
   --color-warning-border: var(--warning-border);
   --color-destructive-subtle: var(--destructive-subtle);
   --color-destructive-border: var(--destructive-border);
+  --color-destructive-text: var(--destructive-text);
 
   /* brand ramp → bg-brand-80, text-brand-160, etc. */
   --color-brand-10: var(--brand-10);

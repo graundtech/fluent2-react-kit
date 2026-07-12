@@ -1,0 +1,15 @@
+{
+  "name": "checkbox",
+  "type": "registry:ui",
+  "title": "Checkbox",
+  "description": "Fluent 2-styled checkbox with shadcn APIs. Built on @base-ui/react's Checkbox primitive for real form participation and keyboard behavior; supports checked, unchecked, and indeterminate states with Fluent's checkmark/dash glyphs from @fluentui/react-icons.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/checkbox.tsx",
+      "target": "components/ui/checkbox.tsx"
+    }
+  ]
+}
