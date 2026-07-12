@@ -182,6 +182,28 @@ describe("RadioGroup / RadioGroupItem", () => {
     expect(item).toHaveClass("custom-item", "rounded-full", "size-4");
   });
 
+  // --- Fluent accessible-stroke ring + interaction ramp -------------------
+
+  it("outlines the unchecked ring with the accessible-stroke ramp and steps the checked ring through the brand ramp", () => {
+    render(
+      <RadioGroup aria-label="Fruit">
+        <RadioGroupItem value="a" aria-label="Apple" />
+      </RadioGroup>
+    );
+    const item = screen.getByRole("radio");
+    expect(item).toHaveClass(
+      "border-stroke-accessible",
+      "hover:border-stroke-accessible-hover",
+      "active:border-stroke-accessible-pressed",
+      "data-[checked]:border-primary",
+      "data-[checked]:hover:border-brand-70",
+      "data-[checked]:active:border-brand-60",
+      "dark:data-[checked]:hover:border-brand-80"
+    );
+    // the old lighter border-input grey is gone
+    expect(item.className).not.toContain("border-input");
+  });
+
   // --- ref -----------------------------------------------------------------
 
   it("forwards refs to the underlying group div and item span", () => {

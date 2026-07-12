@@ -59,6 +59,22 @@ describe("Button", () => {
     expect(screen.getByRole("button")).toHaveClass(signature);
   });
 
+  // the link variant's color ramp is kept in sync with the Link component
+  // (Fluent BrandForegroundLink: rest brand-70 → hover brand-60 → pressed
+  // brand-50), but the button keeps its own font-semibold weight.
+  it("gives the link variant the Fluent link ramp while keeping the button weight", () => {
+    render(<Button variant="link">Linky</Button>);
+    const button = screen.getByRole("button");
+    expect(button).toHaveClass(
+      "text-brand-70",
+      "hover:text-brand-60",
+      "active:text-brand-50",
+      "dark:text-brand-100",
+      "font-semibold"
+    );
+    expect(button.className).not.toContain("text-primary");
+  });
+
   it("merges a caller-provided className without dropping variant classes", () => {
     render(<Button className="w-full custom-x">Merged</Button>);
     const button = screen.getByRole("button");

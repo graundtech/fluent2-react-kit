@@ -52,8 +52,11 @@ const buttonVariants = cva(
         // Fluent subtle — transparent, neutral hover only.
         ghost:
           "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:hover:bg-accent/50 dark:active:bg-accent/70",
-        // Fluent link — brand text, underline on hover.
-        link: "text-primary underline-offset-4 hover:text-brand-70 hover:underline active:text-brand-60 dark:hover:text-brand-100 dark:active:text-brand-110",
+        // Fluent link — brand text, underline on hover. Color ramp matches
+        // Fluent BrandForegroundLink (rest brand-70 → hover brand-60 → pressed
+        // brand-50 light; brand-100 → 110 → 120 dark), kept in sync with the
+        // Link component; the button keeps its own font-semibold weight.
+        link: "text-brand-70 underline-offset-4 hover:text-brand-60 hover:underline active:text-brand-50 dark:text-brand-100 dark:hover:text-brand-110 dark:active:text-brand-120",
       },
       size: {
         // Fluent medium (default) — 32px height, 12px horizontal padding, 14px text.

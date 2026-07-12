@@ -7,9 +7,18 @@ import { cn } from "../../lib/utils";
 /**
  * Badge — Fluent 2-styled, shadcn-API badge.
  *
- * Aesthetics follow Fluent 2 (pill shape, compact 20px height, 12px/600
- * label, flat filled surfaces, brand/status color tokens); the prop surface
- * (`variant`, `asChild`, `badgeVariants`) follows shadcn/ui.
+ * Aesthetics follow Fluent 2 (a 4px-radius chip — Fluent's fixed `medium`
+ * corner token, non-scaling, NOT a full pill — compact 20px height, 10px/600
+ * caption-2 label with 4px horizontal padding, flat filled surfaces, brand/
+ * status color tokens); the prop surface (`variant`, `asChild`,
+ * `badgeVariants`) follows shadcn/ui.
+ *
+ * Geometry is spec-exact: `rounded-md` (`--radius-md` = 4px, the Fluent badge
+ * corner token used at every badge size), `px-1` (4px = `spacingHorizontalXS`),
+ * `text-[10px]/[14px]` (Fluent "Caption 2 Strong", == the `--text-caption2`
+ * token value — see the layout comment for why the arbitrary length is used
+ * over the `text-caption2` utility) + `font-semibold` (600), fixed `h-5`
+ * (20px Medium).
  *
  * Server-safe: no `"use client"`, no hooks/handlers — the React import is
  * type-only, so the file can be dropped straight into an RSC tree.
@@ -20,9 +29,18 @@ import { cn } from "../../lib/utils";
  */
 const badgeVariants = cva(
   [
-    // layout — Fluent pill, compact height, centered label
+    // layout — Fluent 4px chip, compact 20px height, centered caption-2 label
     "inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 whitespace-nowrap",
-    "rounded-full border px-2 text-xs leading-none font-semibold select-none",
+    // Fluent "Caption 2 Strong" = 10px/14px, weight 600. Expressed as the
+    // arbitrary `text-[10px]/[14px]` rather than the `text-caption2` token
+    // utility on purpose: every variant also sets a `text-*` color, and
+    // tailwind-merge (unaware of the custom `caption2` font-size) treats
+    // `text-caption2` as a text-color and drops it behind the variant color;
+    // the `--text-caption2` var also lives in `@theme inline`, which isn't
+    // emitted to :root, so a `text-(length:--text-caption2)` reference would be
+    // undefined at runtime. The arbitrary length is twMerge-safe and resolves
+    // with no runtime var. Values equal the `--text-caption2` token exactly.
+    "rounded-md border px-1 text-[10px]/[14px] font-semibold select-none",
     // motion — token duration + Fluent easyEase curve; honors prefers-reduced-motion
     // automatically (the duration tokens collapse to 0.01ms in tokens.css).
     "outline-none transition-colors duration-fast ease-ease",
@@ -55,9 +73,14 @@ const badgeVariants = cva(
         // Fluent success — green fill, AA-safe foreground from the status token pair.
         success:
           "border-transparent bg-success text-success-foreground [a&]:hover:bg-success/90 [a&]:active:bg-success/80",
-        // Fluent warning — darkOrange fill (not yellow), AA-safe foreground.
+        // Fluent warning badge — bright orange chip (`#f7630c`) with DARK
+        // static text (`#242424`), the opposite foreground polarity from
+        // --warning's white text. Uses the dedicated `--warning-badge` pair
+        // (~4.98:1 AA), matching Figma's WarningBackground3 + NeutralForeground1
+        // Static, so Alert's darkOrange --warning stays put (single-source
+        // decoupling; see tokens.css + tokens-research.md §12.9).
         warning:
-          "border-transparent bg-warning text-warning-foreground [a&]:hover:bg-warning/90 [a&]:active:bg-warning/80",
+          "border-transparent bg-warning-badge text-warning-badge-foreground [a&]:hover:bg-warning-badge/90 [a&]:active:bg-warning-badge/80",
       },
     },
     defaultVariants: {

@@ -11,6 +11,16 @@ import { cn } from "../../lib/utils";
  * (https://www.w3.org/WAI/ARIA/apg/patterns/separator/) is trivial: a role
  * swap plus an orientation attribute.
  *
+ * Stroke color — deliberate token-consistency deviation: Fluent's Divider uses
+ * its own stroke token (`#e0e0e0`, grey-88), one ramp step lighter than the
+ * generic `--border` (`#d1d1d1`, grey-82) this component reuses. The kit keeps
+ * `bg-border` on purpose: a divider sharing the exact border token used by
+ * inputs/cards is worth more than a one-step-lighter grey, and `--border` is
+ * intentionally NOT re-pointed globally to `#e0e0e0` (that would lighten every
+ * input/card border too). Net effect: the divider reads a hair more prominent
+ * than Fluent's spec — an accepted, single-step fidelity trade for token
+ * cohesion.
+ *
  * ARIA:
  * - `decorative` (default `true`) → `role="none"`, removing it from the
  *   accessibility tree. `aria-orientation` is withheld in this case too —

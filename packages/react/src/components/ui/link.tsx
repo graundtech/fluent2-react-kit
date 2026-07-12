@@ -9,9 +9,14 @@ import { cn } from "../../lib/utils";
  *
  * shadcn has no Link primitive; this is a Fluent-driven addition that follows
  * the same authoring pattern as `Button` (cva + `asChild` + `data-slot`) so it
- * reads as part of the same system. Visually it mirrors Button's `link`
- * variant: brand-colored text, `hover:text-brand-70` / `active:text-brand-60`
- * (light), `dark:hover:text-brand-100` / `dark:active:text-brand-110` (dark).
+ * reads as part of the same system. The color ramp matches Fluent's
+ * `BrandForegroundLink` states exactly — one brand-ramp step darker than an
+ * earlier (off-by-one-light) version: rest `brand-70` (`#115ea3`), hover
+ * `brand-60` (`#0f548c`), pressed `brand-50` (`#0c3b5e`) in light; rest
+ * `brand-100`, hover `brand-110`, pressed `brand-120` in dark. Weight is
+ * `font-normal` (Fluent Link is Body 1 / Regular 400, not the medium 500 an
+ * earlier version used). Button's own `link` variant carries the same color
+ * ramp (kept in sync) but keeps the button's `font-semibold` weight.
  *
  * Two variants, mapping directly to the two Fluent 2 link usages
  * (https://storybooks.fluentui.dev/react/?path=/docs/components-link--docs):
@@ -50,17 +55,17 @@ import { cn } from "../../lib/utils";
  */
 const linkVariants = cva(
   [
-    // shape + type
-    "rounded-xs font-medium text-primary underline-offset-4",
+    // shape + type — Fluent Link is Body 1 / Regular 400
+    "rounded-xs font-normal text-brand-70 underline-offset-4 dark:text-brand-100",
     // motion — token duration + Fluent easyEase curve; honors prefers-reduced-motion
     // automatically (the duration tokens collapse to 0.01ms in tokens.css).
     "outline-none transition-colors duration-fast ease-ease",
-    // interactive state ramp — aligned with Button's `link` variant so hover/
-    // active read identically across the two components.
-    // rest brand-80 (via text-primary) → hover brand-70 → pressed brand-60 (light);
-    // dark hover brand-100 → dark pressed brand-110 (brand ramp is global, so the
-    // dark steps are declared explicitly per conventions §4).
-    "hover:text-brand-70 hover:underline active:text-brand-60 dark:hover:text-brand-100 dark:active:text-brand-110",
+    // interactive state ramp — Fluent BrandForegroundLink, one brand step
+    // darker than the color set above, kept in sync with Button's `link`
+    // variant. rest brand-70 → hover brand-60 → pressed brand-50 (light);
+    // rest brand-100 → hover brand-110 → pressed brand-120 (dark). The brand
+    // ramp is global, so the dark steps are declared explicitly (conventions §4).
+    "hover:text-brand-60 hover:underline active:text-brand-50 dark:hover:text-brand-110 dark:active:text-brand-120",
     // focus — Fluent double-stroke approximation: 2px brand ring + 2px surface-colored gap
     "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     // disabled — anchors have no native `disabled`; styled off `aria-disabled` instead.

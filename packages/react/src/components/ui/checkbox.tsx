@@ -50,6 +50,19 @@ import { cn } from "../../lib/utils";
  * against flex-row squish when paired with a `Label` (mirrors
  * `radio-group.tsx`'s `RadioGroupItem`).
  *
+ * Borders + interaction ramp: the unchecked box outlines with Fluent's
+ * `NeutralStrokeAccessible` ramp — rest `#616161` (`border-stroke-accessible`),
+ * hover `#575757` (`border-stroke-accessible-hover`), pressed `#4d4d4d`
+ * (`border-stroke-accessible-pressed`) — the higher-contrast neutral Fluent
+ * specs for interactive control outlines (extracted from the Figma checkbox),
+ * NOT the lighter `--border`/`border-input` grey the box previously used. When
+ * checked/indeterminate the box fills brand, and its border + fill step
+ * through Fluent's `CompoundBrandBackground` on hover/press (`brand-70` /
+ * `brand-60`; dark hover `brand-80`), mirroring Button's documented per-theme
+ * brand ramp (conventions §4). The `data-[checked]:hover:`/`:active:`
+ * selectors outrank the neutral hover/active border by specificity, so a
+ * checked box stays brand (never the neutral grey) while hovered.
+ *
  * Checked glyph: `CheckmarkFilled` from `@fluentui/react-icons` at `size-3`
  * (12px, matching Fluent's checkmark `fontSize`) — a real glyph is
  * appropriate here (unlike Radio's plain dot) because Fluent's checkbox
@@ -98,13 +111,20 @@ function Checkbox({
       indeterminate={indeterminate}
       className={cn(
         // layout — Fluent 16px box, small radius (Fluent borderRadiusSmall)
-        "aspect-square size-4 shrink-0 cursor-pointer rounded-sm border border-input bg-background",
+        "aspect-square size-4 shrink-0 cursor-pointer rounded-sm border bg-background",
         "inline-flex items-center justify-center",
         // motion
         "outline-none transition-colors duration-fast ease-ease",
+        // unchecked — Fluent NeutralStrokeAccessible rest/hover/pressed ramp
+        "border-stroke-accessible hover:border-stroke-accessible-hover active:border-stroke-accessible-pressed",
         // checked / indeterminate — brand fill (Base UI presence attributes)
         "data-[checked]:border-primary data-[checked]:bg-primary data-[checked]:text-primary-foreground",
         "data-[indeterminate]:border-primary data-[indeterminate]:bg-primary data-[indeterminate]:text-primary-foreground",
+        // checked interaction ramp — Fluent CompoundBrandBackground Hover/
+        // Pressed (border + fill together); dark hover brightens to brand-80
+        // per Button's per-theme ramp. Outranks the neutral hover/active
+        // border above by specificity so the checked box stays brand.
+        "data-[checked]:hover:border-brand-70 data-[checked]:hover:bg-brand-70 data-[checked]:active:border-brand-60 data-[checked]:active:bg-brand-60 dark:data-[checked]:hover:border-brand-80 dark:data-[checked]:hover:bg-brand-80",
         // disabled — opacity-based (conventions §4), re-expressed against
         // Base UI's data-disabled presence attribute (this renders a
         // <span>, not a native disableable element — see doc comment)

@@ -4,7 +4,7 @@
   "title": "Progress",
   "description": "Fluent 2-styled progress bar with a shadcn API. Wraps Base UI's Progress primitive (Root/Track/Indicator) into a single `Progress` component: a thin 2px determinate bar (`value` 0-100) plus a pulsing indeterminate stand-in when `value` is omitted or `null`.",
   "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
-  "dependencies": ["@base-ui/react"],
+  "dependencies": ["@base-ui/react", "class-variance-authority"],
   "registryDependencies": ["utils"],
   "files": [
     {

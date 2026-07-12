@@ -68,6 +68,15 @@ function PanelBody() {
 
       <TickingDemo />
 
+      <Row label="Intent variants (Fluent State axis)">
+        <div className="flex flex-col gap-3">
+          <Progress value={70} variant="default" aria-label="Default intent, 70 percent" />
+          <Progress value={70} variant="success" aria-label="Success intent, 70 percent" />
+          <Progress value={70} variant="warning" aria-label="Warning intent, 70 percent" />
+          <Progress value={70} variant="destructive" aria-label="Destructive intent, 70 percent" />
+        </div>
+      </Row>
+
       <Row label="Indeterminate (value omitted — pulsing stand-in)">
         <Progress aria-label="Loading, progress unknown" />
       </Row>

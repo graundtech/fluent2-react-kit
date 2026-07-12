@@ -148,8 +148,11 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        // layout — Fluent medium field, 32px, matches Input
-        "flex h-8 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-1 text-sm whitespace-nowrap",
+        // layout — Fluent medium field, 32px, matches Input. Resting bottom
+        // edge uses the darker NeutralStrokeAccessible (#616161) accent while
+        // the other sides stay border-input; focus (border-primary + inset
+        // underline) and aria-invalid (border-destructive) both override it.
+        "flex h-8 w-full items-center justify-between gap-2 rounded-md border border-input border-b-stroke-accessible bg-background px-3 py-1 text-sm whitespace-nowrap",
         // placeholder text muted (Base UI sets data-placeholder when no value)
         "data-[placeholder]:text-muted-foreground",
         // keep a long value on one line, left-aligned
@@ -257,8 +260,12 @@ function SelectLabel({
  * Item — one option. Text via `ItemText`; the selected-state check
  * (`CheckmarkRegular`) is absolutely positioned on the right (shadcn placement)
  * inside `ItemIndicator`, which Base UI only mounts for the selected item.
- * Highlight (keyboard focus or hover) uses `data-highlighted` →
- * `bg-accent text-accent-foreground`; disabled items are muted + inert.
+ * `rounded-md` (4px) matches Fluent's `Corner-radius/List/Default`. Highlight
+ * (keyboard focus or hover) uses `data-highlighted` → `bg-accent`
+ * (`#f0f0f0`) `text-accent-foreground`; Fluent's list-hover token is `#f5f5f5`
+ * (one grey step lighter), but the kit keeps `--accent` for token consistency
+ * with every other hover surface — the difference is imperceptible on a 32px
+ * row. Disabled items are muted + inert.
  */
 function SelectItem({
   className,
@@ -269,8 +276,9 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        // layout — Fluent 32px row, px-2 with room on the right for the check
-        "relative flex h-8 w-full cursor-default items-center rounded-sm pr-8 pl-2 text-sm outline-none select-none",
+        // layout — Fluent 32px row, 4px list radius, px-2 with room on the
+        // right for the check
+        "relative flex h-8 w-full cursor-default items-center rounded-md pr-8 pl-2 text-sm outline-none select-none",
         // highlighted — keyboard focus / hover (Base UI data attribute)
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         // disabled item — muted + non-interactive

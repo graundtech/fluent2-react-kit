@@ -22,6 +22,16 @@ describe("Input", () => {
     expect(screen.getByRole("textbox")).toHaveClass("h-8", "rounded-md", "border-input");
   });
 
+  it("paints the Fluent darker resting bottom edge (border-b-stroke-accessible)", () => {
+    render(<Input aria-label="Name" />);
+    // the other three sides stay border-input; only the bottom edge is the
+    // darker NeutralStrokeAccessible accent at rest (Fluent field signature)
+    expect(screen.getByRole("textbox")).toHaveClass(
+      "border-input",
+      "border-b-stroke-accessible"
+    );
+  });
+
   // --- interaction ------------------------------------------------------------
   it("accepts typed input via user-event", async () => {
     const user = userEvent.setup();

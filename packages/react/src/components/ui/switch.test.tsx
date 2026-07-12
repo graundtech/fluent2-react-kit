@@ -126,6 +126,31 @@ describe("Switch", () => {
     expect(control).toHaveAttribute("aria-checked", "false");
   });
 
+  // --- Fluent accessible-stroke track + interaction ramp --------------------
+
+  it("outlines the off-track with the accessible-stroke ramp (not border-input)", () => {
+    render(<Switch aria-label="Ramp" />);
+    const control = screen.getByRole("switch");
+    expect(control).toHaveClass(
+      "border-stroke-accessible",
+      "hover:border-stroke-accessible-hover",
+      "active:border-stroke-accessible-pressed"
+    );
+    // the retired border-input deviation is gone
+    expect(control.className).not.toContain("border-input");
+  });
+
+  it("steps the on-track through the Compound brand ramp on hover/press", () => {
+    render(<Switch aria-label="Brand ramp" defaultChecked />);
+    const control = screen.getByRole("switch");
+    expect(control).toHaveClass(
+      "data-[checked]:bg-primary",
+      "data-[checked]:hover:bg-brand-70",
+      "data-[checked]:active:bg-brand-60",
+      "dark:data-[checked]:hover:bg-brand-80"
+    );
+  });
+
   // --- className merge --------------------------------------------------------
 
   it("merges a caller className on the root without dropping base classes", () => {

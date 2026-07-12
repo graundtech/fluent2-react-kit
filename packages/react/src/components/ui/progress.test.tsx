@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { Progress } from "./progress";
+import { Progress, progressVariants } from "./progress";
 
 describe("Progress", () => {
   // --- structure / slots -------------------------------------------------
@@ -26,6 +26,40 @@ describe("Progress", () => {
     const indicator = container.querySelector('[data-slot="progress-indicator"]');
     expect(indicator).toBeInTheDocument();
     expect(indicator).toHaveClass("bg-primary", "rounded-full");
+  });
+
+  // --- intent variants (Fluent State axis) --------------------------------
+
+  it("defaults to the default (brand) intent variant", () => {
+    const { container } = render(<Progress aria-label="Upload" value={50} />);
+    const root = screen.getByRole("progressbar");
+    expect(root).toHaveAttribute("data-variant", "default");
+    expect(
+      container.querySelector('[data-slot="progress-indicator"]')
+    ).toHaveClass("bg-primary");
+  });
+
+  it.each([
+    ["default", "bg-primary"],
+    ["success", "bg-success"],
+    ["warning", "bg-warning"],
+    ["destructive", "bg-destructive"],
+  ] as const)("variant=%s paints the indicator %s", (variant, signature) => {
+    const { container } = render(
+      <Progress aria-label="Upload" value={50} variant={variant} />
+    );
+    const root = screen.getByRole("progressbar");
+    expect(root).toHaveAttribute("data-variant", variant);
+    const indicator = container.querySelector(
+      '[data-slot="progress-indicator"]'
+    );
+    expect(indicator).toHaveClass(signature, "rounded-full");
+  });
+
+  it("exports progressVariants returning a class string", () => {
+    const classes = progressVariants({ variant: "success" });
+    expect(typeof classes).toBe("string");
+    expect(classes).toContain("bg-success");
   });
 
   // --- determinate: aria-valuenow + indicator width -----------------------

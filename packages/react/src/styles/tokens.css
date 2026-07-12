@@ -108,6 +108,26 @@
   --destructive-border: #f1bbbc;
   --destructive-text: #b10e1c;     /* AA-safe destructive text on light surfaces (Fluent red foreground) */
 
+  /* --- accessible interactive stroke (Fluent NeutralStrokeAccessible ramp) -
+     The signature outline for interactive controls: checkbox/radio/switch
+     rest borders and the input/select resting bottom edge. Kept as a SEPARATE
+     alias from --muted-foreground for stroke semantics, even though the light
+     rest value is the same hex. Rest -> Hover -> Pressed darkens (more
+     contrast on interaction) to mirror Fluent's Rest/Hover/Pressed states. */
+  --stroke-accessible: #616161;          /* NeutralStrokeAccessible.Rest  (= --muted-foreground) */
+  --stroke-accessible-hover: #575757;    /* NeutralStrokeAccessible.Hover */
+  --stroke-accessible-pressed: #4d4d4d;  /* NeutralStrokeAccessible.Pressed */
+
+  /* --- badge warning (Fluent bright-orange chip) --------------------------
+     Fluent's Badge Warning fill is a brighter orange than --warning
+     (darkOrange) and pairs with dark static text — the opposite foreground
+     polarity from --warning's white text. Both are Fluent Static tokens
+     (WarningBackground3 / NeutralForeground1Static): #242424 on #f7630c is
+     ~4.98:1, clearing AA. A dedicated pair (not --warning) so Alert's
+     darkOrange fill stays put. See docs/design/tokens-research.md §12.9. */
+  --warning-badge: #f7630c;
+  --warning-badge-foreground: #242424;
+
   /* --- elevation / shadows ------------------------------------------------ */
   --shadow-ambient: rgba(0, 0, 0, 0.12);
   --shadow-key: rgba(0, 0, 0, 0.14);
@@ -224,6 +244,20 @@
   --destructive-border: #9f282b;
   --destructive-text: #ff9a90;     /* AA-safe destructive text on dark surfaces (lightened red) */
 
+  /* --- accessible interactive stroke (dark) — no dark Figma frame exists for
+     these, so hover/pressed are derived: dark neutrals brighten on
+     interaction, so each step is lighter than rest (rest = --muted-foreground
+     dark). */
+  --stroke-accessible: #adadad;          /* grey[68] (= --muted-foreground) */
+  --stroke-accessible-hover: #b3b3b3;    /* [D] derived — one step brighter */
+  --stroke-accessible-pressed: #bdbdbd;  /* [D] derived — brightest (grey[75]) */
+
+  /* --- badge warning (dark) — both tokens are Fluent Static, kept identical
+     across themes; the chip is self-contained (#242424 on #f7630c ~4.98:1
+     clears AA in both themes). */
+  --warning-badge: #f7630c;
+  --warning-badge-foreground: #242424;
+
   /* --- elevation primitives (composite strings inherit via var()) --------- */
   --shadow-ambient: rgba(0, 0, 0, 0.24);
   --shadow-key: rgba(0, 0, 0, 0.28);
@@ -314,6 +348,15 @@
   --warning-border: CanvasText;
   --destructive-text: CanvasText;
   --warning-text: CanvasText;
+
+  /* Interactive control strokes -> CanvasText so every outline stays visible;
+     the badge-warning chip collapses to a Canvas surface with CanvasText ink
+     (status conveyed by text, never color alone — checklist §5). */
+  --stroke-accessible: CanvasText;
+  --stroke-accessible-hover: CanvasText;
+  --stroke-accessible-pressed: CanvasText;
+  --warning-badge: Canvas;
+  --warning-badge-foreground: CanvasText;
 
   /* Alert's `info` variant and Avatar's initials fallback tint with the raw
      brand ramp (no dedicated status token), so the specific stops they use as
@@ -420,6 +463,11 @@
   --color-destructive-subtle: var(--destructive-subtle);
   --color-destructive-border: var(--destructive-border);
   --color-destructive-text: var(--destructive-text);
+  --color-stroke-accessible: var(--stroke-accessible);
+  --color-stroke-accessible-hover: var(--stroke-accessible-hover);
+  --color-stroke-accessible-pressed: var(--stroke-accessible-pressed);
+  --color-warning-badge: var(--warning-badge);
+  --color-warning-badge-foreground: var(--warning-badge-foreground);
 
   /* brand ramp → bg-brand-80, text-brand-160, etc. */
   --color-brand-10: var(--brand-10);

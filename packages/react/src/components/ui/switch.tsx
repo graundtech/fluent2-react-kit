@@ -36,12 +36,17 @@ import { cn } from "../../lib/utils";
  * 14px (`size-3.5`) thumb specified for this component, leaving a visible
  * ~2px gap, which reads cleanly at this track size. Fluent's *unchecked*
  * track is outlined + transparent (measured: 1px solid `#616161`, background
- * transparent) — NOT gray-filled like shadcn's default Radix
- * implementation (`data-[state=unchecked]:bg-input`). This kit follows
- * Fluent here (documented deviation from shadcn, see the class comments
- * below). The *checked* track measured exactly `#0f6cbd` — this kit's
- * `--primary`/`bg-primary` token — with a white thumb (`#ffffff`, this kit's
- * `--primary-foreground` token in both themes).
+ * transparent) — NOT gray-filled like shadcn's default Radix implementation
+ * (`data-[state=unchecked]:bg-input`). This kit now binds that outline to the
+ * `NeutralStrokeAccessible` ramp (`border-stroke-accessible` = `#616161` rest,
+ * `#575757` hover, `#4d4d4d` pressed): spec-true to the measured Fluent value,
+ * so this is no longer the earlier `border-input` (`#d1d1d1`) substitution —
+ * that documented deviation is retired. The *checked* track measured exactly
+ * `#0f6cbd` — this kit's `--primary`/`bg-primary` token — with a white thumb
+ * (`#ffffff`, this kit's `--primary-foreground` token in both themes); on
+ * hover/press the on-track steps through Fluent's `CompoundBrandBackground`
+ * (border+fill `brand-70`/`brand-60`; dark hover `brand-80`), mirroring
+ * Button's per-theme brand ramp (conventions §4).
  *
  * The prop surface (`Switch`, `checked`/`defaultChecked`/`onCheckedChange`,
  * no `size` prop) follows the classic shadcn/ui switch API. Note Base UI's
@@ -63,14 +68,15 @@ function Switch({
         "inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full border px-0.5",
         // motion — border/bg color transition on check/uncheck
         "outline-none transition-colors duration-fast ease-ease",
-        // off (unchecked) — Fluent's outlined/transparent track (measured),
-        // reusing the kit's standard neutral-outline token (conventions §4
-        // "outline" recipe) rather than Fluent's literal darker measured
-        // border (`#616161`/muted-foreground) or shadcn's gray-filled
-        // `bg-input` default — documented deviation, see file header.
-        "border-input bg-transparent",
-        // on (checked) — brand fill, matches Fluent's measured `#0f6cbd`
-        "data-[checked]:border-primary data-[checked]:bg-primary",
+        // off (unchecked) — Fluent's outlined/transparent track, bound to the
+        // NeutralStrokeAccessible ramp (spec-true measured #616161 rest ->
+        // #575757 hover -> #4d4d4d pressed), see file header.
+        "border-stroke-accessible bg-transparent hover:border-stroke-accessible-hover active:border-stroke-accessible-pressed",
+        // on (checked) — brand fill (Fluent CompoundBrandBackground), stepping
+        // border+fill through Hover/Pressed; dark hover brightens to brand-80.
+        // The data-[checked]:hover/active selectors outrank the neutral
+        // hover/active border by specificity so the on-track stays brand.
+        "data-[checked]:border-primary data-[checked]:bg-primary data-[checked]:hover:border-brand-70 data-[checked]:hover:bg-brand-70 data-[checked]:active:border-brand-60 data-[checked]:active:bg-brand-60 dark:data-[checked]:hover:border-brand-80 dark:data-[checked]:hover:bg-brand-80",
         // focus — Fluent double-stroke approximation (conventions §4)
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         // invalid — shadcn aria-invalid treatment (conventions §4); harmless

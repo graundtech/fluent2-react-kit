@@ -45,8 +45,13 @@ function Input({ className, ...props }: ComponentProps<"input">) {
     <input
       data-slot="input"
       className={cn(
-        // layout — Fluent medium field, 32px height
-        "flex h-8 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1 text-sm",
+        // layout — Fluent medium field, 32px height. The resting bottom edge
+        // is the darker NeutralStrokeAccessible (#616161) while the other three
+        // sides stay border-input (#d1d1d1) — Fluent's signature field accent.
+        // On focus, border-primary paints all sides (and the inset underline
+        // covers this); aria-invalid's border-destructive likewise wins by
+        // specificity, so the darker bottom only shows at rest.
+        "flex h-8 w-full min-w-0 rounded-md border border-input border-b-stroke-accessible bg-background px-3 py-1 text-sm",
         // placeholder / text selection
         "placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground",
         // file input button (shadcn parity)

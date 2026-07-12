@@ -59,7 +59,25 @@ describe("Link", () => {
       </Link>
     );
     const link = screen.getByRole("link");
-    expect(link).toHaveClass("w-full", "custom-x", "text-primary");
+    expect(link).toHaveClass("w-full", "custom-x", "text-brand-70");
+  });
+
+  // --- Fluent BrandForegroundLink ramp (one step darker than the old set) ----
+  it("carries the Fluent link color ramp (rest brand-70 → hover brand-60 → pressed brand-50)", () => {
+    render(<Link href="/docs">Ramped</Link>);
+    const link = screen.getByRole("link");
+    expect(link).toHaveClass(
+      "text-brand-70",
+      "hover:text-brand-60",
+      "active:text-brand-50",
+      "dark:text-brand-100",
+      "dark:hover:text-brand-110",
+      "dark:active:text-brand-120",
+      "font-normal"
+    );
+    // the previous one-step-lighter ramp is gone
+    expect(link.className).not.toContain("text-primary");
+    expect(link.className).not.toContain("font-medium");
   });
 
   // --- interaction ------------------------------------------------------------
@@ -140,7 +158,7 @@ describe("Link", () => {
     // the anchor's own prop survives
     expect(link).toHaveAttribute("href", "/dashboard");
     // link variant classes are merged onto the child
-    expect(link).toHaveClass("underline", "text-primary");
+    expect(link).toHaveClass("underline", "text-brand-70");
     // slot data-hooks + arbitrary props flow through
     expect(link).toHaveAttribute("data-slot", "link");
     expect(link).toHaveAttribute("data-extra", "yes");
@@ -170,7 +188,7 @@ describe("Link", () => {
 
     const button = screen.getByRole("button", { name: "Custom" });
     expect(button).toHaveAttribute("data-slot", "link");
-    expect(button).toHaveClass("text-primary");
+    expect(button).toHaveClass("text-brand-70");
   });
 
   // --- linkVariants export -----------------------------------------------------

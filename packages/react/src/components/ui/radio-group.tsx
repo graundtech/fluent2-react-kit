@@ -49,7 +49,20 @@ import { cn } from "../../lib/utils";
  * `@fluentui/react-icons` for this would add a dependency for no visual
  * gain). `Radio.Indicator` only mounts while the radio is checked (Base UI
  * unmounts it otherwise, per `RadioIndicator.js`'s `shouldRender` check), so
- * the dot itself needs no extra checked-conditional styling.
+ * the dot itself needs no extra checked-conditional styling — but it does
+ * ramp its color alongside the ring (see below).
+ *
+ * Borders + interaction ramp: the unchecked ring outlines with Fluent's
+ * `NeutralStrokeAccessible` ramp — rest `#616161` (`border-stroke-accessible`),
+ * hover `#575757`, pressed `#4d4d4d` — the higher-contrast neutral spec for
+ * interactive control outlines (extracted from the Figma radio), NOT the
+ * lighter `border-input` grey the item previously used. When checked, the ring
+ * (border) and dot step through `CompoundBrandStroke`/`CompoundBrandForeground1`
+ * Hover/Pressed (`brand-70`/`brand-60`; dark hover `brand-80`), mirroring
+ * Button's per-theme brand ramp (conventions §4). The ring uses
+ * `data-[checked]:hover:`/`:active:` (which outrank the neutral hover/active
+ * border by specificity); the dot, having no `data-checked` of its own, rides
+ * the root's `group` hover/press instead.
  *
  * States: `data-checked`/`data-unchecked` and `data-disabled` are Base UI's
  * own presence attributes on `Radio.Root`'s rendered `<span>` (see
@@ -97,12 +110,18 @@ function RadioGroupItem({
     <Radio.Root
       data-slot="radio-group-item"
       className={cn(
-        // layout — Fluent 16px circle
-        "aspect-square size-4 shrink-0 cursor-pointer rounded-full border border-input bg-background",
+        // layout — Fluent 16px circle. `group` lets the checked dot (a child
+        // span) pick up the root's hover/press to ramp alongside the ring.
+        "group aspect-square size-4 shrink-0 cursor-pointer rounded-full border bg-background",
         // motion
         "outline-none transition-colors duration-fast ease-ease",
-        // checked — Fluent brand ring (the dot itself lives in the indicator)
-        "data-[checked]:border-primary",
+        // unchecked — Fluent NeutralStrokeAccessible rest/hover/pressed ramp
+        "border-stroke-accessible hover:border-stroke-accessible-hover active:border-stroke-accessible-pressed",
+        // checked — Fluent brand ring (the dot itself lives in the indicator),
+        // stepping through CompoundBrandStroke Hover/Pressed; dark hover
+        // brightens to brand-80 (Button's per-theme ramp). These outrank the
+        // neutral hover/active border by specificity so the ring stays brand.
+        "data-[checked]:border-primary data-[checked]:hover:border-brand-70 data-[checked]:active:border-brand-60 dark:data-[checked]:hover:border-brand-80",
         // disabled — opacity-based (conventions §4), re-expressed against
         // Base UI's data-disabled presence attribute (this renders a
         // <span>, not a native disableable element)
@@ -119,7 +138,9 @@ function RadioGroupItem({
         data-slot="radio-group-indicator"
         className="flex items-center justify-center"
       >
-        <span className="size-2 rounded-full bg-primary" />
+        {/* dot — brand fill, ramping with the ring via the root's `group`
+            hover/press (CompoundBrandForeground1 Hover/Pressed). */}
+        <span className="size-2 rounded-full bg-primary transition-colors duration-fast ease-ease group-hover:bg-brand-70 group-active:bg-brand-60 dark:group-hover:bg-brand-80" />
       </Radio.Indicator>
     </Radio.Root>
   );

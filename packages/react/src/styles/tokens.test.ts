@@ -152,6 +152,51 @@ describe("tokens.css structure", () => {
     }
   });
 
+  it("defines the accessible-stroke ramp under :root and re-points it in dark", () => {
+    for (const name of [
+      "--stroke-accessible",
+      "--stroke-accessible-hover",
+      "--stroke-accessible-pressed"
+    ]) {
+      expect(rootBlock, `:root is missing ${name}`).toContain(`${name}:`);
+      expect(darkBlock, `.dark is missing ${name}`).toContain(`${name}:`);
+    }
+    expect(rootBlock).toContain("--stroke-accessible: #616161");
+    expect(darkBlock).toContain("--stroke-accessible: #adadad");
+  });
+
+  it("defines the badge-warning token pair (bright-orange chip, dark static text)", () => {
+    expect(rootBlock).toContain("--warning-badge: #f7630c");
+    expect(rootBlock).toContain("--warning-badge-foreground: #242424");
+  });
+
+  it("bridges the new stroke/badge tokens through the Tailwind @theme layer", () => {
+    for (const name of [
+      "--color-stroke-accessible",
+      "--color-stroke-accessible-hover",
+      "--color-stroke-accessible-pressed",
+      "--color-warning-badge",
+      "--color-warning-badge-foreground"
+    ]) {
+      expect(css, `@theme is missing ${name}`).toContain(`${name}:`);
+    }
+  });
+
+  it("remaps the accessible-stroke ramp to CanvasText under .high-contrast", () => {
+    const hcBlock = firstBlock(".high-contrast");
+    for (const name of [
+      "--stroke-accessible",
+      "--stroke-accessible-hover",
+      "--stroke-accessible-pressed"
+    ]) {
+      expect(hcBlock, `.high-contrast missing ${name}`).toContain(
+        `${name}: CanvasText;`
+      );
+    }
+    expect(hcBlock).toContain("--warning-badge: Canvas;");
+    expect(hcBlock).toContain("--warning-badge-foreground: CanvasText;");
+  });
+
   it("declares the radius base and derived scale", () => {
     expect(rootBlock).toContain("--radius: 6px");
     expect(css).toContain("--radius-md: calc(var(--radius) - 2px)");

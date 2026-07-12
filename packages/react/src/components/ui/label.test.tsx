@@ -60,7 +60,9 @@ describe("Label", () => {
       </Label>
     );
     const label = screen.getByText("Email");
-    expect(label).toHaveClass("custom-x", "text-sm", "font-semibold");
+    expect(label).toHaveClass("custom-x", "text-sm", "font-normal");
+    // Fluent default is Regular (400), not Semibold — see label.tsx doc comment
+    expect(label).not.toHaveClass("font-semibold");
   });
 
   // --- ref ------------------------------------------------------------------------

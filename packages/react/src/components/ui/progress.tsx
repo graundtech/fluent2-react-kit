@@ -1,4 +1,5 @@
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress";
+import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 
 import { cn } from "../../lib/utils";
@@ -33,7 +34,19 @@ import { cn } from "../../lib/utils";
  * other height) can override via `className` (`cn` + tailwind-merge resolve
  * the conflict, last utility wins). Track is `bg-secondary` (flat neutral
  * fill) with `rounded-full overflow-hidden`; the indicator is `bg-primary`,
- * also `rounded-full`, and its width is driven by Base UI's own computed
+ * also `rounded-full`.
+ *
+ * Intent variants: Fluent's ProgressBar ships a `State` axis (Default/Success/
+ * Error/Warning), so `Progress` exposes a matching `variant` prop
+ * (`default`/`success`/`warning`/`destructive`) via `progressVariants` — a
+ * `cva` on the indicator sub-part, the same precedent `spinner.tsx` sets by
+ * putting its `cva` on the inner glyph. `success` (`bg-success` `#107c10`) and
+ * `warning` (`bg-warning` `#da3b01`) are exact hex matches to Fluent's
+ * Success/Warning `State`. `destructive` reuses `bg-destructive` (`#d13438`)
+ * rather than Fluent's filled-status `#c50f1f`: this kit standardizes on one
+ * destructive red across Badge/Progress/Label per the single-red policy
+ * (docs/design/tokens-research.md §12.9), keeping consistency over a one-off
+ * fifth red token. The indicator width is driven by Base UI's own computed
  * `style.width` percentage (`ProgressIndicator` reads `value`/`min`/`max`
  * from context and sets `width: ${percent}%` — this is "the cleaner" of the
  * two width strategies the spec allows: it needs no manual percent math on
@@ -67,21 +80,41 @@ import { cn } from "../../lib/utils";
  * `...props`) or compose Base UI's own `Progress.Label` alongside this
  * component — consumers must supply one or the other.
  */
+const progressVariants = cva(
+  "h-full rounded-full transition-[width] duration-normal ease-ease",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary",
+        success: "bg-success",
+        warning: "bg-warning",
+        destructive: "bg-destructive",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
 function Progress({
   className,
   value,
+  variant = "default",
   ...props
-}: Omit<ComponentProps<typeof ProgressPrimitive.Root>, "value"> & {
-  /**
-   * 0–100 (relative to `min`/`max`, both default 0/100). Omit or pass `null`
-   * for the indeterminate state — Base UI's Root then correctly omits
-   * `aria-valuenow` and this wrapper renders the pulsing stand-in indicator.
-   */
-  value?: number | null;
-}) {
+}: Omit<ComponentProps<typeof ProgressPrimitive.Root>, "value"> &
+  VariantProps<typeof progressVariants> & {
+    /**
+     * 0–100 (relative to `min`/`max`, both default 0/100). Omit or pass `null`
+     * for the indeterminate state — Base UI's Root then correctly omits
+     * `aria-valuenow` and this wrapper renders the pulsing stand-in indicator.
+     */
+    value?: number | null;
+  }) {
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
+      data-variant={variant}
       value={value ?? null}
       className={cn(
         "relative h-0.5 w-full overflow-hidden rounded-full bg-secondary",
@@ -96,7 +129,7 @@ function Progress({
         <ProgressPrimitive.Indicator
           data-slot="progress-indicator"
           className={cn(
-            "h-full rounded-full bg-primary transition-[width] duration-normal ease-ease",
+            progressVariants({ variant }),
             value == null && "w-1/3 animate-pulse motion-reduce:animate-none"
           )}
         />
@@ -105,4 +138,4 @@ function Progress({
   );
 }
 
-export { Progress };
+export { Progress, progressVariants };

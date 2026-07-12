@@ -26,12 +26,33 @@ describe("Badge", () => {
     ["destructive", "bg-destructive"],
     ["outline", "bg-transparent"],
     ["success", "bg-success"],
-    ["warning", "bg-warning"],
+    ["warning", "bg-warning-badge"],
   ] as const)("variant=%s applies %s", (variant, signature) => {
     render(<Badge variant={variant}>B</Badge>);
     const badge = screen.getByText("B");
     expect(badge).toHaveClass(signature);
     expect(badge).toHaveAttribute("data-variant", variant);
+  });
+
+  // --- geometry: Fluent 4px chip, 4px padding, 10px caption-2 -----------------
+  it("uses the Fluent 4px-chip geometry (rounded-md, px-1, 10px caption-2), not a pill", () => {
+    render(<Badge>Chip</Badge>);
+    const badge = screen.getByText("Chip");
+    expect(badge).toHaveClass("rounded-md", "px-1", "h-5");
+    // 10px/14px Caption 2 Strong — arbitrary length is twMerge-safe (see badge.tsx)
+    expect(badge.className).toContain("text-[10px]/[14px]");
+    expect(badge.className).not.toContain("rounded-full");
+    expect(badge.className).not.toContain("text-xs");
+  });
+
+  // --- warning polarity: bright-orange chip + dark static text ----------------
+  it("gives the warning variant the dedicated bright-orange/dark-text token pair", () => {
+    render(<Badge variant="warning">Warn</Badge>);
+    const badge = screen.getByText("Warn");
+    expect(badge).toHaveClass("bg-warning-badge", "text-warning-badge-foreground");
+    // not the darkOrange fill + white text that --warning would give
+    expect(badge.className).not.toContain("bg-warning ");
+    expect(badge.className).not.toContain("text-warning-foreground");
   });
 
   it("merges a caller-provided className without dropping variant classes", () => {
@@ -71,7 +92,7 @@ describe("Badge", () => {
     // the anchor's own prop survives
     expect(link).toHaveAttribute("href", "/releases");
     // badge variant classes are merged onto the anchor
-    expect(link).toHaveClass("bg-transparent", "rounded-full");
+    expect(link).toHaveClass("bg-transparent", "rounded-md");
     // slot data-hooks + arbitrary props flow through
     expect(link).toHaveAttribute("data-slot", "badge");
     expect(link).toHaveAttribute("data-extra", "yes");

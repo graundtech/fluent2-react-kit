@@ -27,7 +27,7 @@ function DummyIcon(props: { "data-testid"?: string }) {
 }
 
 const VARIANTS = [
-  ["default", "bg-card"],
+  ["default", "bg-secondary"],
   ["destructive", "bg-destructive-subtle"],
   ["success", "bg-success-subtle"],
   ["warning", "bg-warning-subtle"],
@@ -58,7 +58,10 @@ describe("Alert", () => {
   it("defaults to the default variant", () => {
     render(<Alert>Default</Alert>);
     const alert = screen.getByRole("alert");
-    expect(alert).toHaveClass("bg-card");
+    // Fluent Informative grey fill (bg-secondary), not bg-card — see alert.tsx
+    // doc comment for why bg-card fails to read as a tinted surface in light.
+    expect(alert).toHaveClass("bg-secondary");
+    expect(alert).not.toHaveClass("bg-card");
     expect(alert).toHaveAttribute("data-variant", "default");
   });
 

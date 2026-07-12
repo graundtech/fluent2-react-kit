@@ -133,6 +133,31 @@ describe("Checkbox", () => {
     expect(checkbox).toHaveAttribute("aria-checked", "false");
   });
 
+  // --- Fluent accessible-stroke border + interaction ramp -----------------
+
+  it("outlines the unchecked box with the accessible-stroke rest/hover/pressed ramp", () => {
+    render(<Checkbox aria-label="Ramp" />);
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).toHaveClass(
+      "border-stroke-accessible",
+      "hover:border-stroke-accessible-hover",
+      "active:border-stroke-accessible-pressed"
+    );
+    // the old lighter border-input grey is gone
+    expect(checkbox.className).not.toContain("border-input");
+  });
+
+  it("steps the checked fill through the Compound brand ramp on hover/press", () => {
+    render(<Checkbox aria-label="Brand ramp" defaultChecked />);
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).toHaveClass(
+      "data-[checked]:bg-primary",
+      "data-[checked]:hover:bg-brand-70",
+      "data-[checked]:active:bg-brand-60",
+      "dark:data-[checked]:hover:bg-brand-80"
+    );
+  });
+
   // --- className merge ----------------------------------------------------------
 
   it("merges a caller-provided className without dropping base classes", () => {

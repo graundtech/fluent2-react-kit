@@ -7,13 +7,19 @@ import { cn } from "../../lib/utils";
  * Spinner — Fluent 2-styled, shadcn-API loading indicator.
  *
  * Fluent 2's spinner is a rotating brand-colored ARC (not a full ring). It is
- * drawn as an inline SVG: a faint full-circle "track" in `text-muted-foreground`
- * plus a shorter, round-capped arc in `text-primary` (brand). The whole SVG
- * spins via `animate-spin`; because only the arc has visible stroke, rotating
- * the (rotationally symmetric) track alongside it is visually inert — only the
- * arc appears to move. The track is our own addition — Fluent's spec allows
- * for it and it matches the reference visual — flagged here as a deliberate
- * choice rather than a strict reproduction.
+ * drawn as an inline SVG: a faint full-circle "track" plus a shorter,
+ * round-capped arc in `text-primary` (brand). The whole SVG spins via
+ * `animate-spin`; because only the arc has visible stroke, rotating the
+ * (rotationally symmetric) track alongside it is visually inert — only the arc
+ * appears to move.
+ *
+ * Track color: Fluent's Primary spinner track is `BrandStroke2Contrast.Rest`
+ * = `#b4d6fa`, which is this kit's `--brand-140` exactly — a pale *blue* tint,
+ * not the neutral grey an earlier version used. So the track is
+ * `text-brand-140`. Dark: the Figma file had only a light frame, so the dark
+ * pairing is derived — `dark:text-brand-40` (a low, subtle brand stop) keeps
+ * the track a faint blue that reads clearly *behind* the arc without colliding
+ * with the arc's own dark color (`--primary` = `brand-70` in dark).
  *
  * Sizes map 1:1 onto Tailwind's `size-*` scale so the numbers in the spec
  * line up exactly: sm=16px (`size-4`), default=24px (`size-6`), lg=32px
@@ -90,14 +96,15 @@ function Spinner({
         aria-hidden="true"
         className={spinnerVariants({ size })}
       >
-        {/* faint full-circle track */}
+        {/* faint full-circle track — Fluent BrandStroke2Contrast (#b4d6fa =
+            brand-140); dark derived to a low brand stop (see doc comment) */}
         <circle
           cx="8"
           cy="8"
           r="7"
           stroke="currentColor"
           strokeWidth="2"
-          className="text-muted-foreground/25"
+          className="text-brand-140 dark:text-brand-40"
         />
         {/* rotating brand arc — ~100° of the circle, round-capped */}
         <circle

@@ -398,7 +398,7 @@ describe("Select", () => {
     );
     await openWithKeyboard(user);
     const item = screen.getByRole("option", { name: "Apple" });
-    expect(item).toHaveClass("custom-item", "rounded-sm", "h-8");
+    expect(item).toHaveClass("custom-item", "rounded-md", "h-8");
   });
 
   // --- accessibility -------------------------------------------------------

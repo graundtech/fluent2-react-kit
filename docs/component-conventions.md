@@ -221,6 +221,31 @@ shadcn does:
 
 **Destructive:** `bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80 focus-visible:ring-destructive` (there is no red ramp; opacity gives the state step and the ring turns red).
 
+**Control stroke + interaction ramp** (selectable controls with an outlined
+unchecked state that fills brand when on — checkbox, radio, switch). The
+unchecked outline uses Fluent's `NeutralStrokeAccessible` ramp
+(`--stroke-accessible` `#616161` rest → `#575757` hover → `#4d4d4d` pressed;
+dark `#adadad`/`#b3b3b3`/`#bdbdbd`), **not** `border-input` — that lighter grey
+reads too faint for an interactive control outline. When checked, the control
+fills brand and its border+fill step through the Compound brand ramp on
+hover/press. Exact strings, from `checkbox.tsx`:
+
+```
+border-stroke-accessible hover:border-stroke-accessible-hover active:border-stroke-accessible-pressed
+data-[checked]:border-primary data-[checked]:bg-primary
+data-[checked]:hover:border-brand-70 data-[checked]:hover:bg-brand-70 data-[checked]:active:border-brand-60 data-[checked]:active:bg-brand-60 dark:data-[checked]:hover:border-brand-80 dark:data-[checked]:hover:bg-brand-80
+```
+
+The `data-[checked]:hover:`/`:active:` selectors carry more specificity than the
+plain `hover:`/`active:` neutral-border ones, so the checked state always wins
+its border on hover — no source-order fragility. Radio omits the `bg-*` fills
+(its checked state is a ring + centered dot, so only `border-*` ramps; the dot,
+having no `data-checked` of its own, rides the root's `group` hover/press).
+Switch adds the same recipe on its track. The related `--stroke-accessible`
+family also paints the resting **bottom** edge of typed-into fields
+(`Input`/`Select` trigger) via `border-b-stroke-accessible`, Fluent's signature
+darker field underline at rest (focus/`aria-invalid` override it).
+
 **Field focus (Fluent bottom accent)** — the sanctioned per-component deviation
 from the offset ring, for field-like controls (`Input`, `Textarea`, `Select`).
 It paints a 2px brand underline *inside* the border box via an inset box-shadow

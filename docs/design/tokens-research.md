@@ -602,3 +602,10 @@ All eight open questions above are resolved by accepting the stated recommendati
 6. Variables are **authored in hex** (canonical). OKLCH columns remain reference-only.
 7. **System font stack**, no bundled/self-hosted Segoe UI.
 8. Motion exposed as **both** custom properties and Tailwind utilities.
+9. **Single destructive red.** Fluent uses two reds across components — `#d13438`
+   (red primary) and `#c50f1f` (filled-status red, e.g. ProgressBar Error, Badge
+   Danger, Label required-asterisk in the Figma source). This kit standardizes on
+   `#d13438` (`--destructive`) for **all** destructive/danger fills (Badge
+   `destructive`, Progress `destructive`, Label required asterisk): one token, one
+   red. Documented per-component in the Figma validation reports; the `#c50f1f`
+   filled-status red is intentionally not introduced as a fifth red token.

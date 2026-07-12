@@ -37,8 +37,14 @@ import { cn } from "../../lib/utils";
  *   consistency with `CardTitle` (also `font-semibold`) elsewhere in this kit.
  *
  * Token usage:
- * - `default`: neutral — `bg-card`/`text-card-foreground` (matches `Card`),
- *   with a muted (not accent-colored) icon.
+ * - `default`: neutral/Informative — `bg-secondary` (`#f5f5f5` light /
+ *   `#333333` dark) with a muted icon, reproducing Fluent's grey-filled
+ *   "Informative" MessageBar surface (an exact hex match to Figma's
+ *   `Status background color`). This is NOT `bg-card`: in light mode `--card`
+ *   is `#ffffff`, identical to the page background, so a `bg-card` alert reads
+ *   as a bare 1px-bordered box rather than the tinted surface every other
+ *   intent (and Fluent's Informative) shows. The border keeps `--border`
+ *   (`#d1d1d1`), matching Figma's Informative stroke.
  * - `destructive` / `success` / `warning`: the status-extension tokens
  *   (`*-subtle` background, `*-border` border) added to tokens.css for this
  *   component. `destructive` and `warning` both intentionally accent with a
@@ -99,7 +105,7 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground [&>svg]:text-muted-foreground",
+        default: "bg-secondary text-foreground [&>svg]:text-muted-foreground",
         destructive:
           "bg-destructive-subtle border-destructive-border text-foreground [&>svg]:text-destructive-text *:data-[slot=alert-title]:text-destructive-text",
         success:
