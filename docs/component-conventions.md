@@ -156,6 +156,14 @@ through Tailwind utilities. Full semantics: `docs/design/tokens-research.md`.
    (default control curve), `ease-max`, `ease-decelerate-*` (enter),
    `ease-accelerate-*` (exit). Reduced motion is handled by the token layer
    automatically — do not add your own `motion-reduce:` duration hacks.
+   **Popup/overlay enter-exit motion** rides Base UI's `data-starting-style`/
+   `data-ending-style` hooks with a scale+fade, and the transition list is
+   always `transition-[opacity,scale]` — **never** `transition-[transform,opacity]`.
+   Tailwind v4 emits `scale-*`/`translate-*` as the independent `scale:`/
+   `translate:` CSS properties (not `transform:`), so a `transform`-based list
+   leaves the zoom snapping instead of animating; this shipped broken in four
+   components before transition instrumentation caught it. Rationale and the
+   translate/scale coexistence note live in `dialog.tsx`'s doc comment.
 6. **Elevation:** Fluent controls are **flat**. Use `shadow-8`/`shadow-16`/
    `shadow-28`/`shadow-64` only for genuinely floating surfaces (popover, dialog,
    drawer). Buttons, inputs, cards-at-rest carry no shadow.
