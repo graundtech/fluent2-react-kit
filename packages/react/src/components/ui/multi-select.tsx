@@ -65,8 +65,8 @@ import {
  *    stays chrome-light. Open with focus + type or `ArrowDown`. Consumers who want
  *    a clear-all/chevron can compose `@base-ui/react/combobox`'s `Clear`/`Trigger`
  *    directly.
- * 4. **Chip visuals are Badge-adjacent, not `Badge`.** A chip is `bg-secondary`
- *    `text-secondary-foreground`, `rounded-sm`, `h-6`, `px-1.5`, `text-xs` — the
+ * 4. **Chip visuals are Fluent Tag (Small, Filled), Badge-adjacent.** A chip is
+ *    `bg-secondary` `text-foreground-2`, `rounded-md`, `h-6`, `px-1.5`, `text-xs` — the
  *    neutral filled look of `Badge variant="secondary"` but sized for an inline
  *    token (Badge is a static 20px caption chip; a removable token needs the extra
  *    height + a trailing dismiss target). The remove button hover is
@@ -122,8 +122,10 @@ function MultiSelectChip({
     <ComboboxPrimitive.Chip
       data-slot="multi-select-chip"
       className={cn(
-        // Badge-adjacent neutral token, sized for an inline removable chip
-        "inline-flex h-6 items-center gap-1 rounded-sm bg-secondary px-1.5 text-xs text-secondary-foreground select-none",
+        // Fluent Tag (Small, Filled): 24px, #f5f5f5 fill, 4px radius
+        // (rounded-md), Caption-1 text in NeutralForeground2 (text-foreground-2)
+        // — exact token values from Figma validation pass 3, node 9112:10360.
+        "inline-flex h-6 items-center gap-1 rounded-md bg-secondary px-1.5 text-xs text-foreground-2 select-none",
         // highlighted (chip keyboard focus) + disabled
         "data-[highlighted]:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className

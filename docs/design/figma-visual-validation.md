@@ -450,3 +450,45 @@ components shipped after pass 1. Same disclaimer applies.
   `popover-foreground`; now expressible via `--foreground-2`, deferred to keep
   Menu/Select consistent until both are changed together.
 - Breadcrumb size axis (Large 16px / Medium 14px / Small 12px).
+
+---
+
+# Pass 3 — v0.5.0 filter-list family (2026-07-12)
+
+**Method:** same as passes 1–2 (Figma desktop Dev Mode MCP), three parallel
+validation agents over `combobox`, `multi-select`, and `command`. One caveat:
+the Figma MCP hit its daily rate limit during the Multi Select run — two
+checks are flagged as open follow-ups rather than silently assumed.
+
+## Summary
+
+| Component | Figma reference | Verdict (pre-fix) | Findings | Status |
+|---|---|---|---|---|
+| Combobox | `8911:3194` "Dropdown" | MATCH | **No Combobox symbol family exists in this kit file** — the page is Dropdown-only (verified symbol-by-symbol; `9159:2483`/`9159:2507`). All shared chrome (field, popup, expanded-state blue bottom accent) reconfirmed against the pass-1-validated recipes. The Clear ✕ / chevron-trigger affordances are kit-original API decisions with no Figma reference to adjudicate. | No change |
+| Multi Select | `8995:10` "Tag picker" + `8934:20` "Tag & Interaction tag" | MINOR (2) | Chip height/fill/type EXACT matches (24px, `#f5f5f5`, Caption 1 — node `9112:10360`); chip text was `#242424` vs Fluent's `NeutralForeground2` `#424242`; chip radius was 2px (`rounded-sm`) vs Fluent's 4px | **Fixed** (P3-M2) |
+| Command | `8995:7` "SearchBox" (composite — no Fluent command-palette exists) | Composite PASS, 1 MAJOR | `CommandGroup` heading had drifted from the pass-2 `DropdownMenuLabel` fix (still `font-medium text-muted-foreground`) — intra-kit inconsistency; input-row height (44px vs SearchBox's 32/40px) and borderless row are documented palette-context divergences with Fluent precedent (Transparent SearchBox variant, `9315:3052`) | **Fixed** (P3-M1) |
+
+## Fixes applied
+
+- **P3-M1 Command group heading** — `command.tsx` GroupLabel →
+  `font-bold text-foreground-2`, matching the pass-2-corrected
+  `DropdownMenuLabel` (Fluent Caption 1 Stronger in `NeutralForeground2`).
+  Caught as an intra-kit drift check, not a fresh Figma read.
+- **P3-M2 Multi Select chip** — `rounded-sm` (2px) → `rounded-md` (4px, exact
+  Fluent Tag `Container` radius, existing token) and
+  `text-secondary-foreground` (`#242424`) → `text-foreground-2` (`#424242`,
+  Fluent Tag's `NeutralForeground2.Rest`). Node evidence `9112:10360`.
+
+## Open follow-ups (Figma MCP rate-limited before capture)
+
+- **Chip dismiss ✕ hover tint** — kit uses `hover:text-destructive`; Fluent's
+  `.Secondary action` Hover state (`9112:11155`) was not captured. Re-check
+  when quota resets; if Fluent keeps it neutral, decide keep-vs-align.
+- **Populated tag-picker field layout** — no sampled `TagPicker` symbol shows
+  chips inside the field (all render placeholder text only); the kit's
+  `flex-wrap gap-1 py-1` in-field spacing is unverified. Hunt for a composed
+  populated example in the file on a future pass.
+- Scope gaps (documented, not defects): Fluent Tag ships XS/S/M sizes ×
+  Brand/Outline/Filled styles — kit chip matches Small/Filled only; Fluent's
+  dismiss hit-target is an invisible 32×32 overflow area vs the kit's snug
+  16px button.

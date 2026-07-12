@@ -227,7 +227,7 @@ describe("MultiSelect", () => {
       </MultiSelect>
     );
     const chip = document.querySelector('[data-slot="multi-select-chip"]');
-    expect(chip).toHaveClass("custom-chip", "rounded-sm", "bg-secondary");
+    expect(chip).toHaveClass("custom-chip", "rounded-md", "bg-secondary");
     expect(chip).toHaveTextContent("Apple");
   });
 

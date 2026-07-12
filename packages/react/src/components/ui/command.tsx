@@ -260,7 +260,10 @@ function CommandGroup({
       {heading != null && (
         <AutocompletePrimitive.GroupLabel
           data-slot="command-group-heading"
-          className="px-2 py-1.5 text-xs font-medium text-muted-foreground select-none"
+          // Fluent Menu section header — Caption 1 Stronger (12px bold) in
+          // NeutralForeground2, matching DropdownMenuLabel's pass-2 fix
+          // (Figma validation pass 3 caught this as an intra-kit drift).
+          className="px-2 py-1.5 text-xs font-bold text-foreground-2 select-none"
         >
           {heading}
         </AutocompletePrimitive.GroupLabel>

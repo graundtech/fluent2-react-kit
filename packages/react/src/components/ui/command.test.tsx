@@ -287,7 +287,7 @@ describe("Command", () => {
     );
     expect(headings).toHaveLength(2);
     expect(headings[0]).toHaveTextContent("Files");
-    expect(headings[0]).toHaveClass("text-xs", "text-muted-foreground");
+    expect(headings[0]).toHaveClass("text-xs", "font-bold", "text-foreground-2");
     expect(
       document.querySelector('[data-slot="command-separator"]')
     ).toBeInTheDocument();
