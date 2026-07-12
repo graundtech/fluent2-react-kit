@@ -38,6 +38,8 @@ If your project has no `app/` folder — a common Vite layout where `globals.css
 
 Install `theme` **before** any component item — every component assumes these tokens already exist and will render unstyled (or fall back to browser defaults) without them.
 
+**If you ran `shadcn init` first, clean up your global CSS before relying on this.** `init` seeds `globals.css` with its own competing theme — a `:root`/`.dark`/`@theme inline`/`@custom-variant dark`/`@layer base` set plus `@import "shadcn/tailwind.css";` and `@import "tw-animate-css";` — that defines the same variable names as `tokens.css` and otherwise wins the cascade, silently replacing Fluent blue with shadcn's default gray theme (and the stray `@custom-variant dark` breaks the `.light`-inside-`.dark` guard described below). Delete all of it; your global CSS should end up as just the two `@import` lines above. Full before/after example: [`docs/registry.md`](registry.md#cleaning-up-after-shadcn-init).
+
 ## The layer map
 
 `tokens.css` is organized in the order below (light values on `:root, .light`; dark overrides on `.dark`; then the two high-contrast mechanisms; then the Tailwind bridge):

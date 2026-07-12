@@ -21,17 +21,48 @@ Read the full product vision in [`docs/vision.md`](docs/vision.md).
 
 ### Using the components (consumers)
 
-**Option A — shadcn registry (recommended).** Point the shadcn CLI at this kit's registry to copy component source directly into your project:
+**Option A — shadcn registry (recommended).** Point the shadcn CLI at this kit's registry to copy component source directly into your project.
+
+If this is a fresh project, run `init` first (CLI 4.13+ uses presets, not a `--base-color` flag — any preset works, the theme item overrides it):
+
+```bash
+npx shadcn@latest init
+```
+
+> **Clean up after `init`.** `shadcn init` seeds your global CSS with its own competing theme — delete it before installing `theme`, or it silently wins the cascade over Fluent's tokens. Short version: your global CSS should end up as just `@import "tailwindcss";` followed by the Fluent tokens import, nothing else. Full before/after: [`docs/registry.md`](docs/registry.md#cleaning-up-after-shadcn-init).
+
+Then install the token theme, then any components:
 
 ```bash
 # 1. Install the token theme first — every component assumes it's present.
-npx shadcn@latest add <registry-url>/r/theme.json
+npx shadcn@latest add <registry-url>/r/theme.json --yes --overwrite
 
 # 2. Install any component.
-npx shadcn@latest add <registry-url>/r/button.json
+npx shadcn@latest add <registry-url>/r/button.json --yes --overwrite
 ```
 
-> `<registry-url>` is the deployed demo's production domain. **The registry is not yet deployed to a stable production URL** — see [`docs/registry.md`](docs/registry.md) for the current placeholder and how to use the kit locally in the meantime.
+> `--yes --overwrite` — `init` pre-creates files like `button.tsx` and `lib/utils.ts` from its preset, so `add` prompts to overwrite them per file; `--overwrite` accepts, and `--yes` is required for that flag to apply non-interactively (scripted installs and CI should always pass both, or the batch hangs/skips files).
+
+> `<registry-url>` is the deployed demo's production domain, `https://fluent2-react-kit.graund.io` — see [`docs/registry.md`](docs/registry.md) for how that constant is wired up and how to point at a local registry (`pnpm demo:dev`) instead.
+
+> [!WARNING]
+> **Using Fluent icons in your own components?** Any `@fluentui/react-icons` import must live inside a `"use client"` module. The icons package calls a client-only Griffel styling API at module scope, so importing an icon into a Server Component (e.g. dropping one inside your own `<Alert>` on a Next.js App Router page) fails `next build`. Kit components that ship with icons already carry `"use client"` — this only bites icons *you* import directly.
+
+**Named registry alias.** Configure a short alias once in `components.json` so you can install with `npx shadcn add @fluent2/<name>` instead of the full URL:
+
+```json
+// components.json
+{
+  "registries": {
+    "@fluent2": "https://fluent2-react-kit.graund.io/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @fluent2/theme --yes --overwrite
+npx shadcn@latest add @fluent2/button --yes --overwrite
+```
 
 **Option B — npm package.** Install `@graundtech/fluent2-react-kit` and import the token stylesheet:
 

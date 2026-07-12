@@ -44,14 +44,105 @@ The demo app (`apps/demo`) is a plain Next.js app; `apps/demo/public/r/*.json` i
 Install the token theme first — every component assumes its CSS variables are already present — then any components you need:
 
 ```bash
-npx shadcn@latest add <registry-url>/r/theme.json
-npx shadcn@latest add <registry-url>/r/button.json
-npx shadcn@latest add <registry-url>/r/card.json
+npx shadcn@latest add <registry-url>/r/theme.json --yes --overwrite
+npx shadcn@latest add <registry-url>/r/button.json --yes --overwrite
+npx shadcn@latest add <registry-url>/r/card.json --yes --overwrite
 ```
 
 The `utils` item (the `cn()` helper) is pulled in automatically as a `registryDependency` of every component — you don't need to install it explicitly, though `npx shadcn@latest add <registry-url>/r/utils.json` works too if you want it on its own.
 
 Swap `button` / `card` for any item name in the [component status table](../README.md#component-status).
+
+### CLI version and current flags
+
+The steps in this doc are verified against `shadcn` CLI **4.13.0**. Two things that catch people off guard on a first install:
+
+- **No `--base-color` flag.** Current CLI versions are preset-based (`init` defaults to the `base-nova` preset); any older guidance telling you to pass `--base-color` is stale and the flag no longer exists. Any preset is fine to init with — installing this kit's `theme` item is what actually determines your CSS variables (see the cleanup step below).
+- **`add <url> --yes` does not suppress per-file overwrite prompts.** `init` pre-creates files this kit's items also ship — `components/ui/button.tsx`, `lib/utils.ts` — so `add` still asks, per file, whether to overwrite them; `--yes` alone doesn't answer that prompt. Interactively the default answer is `N` (you silently keep the preset's version of the file). Non-interactively (CI, scripts) the batch can hang waiting on a prompt it never renders, or skip the file outright. Pass **`--yes --overwrite`** together — for scripted/CI installs always, and for first-run installs generally, since accidentally keeping the preset's `lib/utils.ts` or `button.tsx` is exactly the kind of silent breakage this section exists to prevent.
+
+### Cleaning up after `shadcn init`
+
+`shadcn init` (CLI 4.13, default `base-nova` preset) seeds your global CSS with a complete theme of its own: a `:root { ... }` block, a `.dark { ... }` block, a Tailwind v4 `@theme inline { ... }` bridge, a `@custom-variant dark (&:is(.dark *))` line, a `@layer base { ... }` block, and `@import "shadcn/tailwind.css";` / `@import "tw-animate-css";`. Every one of those blocks defines the *same variable names* this kit's `theme` item defines (`--background`, `--primary`, `--border`, …), and they end up sitting alongside or after the Fluent tokens import in the cascade. Verified on both a fresh Next.js App Router project and a fresh Vite project: components render in shadcn's neutral gray default theme, not Fluent blue, even though `theme.json` installed without any error. The stray `@custom-variant dark` from `init` also redefines the `dark` variant *without* this kit's `:not(.light *)` guard (see [`docs/tokens.md`](tokens.md#light)), which quietly breaks the `.light`-inside-`.dark` re-scoping mechanism too.
+
+**Fix: after adding `theme`, delete every init-generated theme block from your global CSS.** It should contain exactly two lines and nothing else:
+
+```css
+/* Before — shadcn init + shadcn add theme.json: two competing themes */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../styles/fluent2-tokens.css";
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  /* ...dozens more shadcn preset variables... */
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --primary: oklch(0.922 0 0);
+  /* ... */
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-primary: var(--primary);
+  /* ... */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+```
+
+```css
+/* After — cleaned up, Fluent tokens are the only theme in the cascade */
+@import "tailwindcss";
+@import "../styles/fluent2-tokens.css";
+```
+
+Nothing is lost by deleting init's blocks: `fluent2-tokens.css` already ships its own `:root`/`.light`/`.dark`/`.high-contrast`, its own `@theme inline` bridge, its own `@custom-variant dark` (with the `.light` guard intact), and its own `@layer base`. This is a one-time cleanup performed right after `init`; installing further components afterward doesn't reintroduce the problem.
+
+### Named registry alias
+
+Instead of the full `<registry-url>/r/{name}.json` in every command, configure this kit under a short alias in `components.json` (per the [shadcn registry namespace docs](https://ui.shadcn.com/docs/registry/namespace)):
+
+```json
+// components.json
+{
+  "registries": {
+    "@fluent2": "https://fluent2-react-kit.graund.io/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx shadcn@latest add @fluent2/theme --yes --overwrite
+npx shadcn@latest add @fluent2/button --yes --overwrite
+```
+
+The `{name}` placeholder is substituted by the CLI with the resource name after the `@fluent2/` prefix — `@fluent2/button` resolves to `https://fluent2-react-kit.graund.io/r/button.json`, the same URL you'd otherwise type out by hand.
+
+### Troubleshooting: TS5101 on Vite (`baseUrl` deprecation)
+
+If you're following the official [shadcn Vite installation guide](https://ui.shadcn.com/docs/installation/vite) and its `tsconfig.json` step adds a `"baseUrl"` compiler option, TypeScript 6 rejects it with **TS5101: `baseUrl` is deprecated**. This is an upstream issue in that guide/TypeScript's deprecation schedule, not something specific to this kit. Until the guide catches up, either drop `baseUrl` (path aliases still resolve via `"paths"` alone in modern `tsconfig`/bundler resolution) or, if you need to keep it for another tool in your setup, silence the warning explicitly:
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0"
+  }
+}
+```
 
 ## The `REGISTRY_BASE_URL` constant
 

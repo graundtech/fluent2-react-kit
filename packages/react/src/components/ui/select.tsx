@@ -45,6 +45,9 @@ import { cn } from "../../lib/utils";
  *    `Select.Group`. shadcn's `SelectLabel` is the group heading, so it maps to
  *    `GroupLabel`. Base UI's control-level `Select.Label` is intentionally not
  *    re-exported — pair the trigger with the kit's own `Label` component instead.
+ *    `Label` is a separate registry item (`registry/items/label.json`) and is
+ *    not a `registryDependency` of `select`, so install it explicitly:
+ *    `npx shadcn@latest add <registry-url>/r/label.json`.
  *
  *    **Labeling recipe.** Give the `Label` an `id` and the `SelectTrigger` its
  *    own `id`, then set `aria-labelledby="<label-id> <trigger-id>"` on the

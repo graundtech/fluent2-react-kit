@@ -11,6 +11,20 @@ The foundation plus a second batch of form/status/feedback components are comple
 - **278 tests, 20 test files, all passing** — Vitest + Testing Library + `user-event` + `axe-core`. Every component's test file verifies rendering, `data-slot`/variant/size attributes, className merging, primary interaction, disabled state, keyboard activation, `asChild` (where applicable), ref forwarding, the variants helper function, and an axe accessibility check on at least two states (default + one secondary state).
 - **Demo/showcase app** — a Next.js app (`apps/demo`) deployed via the Vercel Git integration, with a landing page (hero, a composed sample built entirely from kit components, a component grid, and a registry-install snippet) plus one `/preview/<name>` route per item rendering every variant × size.
 
+## Consumer validation (2026-07-11)
+
+Real consumer installs were run against fresh Next.js 16 and Vite projects (`shadcn` CLI 4.13.0, both completed), to validate the registry from a cold start rather than this repo's own test suite. **Registry mechanics passed on both platforms** — fragment schema, file targets, import rewriting (`@/lib/utils`), and `registryDependencies` resolution all worked as designed. The docs, however, caused three real installation failures, all now fixed:
+
+- **F1 (critical).** `shadcn init`'s default `base-nova` preset seeds the consumer's global CSS with a full competing theme (`:root`, `.dark`, `@theme inline`, `@custom-variant dark`, `@layer base`, plus `@import "shadcn/tailwind.css"` / `@import "tw-animate-css"`) that defines the same variable names as this kit's tokens and silently wins the cascade — consumers got shadcn's neutral gray theme, not Fluent blue, on both platforms. The stray `@custom-variant dark` also defeats the kit's `.light`-inside-`.dark` guard. Documented as a required post-`init` cleanup step: [`docs/registry.md`](registry.md#cleaning-up-after-shadcn-init) (full before/after), [`docs/tokens.md`](tokens.md), `registry/items/theme.json`'s `docs` field (CLI-printed), and the README quick start.
+- **F2 (high).** Any consumer usage of `@fluentui/react-icons` inside their own React Server Component fails `next build` (the icons package calls a client-only Griffel styling API at module scope). Kit components that need icons already carry `"use client"` — documented the rule for consumer-authored usage in a warning box in the README quick start.
+- **F3 (medium).** `npx shadcn add <url> --yes` does not suppress the per-file overwrite prompts `init` leaves behind (it pre-creates `button.tsx` and `lib/utils.ts`); interactively the default is `N` (silently keeps the preset's file), non-interactively the batch hangs or skips. Documented `--yes --overwrite` together as required for scripted/CI and recommended for first-run installs.
+- **F4 (low).** Removed stale `--base-color` init guidance — CLI 4.13 is preset-based and the flag no longer exists.
+- **F5 (low).** `select`'s `aria-labelledby` labeling recipe needs the kit's `label` item, which is intentionally not a `registryDependency` of `select` (kept opt-in) — documented in `select.json`'s new `docs` field and a one-line addition to `select.tsx`'s doc comment.
+- **F6 (QoL).** Documented the shadcn named-registry alias so consumers can run `npx shadcn add @fluent2/button`: `components.json` → `"registries": { "@fluent2": "https://fluent2-react-kit.graund.io/r/{name}.json" }`, verified against the [shadcn namespace docs](https://ui.shadcn.com/docs/registry/namespace).
+- **F7 (footnote).** Noted the upstream TS5101 `baseUrl`-deprecation error hit when following the official shadcn Vite guide, with the `"ignoreDeprecations": "6.0"` workaround, clearly marked as not this kit's issue.
+
+No component or registry-mechanics code changed to fix any of the above — only the `docs` string fields in `registry/items/theme.json` and `registry/items/select.json` (both CLI-printed text) plus a one-line doc-comment addition in `select.tsx`.
+
 ## Backlog
 
 ### Near-term components

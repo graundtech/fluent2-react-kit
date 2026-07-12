@@ -11,5 +11,6 @@
       "path": "packages/react/src/components/ui/select.tsx",
       "target": "components/ui/select.tsx"
     }
-  ]
+  ],
+  "docs": "Base UI's `Select.Label` (a control-level field label) is intentionally not exposed by this component — pair `SelectTrigger` with the kit's own `Label` item instead, which is *not* pulled in automatically (`select`'s only registryDependency is `utils`). Install it separately:\n\n```bash\nnpx shadcn@latest add <registry-url>/r/label.json\n```\n\nThen give the `Label` an `id` and the `SelectTrigger` its own `id`, and set `aria-labelledby=\"<label-id> <trigger-id>\"` on the trigger (referencing both) — pointing only at the external label drops the selected value from the accessible name. See `select.tsx`'s doc comment for the full recipe."
 }
