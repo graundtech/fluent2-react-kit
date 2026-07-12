@@ -74,7 +74,10 @@ npm install @graundtech/fluent2-react-kit
 /* globals.css */
 @import "tailwindcss";
 @import "@graundtech/fluent2-react-kit/tokens.css";
+@source "../node_modules/@graundtech/fluent2-react-kit/dist";
 ```
+
+The `@source` line tells Tailwind v4 to scan the package for utility classes (it skips `node_modules` by default — without it the components render unstyled). The path is relative to your CSS file; adjust the `../` depth accordingly.
 
 Full theming details: [`docs/tokens.md`](docs/tokens.md).
 

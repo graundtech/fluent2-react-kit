@@ -1,6 +1,15 @@
 # Status and backlog
 
-## Current status: v0.5.0
+## Current status: v0.5.1
+
+v0.5.1 is a package-infrastructure release — no component changes — that makes the npm modality real (the README's "Option B" had never actually been published):
+
+- **Build now preserves per-file `"use client"` directives.** `tsup` moved from a single bundle (which silently dropped every directive — client components would crash in a Next.js App Router tree) to per-file transpilation (`bundle: false`), plus a post-build script (`packages/react/scripts/fix-esm-extensions.mjs`) that appends `.js` to relative specifiers so the output is spec-compliant strict-Node ESM. The 10 client components keep their directive; the 19 server-safe ones stay directive-free, so `buttonVariants()`-style calls from Server Components keep working. Known non-blocker: `@fluentui/react-icons` itself ships extensionless ESM upstream, so the icon-importing modules need a bundler — which Tailwind consumers have anyway.
+- **npm publish prep** — `packages/react/README.md` (the npm package page), `LICENSE` copied into the package dir, `publishConfig.access: public`, `sideEffects: ["**/*.css"]`, `./package.json` export. Tarball audited via `npm pack` (98 files, ~165 kB) and validated end-to-end: installed into a scratch project, bundled with esbuild, SSR-rendered.
+- **`@source` documented for the npm modality** — Tailwind v4 doesn't scan `node_modules`, so npm consumers need `@source "../node_modules/@graundtech/fluent2-react-kit/dist";` in their global CSS or everything renders unstyled. Added to the README Option B and `docs/tokens.md`. It deliberately does NOT live inside `tokens.css`: the registry inlines that file into consumer projects where the path wouldn't exist.
+- **Publish pipeline** — `.github/workflows/publish.yml` publishes to npm on a GitHub release via trusted publishing (OIDC, no token secret, automatic provenance), with a tag-vs-package-version guard. The first-ever publish must be manual (`npm publish` from `packages/react`) because npm's trusted publisher is configured on an existing package's settings.
+
+## v0.5.0
 
 The foundation, a second batch of form/status/feedback components, a third batch of overlays, a fourth batch of navigation/disclosure/notification components, and the first long-term wave (the filter-list family) are complete and verified. What shipped across the five passes:
 

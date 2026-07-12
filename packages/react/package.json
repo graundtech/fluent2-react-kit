@@ -1,6 +1,6 @@
 {
   "name": "@graundtech/fluent2-react-kit",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Fluent 2-inspired React components built with shadcn-style APIs and registry-first distribution.",
   "type": "module",
   "private": false,
@@ -27,14 +27,21 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./tokens.css": "./src/styles/tokens.css"
+    "./tokens.css": "./src/styles/tokens.css",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "src/styles"
   ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/fix-esm-extensions.mjs",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

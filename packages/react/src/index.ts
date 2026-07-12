@@ -138,4 +138,4 @@ export {
 } from "./components/ui/tooltip";
 
 /** Current version of the @graundtech/fluent2-react-kit component library. */
-export const version = "0.5.0";
+export const version = "0.5.1";

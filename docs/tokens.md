@@ -12,9 +12,12 @@ This doc covers the token system from a **consumer's** point of view: how to imp
 /* globals.css */
 @import "tailwindcss";
 @import "@graundtech/fluent2-react-kit/tokens.css";
+@source "../node_modules/@graundtech/fluent2-react-kit/dist";
 ```
 
 The token import **must** come after `@import "tailwindcss";` and before your own rules — `tokens.css` itself doesn't import Tailwind (the consumer owns that), so the order matters for cascade and for Tailwind's `@theme inline` block to see the variables it's re-exporting.
+
+The `@source` line is npm-modality-only: Tailwind v4 doesn't scan `node_modules`, so without it the utility classes the components use are never generated and everything renders unstyled. The path is resolved relative to *this CSS file* — adjust the `../` depth to wherever your global stylesheet lives (e.g. `../../node_modules/...` from `src/app/globals.css`). Registry consumers don't need it: the component source lives inside the project, where Tailwind already scans. (It can't ship inside `tokens.css` for that same reason — the registry inlines that file into projects where the path wouldn't exist.)
 
 ### Via the registry (`theme` item)
 
