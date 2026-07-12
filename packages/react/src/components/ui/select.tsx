@@ -215,7 +215,7 @@ function SelectContent({
           className={cn(
             "relative min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-16 outline-none",
             // motion — subtle scale + fade on open (enter) / close (exit)
-            "transition-[transform,opacity] duration-fast ease-decelerate-mid",
+            "transition-[opacity,scale] duration-fast ease-decelerate-mid",
             "data-starting-style:scale-95 data-starting-style:opacity-0",
             "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:ease-accelerate-mid",
             className

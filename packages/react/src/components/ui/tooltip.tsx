@@ -160,7 +160,7 @@ function TooltipContent({
           className={cn(
             "relative max-w-60 origin-[var(--transform-origin)] text-balance rounded-md border bg-popover px-2.5 py-1.5 text-xs text-popover-foreground shadow-16 outline-none",
             // motion — subtle scale + fade on open (enter) / close (exit)
-            "transition-[transform,opacity] duration-fast ease-decelerate-mid",
+            "transition-[opacity,scale] duration-fast ease-decelerate-mid",
             "data-starting-style:scale-95 data-starting-style:opacity-0",
             "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:ease-accelerate-mid",
             className

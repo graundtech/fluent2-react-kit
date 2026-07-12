@@ -74,8 +74,9 @@ import { cn } from "../../lib/utils";
  * `translate:`/`scale:` properties (not a shared `transform:`), so the
  * -50%/-50% centering translate and the open/close zoom coexist without
  * clobbering each other — but it also means the popup's transition must target
- * `transition-[opacity,scale]` (select's `transition-[transform,opacity]`
- * would leave the zoom snapping).
+ * `transition-[opacity,scale]` (a `transition-[transform,opacity]` list would
+ * leave the zoom snapping — every popup in the kit uses `[opacity,scale]` for
+ * this reason).
  *
  * ## `"use client"` — required
  * Two reasons. The Base UI Dialog parts manage client state (each part module

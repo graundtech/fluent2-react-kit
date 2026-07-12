@@ -152,7 +152,7 @@ function DropdownMenuContent({
             "min-w-[8rem] origin-[var(--transform-origin)] overflow-y-auto overscroll-contain rounded-md border bg-popover p-1 text-popover-foreground shadow-16 outline-none",
             "max-h-[var(--available-height)]",
             // motion — subtle scale + fade on open (enter) / close (exit)
-            "transition-[transform,opacity] duration-fast ease-decelerate-mid",
+            "transition-[opacity,scale] duration-fast ease-decelerate-mid",
             "data-starting-style:scale-95 data-starting-style:opacity-0",
             "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:ease-accelerate-mid",
             className
@@ -412,7 +412,7 @@ function DropdownMenuSubContent({
           className={cn(
             "min-w-[8rem] origin-[var(--transform-origin)] overflow-y-auto overscroll-contain rounded-md border bg-popover p-1 text-popover-foreground shadow-16 outline-none",
             "max-h-[var(--available-height)]",
-            "transition-[transform,opacity] duration-fast ease-decelerate-mid",
+            "transition-[opacity,scale] duration-fast ease-decelerate-mid",
             "data-starting-style:scale-95 data-starting-style:opacity-0",
             "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:ease-accelerate-mid",
             className
