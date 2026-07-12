@@ -1,4 +1,5 @@
 import NextLink from "next/link";
+import type { Metadata } from "next";
 
 import { version } from "@graundtech/fluent2-react-kit";
 import { Avatar, AvatarFallback } from "@kit/components/ui/avatar";
@@ -64,6 +65,16 @@ const PREVIEWS = [
 // Kept identical to the constant in scripts/build-registry.mjs — see
 // docs/registry.md for why these two must stay in sync.
 const REGISTRY_BASE_URL = "https://fluent2-react-kit.graund.io";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: {
+    url: "/",
+    title: "Fluent 2 React Kit — Fluent-inspired components, source-owned",
+    description:
+      "Accessible, themeable React components with shadcn-style APIs. Copy the source from the registry or install the npm package.",
+  },
+};
 
 export default function DemoPage() {
   return (

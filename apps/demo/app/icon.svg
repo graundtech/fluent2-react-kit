@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Fluent 2 React Kit</title>
+  <desc id="desc">A modular token crossing a fluid seam between two rounded layers.</desc>
+  <!-- The transparent canvas makes the mark portable across npm, registries, and docs. -->
+  <path fill="#817CF5" d="M88 72h336a48 48 0 0 1 48 48v50c-45 71-112 98-216 98S115 295 40 362V120a48 48 0 0 1 48-48Z"/>
+  <path fill="#7956D9" d="M40 393c72-72 119-93 216-93s174-27 216-89v181a48 48 0 0 1-48 48H88a48 48 0 0 1-48-47Z"/>
+
+  <!-- Opaque token: solid colors replace the concept's translucent glass treatment. -->
+  <g stroke="#FFF" stroke-width="10">
+    <path fill="#77DED5" d="M216 200h40v112h-40a32 32 0 0 1-32-32v-48a32 32 0 0 1 32-32Z"/>
+    <path fill="#FF91A8" d="M256 200h40a32 32 0 0 1 32 32v48a32 32 0 0 1-32 32h-40V200Z"/>
+  </g>
+</svg>

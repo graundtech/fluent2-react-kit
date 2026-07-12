@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Fluent 2 React Kit</title>
+  <desc id="desc">Fluent 2-inspired React components available through a shadcn registry and npm.</desc>
+  <defs>
+    <linearGradient id="canvas" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9FAFF"/>
+      <stop offset=".52" stop-color="#EEF5FF"/>
+      <stop offset="1" stop-color="#FBEAFC"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#443A76" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#canvas)"/>
+  <circle cx="1010" cy="100" r="230" fill="#EADFFF" opacity=".72"/>
+  <circle cx="880" cy="600" r="280" fill="#DDEEFF" opacity=".72"/>
+
+  <g transform="translate(82 94)">
+    <text x="0" y="82" fill="#171717" font-family="Helvetica Neue" font-size="72" font-weight="300">Fluent 2</text>
+    <text x="0" y="174" fill="#171717" font-family="Helvetica Neue" font-size="88" font-weight="700">React Kit</text>
+    <text x="4" y="245" fill="#56545D" font-family="Helvetica Neue" font-size="30">Fluent-inspired components.</text>
+    <text x="4" y="286" fill="#56545D" font-family="Helvetica Neue" font-size="30">Source-owned through shadcn or npm.</text>
+    <g transform="translate(4 340)">
+      <rect width="246" height="54" rx="27" fill="#FFFFFF" stroke="#817CF5" stroke-width="2"/>
+      <text x="123" y="36" text-anchor="middle" fill="#5F55C8" font-family="Helvetica Neue" font-size="23" font-weight="600">Tailwind CSS v4</text>
+    </g>
+  </g>
+
+  <g transform="translate(770 125)" filter="url(#shadow)">
+    <rect width="350" height="350" rx="72" fill="#FFFFFF"/>
+    <g transform="translate(31 31) scale(.5625)">
+      <path fill="#817CF5" d="M88 72h336a48 48 0 0 1 48 48v50c-45 71-112 98-216 98S115 295 40 362V120a48 48 0 0 1 48-48Z"/>
+      <path fill="#7956D9" d="M40 393c72-72 119-93 216-93s174-27 216-89v181a48 48 0 0 1-48 48H88a48 48 0 0 1-48-47Z"/>
+      <g stroke="#FFF" stroke-width="10">
+        <path fill="#77DED5" d="M216 200h40v112h-40a32 32 0 0 1-32-32v-48a32 32 0 0 1 32-32Z"/>
+        <path fill="#FF91A8" d="M256 200h40a32 32 0 0 1 32 32v48a32 32 0 0 1-32 32h-40V200Z"/>
+      </g>
+    </g>
+  </g>
+</svg>
