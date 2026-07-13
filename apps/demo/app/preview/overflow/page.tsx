@@ -284,9 +284,11 @@ function RibbonDemo() {
           `Overflow` clones this Toolbar and observes it. `w-full` fills the
           width-constrained parent; `relative` anchors the hidden trigger;
           `overflow-hidden` clips any residual. `padding` reserves slack for the
-          inter-item gaps + dividers the item-size sum doesn't count.
+          inter-item gaps + dividers the item-size sum doesn't count (64: the
+          true extra is ~60px; 44 under-reserved and clipped at 440/380px —
+          e2e/overflow.spec.ts finding; rect-extent measuring is the real fix).
         */}
-        <Overflow padding={44} minimumVisible={1}>
+        <Overflow padding={64} minimumVisible={1}>
           <Toolbar
             aria-label="Formatting"
             className="relative w-full flex-nowrap overflow-hidden"

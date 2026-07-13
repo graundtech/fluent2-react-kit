@@ -110,7 +110,10 @@ const toggleVariants = cva(
         outline: [
           "border-input bg-transparent hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
           "dark:bg-input/30 dark:hover:bg-input/50 dark:active:bg-input/70",
-          "data-[pressed]:border-primary data-[pressed]:bg-secondary data-[pressed]:text-secondary-foreground",
+          // dark:bg-input/30 (rest) outranks the unscoped pressed fill in the
+          // cascade, so the pressed fill must be re-asserted under dark: too
+          // (real-browser finding from e2e/toggle.spec.ts).
+          "data-[pressed]:border-primary data-[pressed]:bg-secondary data-[pressed]:text-secondary-foreground dark:data-[pressed]:bg-secondary",
           "data-[pressed]:hover:bg-accent data-[pressed]:active:bg-input dark:data-[pressed]:hover:bg-input dark:data-[pressed]:active:bg-input",
         ],
       },

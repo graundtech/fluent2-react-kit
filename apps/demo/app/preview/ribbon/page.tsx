@@ -80,6 +80,11 @@ function Icon({ children }: { children: ReactNode }) {
   );
 }
 
+const HighlightIcon = () => (
+  <Icon>
+    <path d="m11 4 5 5-6 6H7l-1-1zM5 16l-1.5 2h5" />
+  </Icon>
+);
 const UndoIcon = () => (
   <Icon>
     <path d="M7 7 4 10l3 3M4 10h8a4 4 0 0 1 0 8h-1" />
@@ -253,7 +258,7 @@ function WordRibbon({
         {/* ---------------------------------------------------------------- */}
         {/* Início — the full Home tab                                        */}
         {/* ---------------------------------------------------------------- */}
-        <RibbonContent value="inicio" padding={24}>
+        <RibbonContent value="inicio" padding={88}>
           <RibbonGroup groupId="desfazer" label="Desfazer">
             <RibbonItem id="undo" label="Desfazer" icon={<UndoIcon />} priority={100} pinned>
               <TipButton label="Desfazer">
@@ -267,7 +272,7 @@ function WordRibbon({
               id="paste"
               label="Colar"
               icon={<PasteIcon />}
-              priority={44}
+              priority={95}
               overflowRender={() => (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -299,17 +304,17 @@ function WordRibbon({
                 </DropdownMenu>
               </SplitButton>
             </RibbonItem>
-            <RibbonItem id="cut" label="Recortar" icon={<CutIcon />} priority={55}>
+            <RibbonItem id="cut" label="Recortar" icon={<CutIcon />} priority={40}>
               <TipButton label="Recortar">
                 <CutIcon />
               </TipButton>
             </RibbonItem>
-            <RibbonItem id="copy" label="Copiar" icon={<CopyIcon />} priority={50}>
+            <RibbonItem id="copy" label="Copiar" icon={<CopyIcon />} priority={38}>
               <TipButton label="Copiar">
                 <CopyIcon />
               </TipButton>
             </RibbonItem>
-            <RibbonItem id="painter" label="Pincel de Formatação" icon={<PainterIcon />} priority={45}>
+            <RibbonItem id="painter" label="Pincel de Formatação" icon={<PainterIcon />} priority={70}>
               <TipButton label="Pincel de Formatação">
                 <PainterIcon />
               </TipButton>
@@ -359,6 +364,43 @@ function WordRibbon({
                 </Tooltip>
               </span>
             </RibbonItem>
+            <RibbonItem
+              id="highlight"
+              label="Realce"
+              icon={<HighlightIcon />}
+              priority={28}
+              overflowRender={() => (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <HighlightIcon />
+                    Realce
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem>Amarelo</DropdownMenuItem>
+                    <DropdownMenuItem>Verde</DropdownMenuItem>
+                    <DropdownMenuItem>Rosa</DropdownMenuItem>
+                    <DropdownMenuItem>Sem realce</DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
+            >
+              <SplitButton variant="ghost" size="sm" className="inline-flex">
+                <SplitButtonAction aria-label="Realce">
+                  <HighlightIcon />
+                </SplitButtonAction>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={<SplitButtonTrigger aria-label="Opções de realce" />}
+                  />
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem>Amarelo</DropdownMenuItem>
+                    <DropdownMenuItem>Verde</DropdownMenuItem>
+                    <DropdownMenuItem>Rosa</DropdownMenuItem>
+                    <DropdownMenuItem>Sem realce</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SplitButton>
+            </RibbonItem>
             <RibbonItem id="color" label="Cor da Fonte" icon={<ColorIcon />} priority={30}>
               <TipButton label="Cor da Fonte">
                 <ColorIcon />
@@ -372,12 +414,12 @@ function WordRibbon({
                 <BulletsIcon />
               </TipButton>
             </RibbonItem>
-            <RibbonItem id="numbers" label="Numeração" icon={<NumbersIcon />} priority={40}>
+            <RibbonItem id="numbers" label="Numeração" icon={<NumbersIcon />} priority={35}>
               <TipButton label="Numeração">
                 <NumbersIcon />
               </TipButton>
             </RibbonItem>
-            <RibbonItem id="align-left" label="Alinhar à Esquerda" icon={<AlignLeftIcon />} priority={25}>
+            <RibbonItem id="align-left" label="Alinhar à Esquerda" icon={<AlignLeftIcon />} priority={55}>
               <TipButton label="Alinhar à Esquerda">
                 <AlignLeftIcon />
               </TipButton>
@@ -390,7 +432,7 @@ function WordRibbon({
           </RibbonGroup>
 
           <RibbonGroup groupId="styles" label="Estilos">
-            <RibbonItem id="style" label="Estilo" icon={<StyleIcon />} priority={35}>
+            <RibbonItem id="style" label="Estilo" icon={<StyleIcon />} priority={58}>
               <TipButton label="Estilo">
                 <StyleIcon />
               </TipButton>
@@ -414,7 +456,7 @@ function WordRibbon({
         {/* ---------------------------------------------------------------- */}
         {/* Inserir                                                           */}
         {/* ---------------------------------------------------------------- */}
-        <RibbonContent value="inserir" padding={24}>
+        <RibbonContent value="inserir" padding={48}>
           <RibbonGroup groupId="tables" label="Tabelas">
             <RibbonItem id="table" label="Tabela" icon={<TableIcon />} priority={80}>
               <TipButton label="Tabela">
@@ -448,7 +490,7 @@ function WordRibbon({
         {/* ---------------------------------------------------------------- */}
         {/* Exibir                                                            */}
         {/* ---------------------------------------------------------------- */}
-        <RibbonContent value="exibir" padding={24}>
+        <RibbonContent value="exibir" padding={48}>
           <RibbonGroup groupId="show" label="Mostrar">
             <RibbonItem id="ruler" label="Régua" icon={<RulerIcon />} priority={80}>
               <span className="inline-flex">
@@ -513,7 +555,7 @@ function RibbonDemo() {
           <input
             id="ribbon-width"
             type="range"
-            min={360}
+            min={240}
             max={1100}
             step={10}
             value={width}

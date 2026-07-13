@@ -180,7 +180,12 @@ function PanelBody() {
           <ToolbarButton>Copy</ToolbarButton>
           <ToolbarButton disabled>Paste</ToolbarButton>
           <ToolbarSeparator />
-          {/* render-prop composition: a brand-filled primary via the kit Button */}
+          {/* render-prop composition: the rendered Button participates in the
+              toolbar's roving tabindex, but ToolbarButton's own variant/size
+              win the class merge (outer beats inner — e2e/toolbar.spec.ts
+              finding), so this paints as a subtle/ghost item, NOT brand-filled.
+              For a styled toolbar item, set variant/size on ToolbarButton
+              itself (it exposes the full buttonVariants surface). */}
           <ToolbarButton
             render={<Button variant="default" size="sm">Publish</Button>}
           />

@@ -56,8 +56,26 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
   with core + StrictMode regression tests. Registry: 36 items; 630 tests.
   Phase-4 note: preview priorities are illustrative (Colar deliberately
   mid-priority to demo the submenu-in-overflow path) — tune against live Word.
-- **Phase 4** — validation: report against live Word Online + Playwright e2e
-  for real resize/overflow behavior.
+- **Phase 4 (done)** — validation + e2e. Live-Word validation report:
+  [`docs/design/ribbon-validation.md`](design/ribbon-validation.md) — 7/10
+  aspects match outright; 2 MAJOR findings fixed (RibbonTab compact `h-9`
+  strip; preview priorities retuned to Word's survivor ladder, with a new
+  low-priority "Realce" split button carrying the submenu-in-overflow demo);
+  3 divergences documented as intentional (2px underline per Figma tokens,
+  auto-hiding "…" trigger, no built-in layout switcher in v1). Playwright
+  e2e: 5 new specs, 30 tests — full suite **135/135** — including the
+  focus-moves-to-"…"-trigger-on-overflow marquee assertion in a real
+  browser. The e2e pass also found and got fixed: a real Toggle bug
+  (outline pressed fill lost in dark to the resting `dark:bg-input/30` —
+  now `dark:data-[pressed]:bg-secondary`), a stale smoke-test count, and
+  under-reserved overflow `padding` (overflow preview now 64px and asserts
+  no clipping at every settled width). Known accepted residue: the ribbon
+  preview's dense Início row can still clip up to ~47px at some widths
+  (commands stay usable; documented in `e2e/ribbon.spec.ts`) — the
+  definitive fix is **rect-extent measuring in the overflow manager**
+  (measure the container's rendered extent instead of summing item widths),
+  the queued v1.1 improvement. Also documented: Toolbar `render`-prop
+  composition caveat (outer ToolbarButton's variant/size win the merge).
 - **v2 backlog** — classic multi-row layout (staged group collapse → scroll
   fallback → tab-strip overflow), KeyTips, QAT, contextual tabs.
 

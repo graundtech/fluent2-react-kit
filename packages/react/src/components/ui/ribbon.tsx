@@ -441,7 +441,10 @@ function RibbonTab({
         onTabActivate();
         onClick?.(event);
       }}
-      className={cn(className)}
+      // h-9 (36px): Word's ribbon guide strip is compact (~36px), unlike the
+      // kit Tabs default 44px (Figma-validated for standalone use) — see
+      // docs/design/ribbon-validation.md finding #1.
+      className={cn("h-9", className)}
       {...props}
     />
   );
