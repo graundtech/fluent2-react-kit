@@ -1,0 +1,16 @@
+{
+  "name": "ribbon",
+  "type": "registry:ui",
+  "title": "Ribbon",
+  "description": "Fluent 2-styled, Office-like single-line Ribbon — the kit's flagship composite. Composes the kit Tabs (guide strip), Toolbar (APG roving-tabindex command row), and the headless Overflow priority system so the lowest-priority commands drop into a '…' menu as the row shrinks. Each RibbonItem renders two ways at once: an icon control in the bar and an icon + full-label row inside the overflow menu, grouped under a header named after its source group (Word Online's 'Faixa de Opções de Linha Única'). v1 ships the single-line layout only; `layout` reserves 'classic' for v2. Controlled/uncontrolled tab selection plus a `collapsed` (tabs-only) axis. Custom overflowRender lets split buttons/combos supply their own menu form; focus moves to the '…' trigger when the focused command overflows.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "@fluentui/react-icons"],
+  "registryDependencies": ["utils", "tabs", "toolbar", "overflow", "dropdown-menu"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/ribbon.tsx",
+      "target": "components/ui/ribbon.tsx"
+    }
+  ],
+  "docs": "Compose `Ribbon` > `RibbonTabList`/`RibbonTab` + one `RibbonContent` per tab > `RibbonGroup` > `RibbonItem`. `RibbonContent` wires the Overflow provider, the measured Toolbar, the item registry, AND the '…' overflow menu for you — you only supply groups and items.\n\n```tsx\n<Ribbon defaultValue=\"home\">\n  <RibbonTabList aria-label=\"Ribbon\">\n    <RibbonTab value=\"home\">Home</RibbonTab>\n    <RibbonTab value=\"insert\">Insert</RibbonTab>\n  </RibbonTabList>\n  <RibbonContent value=\"home\">\n    <RibbonGroup groupId=\"font\" label=\"Font\">\n      <RibbonItem id=\"bold\" label=\"Bold\" icon={<BoldIcon />} priority={80} pinned onSelect={bold}>\n        <ToolbarButton size=\"icon\" aria-label=\"Bold\"><BoldIcon /></ToolbarButton>\n      </RibbonItem>\n      {/* …more items */}\n    </RibbonGroup>\n    {/* …more groups */}\n  </RibbonContent>\n</Ribbon>\n```\n\nEvery `RibbonItem` needs `id` + `label` (+ optional `icon`) so it can render as a bar icon AND a labeled menu row. `priority` (higher survives longer, beats DOM order) and `pinned` (never overflows) drive the overflow order. Supply `overflowRender` for a complex menu form (a split button → submenu, a combo → labeled field); otherwise the default menu form is a `DropdownMenuItem` firing `onSelect`. Axes mirror Word's switcher: `layout` ('single-line' v1 / 'classic' reserved for v2 — unknown values degrade to single-line), and the controlled/uncontrolled `collapsed` pair ('Mostrar apenas as guias' — tabs-only; activating any tab un-collapses). There is no ARIA 'ribbon' pattern: the composite is APG Tabs over APG Toolbar, and each command row is labelled by its owning tab. See ribbon.tsx's doc comment for the full model, the desktop-Office divergence (no overlay flyout when collapsed), and the focus-preservation behavior."
+}

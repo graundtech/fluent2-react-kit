@@ -52,6 +52,7 @@ const PREVIEWS = [
   "popover",
   "progress",
   "radio-group",
+  "ribbon",
   "select",
   "separator",
   "skeleton",

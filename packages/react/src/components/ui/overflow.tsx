@@ -162,6 +162,13 @@ export interface OverflowManager {
   setOptions: (options: Partial<OverflowManagerOptions>) => void;
   /** Synchronously re-measure and recompute (used by the observer and by tests). */
   update: () => void;
+  /**
+   * Dispose current resources (observer, listeners, items). NOT terminal: any
+   * subsequent `register`/`setContainer`/`setOverflowMenu` revives the manager.
+   * This makes the React binding safe under StrictMode's dev-only
+   * unmount/remount double-invoke, where the same useState-held manager is
+   * destroyed by the simulated unmount and must rebuild on the re-run.
+   */
   destroy: () => void;
 }
 
@@ -402,6 +409,7 @@ export function createOverflowManager(
       return snapshot;
     },
     register(registration) {
+      destroyed = false; // any new use revives a destroyed manager (StrictMode remount)
       const existing = items.get(registration.id);
       items.set(registration.id, {
         id: registration.id,
@@ -422,13 +430,18 @@ export function createOverflowManager(
       if (item) item.element = element;
     },
     setContainer(element) {
-      if (element === container) return;
+      if (element) destroyed = false; // revive on re-attach (StrictMode remount)
+      if (element === container) {
+        if (element) attachObserver(); // same node after a destroy → observer is gone
+        return;
+      }
       detachObserver();
       container = element;
       if (element) attachObserver();
       update();
     },
     setOverflowMenu(element) {
+      if (element) destroyed = false; // revive on re-attach (StrictMode remount)
       overflowMenuEl = element;
       update();
     },

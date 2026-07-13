@@ -1,4 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
@@ -468,6 +469,40 @@ describe("Overflow — React bindings", () => {
     for (const id of ["a", "b", "c"]) {
       expect(screen.getByLabelText(id)).not.toHaveAttribute("data-overflowing");
     }
+  });
+
+  // Regression: StrictMode's dev-only unmount/remount double-invoke destroys
+  // the useState-held manager on the simulated unmount; the re-run's item
+  // registrations and container re-attach must revive it, or every item reads
+  // an empty snapshot and hides (found live by the ribbon build).
+  it("survives StrictMode's dev double-mount (destroyed manager revives)", () => {
+    render(
+      <StrictMode>
+        <Bar width={1000} withProbe />
+      </StrictMode>
+    );
+    act(() => triggerResize());
+
+    for (const id of ["a", "b", "c"]) {
+      expect(screen.getByLabelText(id)).not.toHaveAttribute("data-overflowing");
+    }
+    // The snapshot pipeline is alive too: probe reports zero overflow.
+    expect(screen.getByTestId("probe")).toHaveTextContent("0|visible|a-vis");
+  });
+
+  // Same regression at the core level: destroy is disposal, not a tombstone.
+  it("createOverflowManager revives after destroy on new registrations", () => {
+    const core = makeCore();
+    core.setContainerSize(1000);
+    core.add("x", { size: 100 });
+    core.manager.update();
+    expect(core.manager.getSnapshot().visibleItemIds.has("x")).toBe(true);
+
+    core.manager.destroy();
+    core.add("y", { size: 100 });
+    core.manager.setContainer(core.container);
+    core.manager.update();
+    expect(core.manager.getSnapshot().visibleItemIds.has("y")).toBe(true);
   });
 
   it("hides the overflowing item and stamps data-slot/data-overflowing", () => {

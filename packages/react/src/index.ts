@@ -118,6 +118,16 @@ export { Popover, PopoverTrigger, PopoverContent } from "./components/ui/popover
 export { Progress } from "./components/ui/progress";
 export { RadioGroup, RadioGroupItem } from "./components/ui/radio-group";
 export {
+  Ribbon,
+  RibbonTabList,
+  RibbonTab,
+  RibbonContent,
+  RibbonGroup,
+  RibbonItem,
+  RibbonOverflowMenu,
+  RibbonSeparator,
+} from "./components/ui/ribbon";
+export {
   Select, SelectGroup, SelectValue, SelectTrigger, SelectContent,
   SelectLabel, SelectItem, SelectSeparator,
   SelectScrollUpButton, SelectScrollDownButton,

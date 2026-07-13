@@ -35,9 +35,27 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
   rect-extent measuring for pixel-exact drop points), and focus should move to
   the "…" trigger when the focused item overflows (roving tabindex +
   `display:none` can drop focus).
-- **Phase 3** — the `ribbon` composite (single-line mode v1): Tabs + toolbar +
-  overflow; items carry `icon` + `label` for dual presentation (bar form vs
-  overflow-menu form); API axes `layout` / `collapsed` / `autoAdjust`.
+- **Phase 3 (done)** — the `ribbon` composite (single-line mode v1):
+  `Ribbon`/`RibbonTabList`/`RibbonTab`/`RibbonContent`/`RibbonGroup`/
+  `RibbonItem`/`RibbonOverflowMenu`/`RibbonSeparator` over kit Tabs + Toolbar +
+  Overflow. `RibbonItem` carries `id`+`label` (+`icon`, `priority`, `pinned`,
+  `onSelect`, `overflowRender`) for dual presentation — bar control vs
+  icon+label menu row inside the prewired "…" menu, grouped under
+  source-group section headers, source order preserved. Root axes:
+  `value`/`collapsed` (controlled/uncontrolled); `layout` accepts only
+  `"single-line"` (v2's `"classic"` reserved, as is `autoAdjust`); collapsed
+  mode has no overlay flyout (documented divergence from desktop Office).
+  Focus moves to the "…" trigger when the focused command overflows.
+  `RibbonContent` keeps panels mounted across tab switches (`keepMounted`) —
+  cheaper (no re-measure) and immune to remount edge cases. The build also
+  surfaced a real Phase-2 bug, fixed at the root in `overflow.tsx`: React 19
+  StrictMode's dev double-mount destroyed the useState-held manager with no
+  revival path (every item then hid against an empty snapshot) — `destroy()`
+  is now disposal-not-tombstone (any `register`/`setContainer`/
+  `setOverflowMenu` revives, observer re-attaches on same-node re-attach),
+  with core + StrictMode regression tests. Registry: 36 items; 630 tests.
+  Phase-4 note: preview priorities are illustrative (Colar deliberately
+  mid-priority to demo the submenu-in-overflow path) — tune against live Word.
 - **Phase 4** — validation: report against live Word Online + Playwright e2e
   for real resize/overflow behavior.
 - **v2 backlog** — classic multi-row layout (staged group collapse → scroll
