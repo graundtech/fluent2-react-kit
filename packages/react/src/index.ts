@@ -118,6 +118,13 @@ export { Popover, PopoverTrigger, PopoverContent } from "./components/ui/popover
 export { Progress } from "./components/ui/progress";
 export { RadioGroup, RadioGroupItem } from "./components/ui/radio-group";
 export {
+  GroupCollapse,
+  CollapseGroup,
+  createGroupCollapseManager,
+  useGroupMode,
+  useIsScrollMode,
+} from "./components/ui/ribbon-collapse";
+export {
   Ribbon,
   RibbonTabList,
   RibbonTab,

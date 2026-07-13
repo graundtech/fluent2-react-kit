@@ -80,15 +80,28 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
   `getOverflowSize` + `registerDivider`/`settle()` on the manager. 639 unit
   tests, 136 e2e. Also documented: Toolbar `render`-prop
   composition caveat (outer ToolbarButton's variant/size win the merge).
-- **v2 (planned — see [`docs/design/ribbon-v2-plan.md`](design/ribbon-v2-plan.md))** —
-  classic/expanded layout in 4 phases (C1 group-collapse manager on the
-  v1.1 foundations, C2 classic presentation with one-tree/two-layouts +
-  per-layout escape hatch, C3 scroll fallback + tab-strip overflow +
-  `autoAdjust`, C4 layout switcher + validation + e2e). Scope decisions
-  locked 2026-07-13: Word-web collapse model (whole-group → dropdown; the
-  desktop per-item SizeDefinition ladder is a possible v2.1), gallery
-  deferred to a standalone future `gallery` component, single shared tree
-  across layouts. Still backlog beyond v2: KeyTips, QAT, contextual tabs.
+- **v2 (in progress — see [`docs/design/ribbon-v2-plan.md`](design/ribbon-v2-plan.md))** —
+  classic/expanded layout in 4 phases. Scope decisions locked 2026-07-13:
+  Word-web collapse model (whole-group → dropdown; the desktop per-item
+  SizeDefinition ladder is a possible v2.1), gallery deferred to a
+  standalone future `gallery` component, single shared tree across layouts.
+  - **C1 (done)** — `ribbon-collapse`: headless group-collapse manager,
+    sibling of the v1.1 overflow manager (same accounting/`settle()`/
+    StrictMode-revivable foundations) but per-GROUP state. Groups collapse
+    highest-`collapsePriority`-first (Parágrafo before Fonte, matching
+    Word), then a `scrollMode` flag escalates when all are collapsed and it
+    still overflows. `createGroupCollapseManager` + `GroupCollapse`/
+    `CollapseGroup` + `useGroupMode`/`useIsScrollMode`; snapshot
+    `{ groupModes, scrollMode }`, referentially stable, all-expanded SSR
+    path. Registry: 37 items; 674 tests. Browser-verified: 620px all
+    expanded → 520px Fonte+Parágrafo collapsed (order beats DOM) → 300px
+    all collapsed + scrollMode. C2-handoff notes recorded in the plan
+    (collapsed-form must be ref-forwarding DOM; focus-on-collapse is C2;
+    `collapsedEstimate` default; separator modeling).
+  - **C2 (next)** — classic presentation consuming C1's snapshot.
+  - **C3** — scroll fallback + tab-strip overflow + `autoAdjust`.
+  - **C4** — layout switcher + validation + e2e.
+  - Still backlog beyond v2: KeyTips, QAT, contextual tabs.
 
 ## Current status: v0.5.1
 

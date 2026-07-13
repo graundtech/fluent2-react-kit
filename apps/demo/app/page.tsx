@@ -53,6 +53,7 @@ const PREVIEWS = [
   "progress",
   "radio-group",
   "ribbon",
+  "ribbon-collapse",
   "select",
   "separator",
   "skeleton",

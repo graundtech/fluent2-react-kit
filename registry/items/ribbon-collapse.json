@@ -1,0 +1,16 @@
+{
+  "name": "ribbon-collapse",
+  "type": "registry:ui",
+  "title": "Ribbon collapse",
+  "description": "Headless group-collapse system — the mechanism behind a classic (expanded) Fluent 2 Ribbon. When a two-row band cannot fit its container it collapses whole groups (highest collapsePriority first — Word: Parágrafo before Fonte) from their expanded form to a single collapsed dropdown button; when every group is collapsed and it still overflows it reports a scrollMode flag (the terminal horizontal-scroll fallback). Ships a framework-agnostic manager (createGroupCollapseManager) plus React bindings: GroupCollapse provider, CollapseGroup (renders both the expanded and collapsed forms and toggles them), and the useGroupMode / useIsScrollMode hooks. ResizeObserver-driven, accurate space accounting (per-group sizes + flex gap + container padding), size caching with an optimistic collapsed estimate, a hide-only settle() safety net, and a referentially-stable subscribe/getSnapshot store built for useSyncExternalStore. SSR-safe (all groups expanded until measured) and headless (no styling of its own). Sibling of the single-line 'overflow' manager.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/ribbon-collapse.tsx",
+      "target": "components/ui/ribbon-collapse.tsx"
+    }
+  ],
+  "docs": "Headless — renders no visuals and imports no `cn`, so it has no `utils` registry dependency. Reimplements the publicly documented ribbon-resizing *pattern* (per-group staged collapse by explicit priority, then scroll fallback; no Fluent UI source consulted). `priority`/`pinned` are single-line concepts and do NOT apply here — classic collapse is governed solely by group `collapsePriority` (higher collapses first). Wrap the classic band in `<GroupCollapse>` (it clones its single child, merges in the container ref, and — crucially — subscribes to the store and schedules `settle()` in a layout effect; it also stamps `data-scroll-mode` on the container). Wrap each group in `<CollapseGroup groupId collapsePriority expanded={<...>} collapsed={<...>}>`: both forms are mounted, the inactive one hidden via CSS (`display:none`) so the collapsed flyout's children stay live and each form stays measurable when re-shown; it stamps `data-slot=\"collapse-group\"` + `data-mode`. Read state with `useGroupMode(groupId)` (\"expanded\"|\"collapsed\") and `useIsScrollMode()` (boolean) to render the classic anatomy, the collapsed dropdown button, and the scroll fallback. Snapshot: `{ groupModes: Record<groupId, \"expanded\"|\"collapsed\">, scrollMode: boolean }`, referentially stable. Options on `<GroupCollapse>`: `axis` (\"horizontal\" first-class / \"vertical\"), `padding` (consumer slack), `collapsedEstimate` (optimistic pre-measure size, default 0), and injectable `getSize`/`getGap`/`getOverflowSize`. Mirrors the shipped single-line `overflow` manager's architecture. See `ribbon-collapse.tsx`'s doc comment for the full contract."
+}
