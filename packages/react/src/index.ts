@@ -133,6 +133,9 @@ export {
   RibbonItem,
   RibbonOverflowMenu,
   RibbonSeparator,
+  RibbonLargeButton,
+  RibbonRow,
+  RibbonColumn,
 } from "./components/ui/ribbon";
 export {
   Select, SelectGroup, SelectValue, SelectTrigger, SelectContent,

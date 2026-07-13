@@ -37,9 +37,12 @@ import {
 } from "@kit/components/ui/dropdown-menu";
 import {
   Ribbon,
+  RibbonColumn,
   RibbonContent,
   RibbonGroup,
   RibbonItem,
+  RibbonLargeButton,
+  RibbonRow,
   RibbonTab,
   RibbonTabList,
 } from "@kit/components/ui/ribbon";
@@ -235,10 +238,158 @@ function TipButton({
 /* The single-line ribbon (Início / Inserir / Exibir)                          */
 /* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+/* Classic Início — Word's two-row band (same tabs, layout-specific content).   */
+/* Exercises RibbonLargeButton (Colar), 2×3 / vertical grids via RibbonRow +    */
+/* RibbonColumn, a dialog launcher (Fonte), collapsePriority (Parágrafo 50      */
+/* collapses before Fonte 40), and one `layouts`-escape-hatch command.          */
+/* -------------------------------------------------------------------------- */
+
+/** A small classic icon button (Fluent subtle) — 24px, participates in roving. */
+function SmallCmd({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <ToolbarButton size="icon-sm" aria-label={label}>
+      {children}
+    </ToolbarButton>
+  );
+}
+
+function ClassicInicio() {
+  return (
+    <RibbonContent value="inicio">
+      <RibbonGroup
+        groupId="clipboard"
+        label="Área de Transferência"
+        icon={<PasteIcon />}
+        collapsePriority={10}
+      >
+        {/* Large stacked "Colar" with a paste-options dropdown. */}
+        <RibbonItem id="paste" label="Colar">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <RibbonLargeButton icon={<PasteIcon />} chevron>
+                  Colar
+                </RibbonLargeButton>
+              }
+            />
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem>Manter formatação original</DropdownMenuItem>
+              <DropdownMenuItem>Mesclar formatação</DropdownMenuItem>
+              <DropdownMenuItem>Manter somente texto</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </RibbonItem>
+        {/* A small vertical list of the remaining clipboard commands. */}
+        <RibbonColumn>
+          <SmallCmd label="Recortar">
+            <CutIcon />
+          </SmallCmd>
+          <SmallCmd label="Copiar">
+            <CopyIcon />
+          </SmallCmd>
+          <SmallCmd label="Pincel de Formatação">
+            <PainterIcon />
+          </SmallCmd>
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup
+        groupId="font"
+        label="Fonte"
+        icon={<BoldIcon />}
+        collapsePriority={40}
+        onLauncherClick={() => {}}
+      >
+        {/* 2×3 grid of small icon buttons. */}
+        <RibbonColumn>
+          <RibbonRow>
+            <SmallCmd label="Negrito">
+              <BoldIcon />
+            </SmallCmd>
+            <SmallCmd label="Itálico">
+              <ItalicIcon />
+            </SmallCmd>
+            <SmallCmd label="Sublinhado">
+              <UnderlineIcon />
+            </SmallCmd>
+          </RibbonRow>
+          <RibbonRow>
+            <SmallCmd label="Realce">
+              <HighlightIcon />
+            </SmallCmd>
+            <SmallCmd label="Cor da Fonte">
+              <ColorIcon />
+            </SmallCmd>
+            <SmallCmd label="Estilo">
+              <StyleIcon />
+            </SmallCmd>
+          </RibbonRow>
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup
+        groupId="paragraph"
+        label="Parágrafo"
+        icon={<BulletsIcon />}
+        collapsePriority={50}
+      >
+        {/* 2×2 grid. Parágrafo has the highest collapsePriority → collapses first. */}
+        <RibbonColumn>
+          <RibbonRow>
+            <SmallCmd label="Marcadores">
+              <BulletsIcon />
+            </SmallCmd>
+            <SmallCmd label="Numeração">
+              <NumbersIcon />
+            </SmallCmd>
+          </RibbonRow>
+          <RibbonRow>
+            <SmallCmd label="Alinhar à Esquerda">
+              <AlignLeftIcon />
+            </SmallCmd>
+            <SmallCmd label="Centralizar">
+              <AlignCenterIcon />
+            </SmallCmd>
+          </RibbonRow>
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup
+        groupId="editing"
+        label="Edição"
+        icon={<FindIcon />}
+        collapsePriority={20}
+      >
+        <RibbonColumn>
+          <SmallCmd label="Localizar">
+            <FindIcon />
+          </SmallCmd>
+          <SmallCmd label="Substituir">
+            <ReplaceIcon />
+          </SmallCmd>
+        </RibbonColumn>
+        {/* Escape hatch: a large "Ditar" command that exists ONLY in classic. */}
+        <RibbonItem id="dictate" label="Ditar" layouts={["classic"]}>
+          <RibbonLargeButton icon={<CommentIcon />}>Ditar</RibbonLargeButton>
+        </RibbonItem>
+      </RibbonGroup>
+    </RibbonContent>
+  );
+}
+
 function WordRibbon({
+  layout,
   collapsed,
   onCollapsedChange,
 }: {
+  layout: "single-line" | "classic";
   collapsed: boolean;
   onCollapsedChange: (next: boolean) => void;
 }) {
@@ -246,6 +397,7 @@ function WordRibbon({
     <TooltipProvider>
       <Ribbon
         defaultValue="inicio"
+        layout={layout}
         collapsed={collapsed}
         onCollapsedChange={onCollapsedChange}
       >
@@ -256,12 +408,18 @@ function WordRibbon({
         </RibbonTabList>
 
         {/* ---------------------------------------------------------------- */}
-        {/* Início — the full Home tab                                        */}
+        {/* Início — the Home tab. The command SET differs per layout (Word    */}
+        {/* parity), so the single-line row (unchanged v1 content — the e2e    */}
+        {/* regression proof drives it) and the classic band render distinct   */}
+        {/* trees. C4 will fold them into one tree via the `layouts` escape    */}
+        {/* hatch; the mechanism is proven in ribbon.test.tsx.                  */}
         {/* ---------------------------------------------------------------- */}
+        {layout === "classic" ? <ClassicInicio /> : null}
         {/* No `padding` reserve: the Overflow manager (v1.1) measures the flex
             gaps, the 5 group dividers, and the "…" trigger directly, so this
             dense 16-command row no longer clips between breakpoints (the old
             ~47px overrun documented in e2e/ribbon.spec.ts is gone). */}
+        {layout === "classic" ? null : (
         <RibbonContent value="inicio">
           <RibbonGroup groupId="desfazer" label="Desfazer">
             <RibbonItem id="undo" label="Desfazer" icon={<UndoIcon />} priority={100} pinned>
@@ -456,6 +614,7 @@ function WordRibbon({
             </RibbonItem>
           </RibbonGroup>
         </RibbonContent>
+        )}
 
         {/* ---------------------------------------------------------------- */}
         {/* Inserir                                                           */}
@@ -545,6 +704,9 @@ function WordRibbon({
 function RibbonDemo() {
   const [width, setWidth] = useState(760);
   const [collapsed, setCollapsed] = useState(false);
+  const [layout, setLayout] = useState<"single-line" | "classic">(
+    "single-line"
+  );
 
   return (
     <div className="space-y-4">
@@ -571,6 +733,18 @@ function RibbonDemo() {
           </span>
         </div>
 
+        {/* Local layout switch (the real RibbonLayoutSwitcher is C4). */}
+        <Toggle
+          size="sm"
+          pressed={layout === "classic"}
+          onPressedChange={(next) =>
+            setLayout(next ? "classic" : "single-line")
+          }
+          aria-label="Faixa de Opções Clássica"
+        >
+          Faixa Clássica
+        </Toggle>
+
         <Toggle
           size="sm"
           pressed={collapsed}
@@ -585,18 +759,27 @@ function RibbonDemo() {
         style={{ width }}
         className="max-w-full rounded-lg border border-border bg-background shadow-8"
       >
-        <WordRibbon collapsed={collapsed} onCollapsedChange={setCollapsed} />
+        <WordRibbon
+          layout={layout}
+          collapsed={collapsed}
+          onCollapsedChange={setCollapsed}
+        />
       </div>
 
       <p className="text-sm text-muted-foreground">
+        Toggle <em>Faixa Clássica</em> to switch layouts on the same tabs. In{" "}
+        <strong className="font-medium text-foreground">single-line</strong>,{" "}
         <strong className="font-medium text-foreground">Desfazer</strong> is
-        pinned (never overflows). Drag the slider to shrink the row — commands
-        drop by <strong className="font-medium text-foreground">priority</strong>
-        , not position, into the “…” menu, grouped under their source-group
-        headers. <strong className="font-medium text-foreground">Colar</strong>{" "}
-        keeps its split-button menu as a submenu when overflowed. Toggle{" "}
-        <em>Mostrar apenas as guias</em> for the tabs-only mode; selecting any tab
-        brings the row back.
+        pinned and commands drop by{" "}
+        <strong className="font-medium text-foreground">priority</strong> into
+        the “…” menu as the row shrinks. In{" "}
+        <strong className="font-medium text-foreground">classic</strong>, shrink
+        the band and whole groups collapse to a dropdown button —{" "}
+        <strong className="font-medium text-foreground">Parágrafo</strong>{" "}
+        (collapsePriority 50) before{" "}
+        <strong className="font-medium text-foreground">Fonte</strong> (40); open
+        a collapsed group to use its commands in a flyout. Toggle{" "}
+        <em>Mostrar apenas as guias</em> for tabs-only mode.
       </p>
     </div>
   );

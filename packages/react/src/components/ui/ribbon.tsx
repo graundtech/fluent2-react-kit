@@ -41,6 +41,17 @@ import {
   useIsOverflowItemVisible,
   useOverflowMenu,
 } from "./overflow";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import {
+  CollapseGroup,
+  GroupCollapse,
+  useGroupMode,
+} from "./ribbon-collapse";
+import type {
+  CollapseGetGap,
+  CollapseGetOverflowSize,
+  CollapseGetSize,
+} from "./ribbon-collapse";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { Toolbar, ToolbarButton, ToolbarSeparator } from "./toolbar";
 
@@ -92,22 +103,56 @@ import { Toolbar, ToolbarButton, ToolbarSeparator } from "./toolbar";
  *    field). The container decides the form from context, not the item's props —
  *    exactly the spec's "API implications" §1.
  *
- * ## Three API axes (mirroring Word's own switcher)
- * - **`layout`** — `"single-line"` (v1, default). The prop exists now so v2's
- *   `"classic"` (two-row, per-group staged collapse → horizontal scroll) lands
- *   without a breaking change; **unknown values are ignored** (treated as
- *   single-line) so forward-compat callers degrade gracefully.
+ * ## Two layouts, one tree (v2 — the classic band)
+ * The SAME `RibbonGroup`/`RibbonItem` tree renders in both layouts; the form
+ * parts adapt to the root `layout`. This is the v2-plan "one tree, two layouts +
+ * escape hatch" decision.
+ * - **`layout="single-line"`** (default) — the v1 command row above: `Overflow`
+ *   priority manager + the "…" menu. Unchanged; the v1 e2e suite is its
+ *   regression guard.
+ * - **`layout="classic"`** — Word's two-row **classic band** (~96px content
+ *   area). `RibbonContent` swaps the `Overflow` row for a `GroupCollapse`
+ *   provider (the headless C1 group-collapse manager) wrapping the SAME
+ *   `Toolbar`, and each `RibbonGroup` renders its classic anatomy: a horizontal
+ *   cluster of controls over a centered muted group label, an optional
+ *   dialog-launcher (↘), and a trailing hairline. When the band can't fit,
+ *   whole groups collapse — highest `collapsePriority` first — to a single
+ *   dropdown button whose flyout (kit `Popover`) holds the group's SAME
+ *   children; when every group is collapsed and it still overflows, the band
+ *   reports `scrollMode` (C1 stamps `data-scroll-mode`; the scroll UI is C3).
+ *   There is **no "…" overflow menu** in classic — Word classic has none; its
+ *   fallback is scroll. **Unknown `layout` values degrade to single-line** so
+ *   forward-compat callers never break.
+ *
+ * ### Escape hatch — per-layout content (`layouts`)
+ * Word genuinely shows different command sets per layout, so both `RibbonItem`
+ * and `RibbonGroup` accept `layouts?: ("single-line" | "classic")[]`: when set
+ * and the active layout isn't listed, the part renders nothing (and, in
+ * single-line, does not register in the overflow/menu registry). Default: both.
+ *
+ * ### Collapsed-flyout children placement (design note)
+ * A group's children are a single React subtree that lives in exactly ONE place
+ * per mode: inside the expanded shell when the group is expanded, and inside the
+ * `Popover` flyout when the group is collapsed (and the flyout is open). The two
+ * form SHELLS both stay mounted for measurement (C1's model), but the children
+ * are never double-rendered — the collapsed shell is a fixed icon+label+chevron
+ * button whose size is independent of the children. Flipping mode therefore
+ * **remounts** the children (they move between the band and the portal); ribbon
+ * controls are stateless commands, so this is acceptable (v2-plan design risk).
+ *
+ * ## The other two API axes (mirroring Word's own switcher)
  * - **`collapsed`** — Word's "Mostrar apenas as guias" (tabs-only). A
  *   controlled/uncontrolled pair (`collapsed` / `defaultCollapsed` /
  *   `onCollapsedChange`): when collapsed, the command rows are hidden (via CSS,
  *   not unmounted — see `RibbonContent`'s `keepMounted` note); activating **any**
- *   tab un-collapses (Word's behavior). **Divergence from
- *   desktop Office:** desktop shows the active tab's ribbon as a temporary
+ *   tab un-collapses (Word's behavior). Applies to both layouts. **Divergence
+ *   from desktop Office:** desktop shows the active tab's ribbon as a temporary
  *   *overlay flyout* on click while staying collapsed; v1 simply un-collapses
  *   (no overlay), matching the simpler web model.
- * - **`autoAdjust`** — **not implemented in v1.** Word exposes it ("Ajustar
+ * - **`autoAdjust`** — **not implemented yet (C3).** Word exposes it ("Ajustar
  *   automaticamente") to toggle the *classic* adaptive resize; single-line always
- *   adapts via `Overflow`. Reserved for the v2 classic mode.
+ *   adapts via `Overflow`, and classic currently always adapts via
+ *   `GroupCollapse`. C3 will wire the toggle (off = straight to scroll).
  *
  * ## Accessibility contract
  * There is **no ARIA "ribbon" pattern** — the composite is APG **Tabs** (from kit
@@ -312,7 +357,7 @@ function useControllableState<T>(
 
 export interface RibbonProps
   extends Omit<ComponentProps<typeof Tabs>, "value" | "defaultValue"> {
-  /** v1 implements only `"single-line"` (default). `"classic"` is reserved for v2; unknown values are treated as single-line. */
+  /** `"single-line"` (default) or `"classic"` (Word's two-row band). Unknown values degrade to single-line. */
   layout?: RibbonLayout | (string & {});
   /** Selected tab value (controlled). */
   value?: string;
@@ -467,20 +512,40 @@ export interface RibbonContentProps
   /** Floor on non-pinned items kept in the bar (they clip rather than vanish). Default `1`. */
   minimumVisible?: number;
   /**
-   * Injectable measurement fn, forwarded to `Overflow` (default reads
-   * `offsetWidth`). Escape hatch for tests/SSR where layout is unavailable — you
-   * almost never set this in app code.
+   * Injectable measurement fn. **single-line:** forwarded to `Overflow`;
+   * **classic:** forwarded to `GroupCollapse` (its `axis` second arg is ignored
+   * by an `(el) => number` fn). Default reads `offsetWidth`. Escape hatch for
+   * tests/SSR where layout is unavailable — you almost never set this in app code.
    */
   getSize?: ComponentProps<typeof Overflow>["getSize"];
+  /**
+   * **classic only.** Optimistic width used for a group's collapsed dropdown
+   * button *before* it has been measured (a `display:none` form reports 0).
+   * Kept low so the collapse loop only under-collapses and the C1 settle net
+   * corrects (see `ribbon-collapse.tsx`). Default `64`.
+   */
+  collapsedEstimate?: number;
+  /** **classic only.** Injectable flex-gap reader forwarded to `GroupCollapse`. */
+  getGap?: CollapseGetGap;
+  /** **classic only.** Injectable overflow-extent reader for the C1 settle net. */
+  getOverflowSize?: CollapseGetOverflowSize;
 }
 
 /**
- * RibbonContent — one tab's single-line command row: a kit `Toolbar` wrapped in
- * `Overflow`, wired end-to-end, with the `RibbonOverflowMenu` appended after your
- * groups. The toolbar takes its accessible name from the owning tab
- * (`aria-labelledby` → the tab's id). ~40px tall, transparent surface, thin group
- * dividers, `overflow-hidden`. When the ribbon is `collapsed`, the row is not
- * rendered (tabs-only mode).
+ * RibbonContent — one tab's command band.
+ *
+ * **single-line:** a kit `Toolbar` wrapped in `Overflow`, wired end-to-end, with
+ * the `RibbonOverflowMenu` appended after your groups (~40px tall, thin group
+ * dividers).
+ *
+ * **classic:** the SAME `Toolbar` wrapped in a `GroupCollapse` provider (the C1
+ * group-collapse manager) — a ~96px two-row band, no "…" menu (Word classic has
+ * none; the terminal fallback is scroll, which `GroupCollapse` flags by stamping
+ * `data-scroll-mode` on the band — the scroll UI itself is C3). Both layouts take
+ * the toolbar's accessible name from the owning tab (`aria-labelledby` → tab id).
+ *
+ * When the ribbon is `collapsed` (tabs-only), the band is hidden (via the
+ * `hidden` attribute, not unmounted — the `keepMounted` note below).
  */
 function RibbonContent({
   className,
@@ -488,10 +553,14 @@ function RibbonContent({
   padding = 0,
   minimumVisible = 1,
   getSize,
+  collapsedEstimate = 64,
+  getGap,
+  getOverflowSize,
   children,
   ...props
 }: RibbonContentProps) {
-  const { tabId, collapsed } = useRibbonContext();
+  const { tabId, collapsed, layout } = useRibbonContext();
+  const isClassic = layout === "classic";
   const [registry] = useState(() => createRibbonRegistry());
   const overflowTriggerRef = useRef<HTMLElement | null>(null);
 
@@ -543,29 +612,53 @@ function RibbonContent({
     >
       <RibbonContentContext.Provider value={contentCtx}>
         {/*
-          When collapsed, hide the row with the `hidden` attribute (real
+          When collapsed, hide the band with the `hidden` attribute (real
           display:none, and — unlike a CSS class — honoured by jsdom / the
-          accessibility tree) instead of unmounting, so the `Overflow` manager
-          survives (see the `keepMounted` note above).
+          accessibility tree) instead of unmounting, so the `Overflow` /
+          `GroupCollapse` manager survives (see the `keepMounted` note above).
         */}
         <div hidden={collapsed || undefined}>
-          <Overflow
-            padding={padding}
-            minimumVisible={minimumVisible}
-            getSize={getSize}
-          >
-            <Toolbar
-              aria-labelledby={tabId(value)}
-              className={cn(
-                // ~40px transparent band with a chrome hairline; clip residuals.
-                "relative min-h-10 w-full flex-nowrap items-center overflow-hidden",
-                "border-b border-border bg-background px-1"
-              )}
+          {isClassic ? (
+            <GroupCollapse
+              collapsedEstimate={collapsedEstimate}
+              padding={padding}
+              getSize={getSize as CollapseGetSize | undefined}
+              getGap={getGap}
+              getOverflowSize={getOverflowSize}
             >
-              {preparedChildren}
-              <RibbonOverflowMenu />
-            </Toolbar>
-          </Overflow>
+              <Toolbar
+                aria-labelledby={tabId(value)}
+                className={cn(
+                  // ~96px two-row classic band: content area + group labels row.
+                  // `items-stretch` so each group form fills the band height and
+                  // can pin its label to the bottom; clip residuals so the C1
+                  // accounting + settle net see a real overrun.
+                  "relative h-24 w-full flex-nowrap items-stretch overflow-hidden",
+                  "border-b border-border bg-background px-1"
+                )}
+              >
+                {preparedChildren}
+              </Toolbar>
+            </GroupCollapse>
+          ) : (
+            <Overflow
+              padding={padding}
+              minimumVisible={minimumVisible}
+              getSize={getSize}
+            >
+              <Toolbar
+                aria-labelledby={tabId(value)}
+                className={cn(
+                  // ~40px transparent band with a chrome hairline; clip residuals.
+                  "relative min-h-10 w-full flex-nowrap items-center overflow-hidden",
+                  "border-b border-border bg-background px-1"
+                )}
+              >
+                {preparedChildren}
+                <RibbonOverflowMenu />
+              </Toolbar>
+            </Overflow>
+          )}
         </div>
       </RibbonContentContext.Provider>
     </TabsContent>
@@ -579,22 +672,60 @@ function RibbonContent({
 export interface RibbonGroupProps extends ComponentProps<"div"> {
   /** Stable group id; inherited by the group's items and used for its divider. */
   groupId: string;
-  /** Human label — the overflow menu's section header for this group. */
+  /** Human label — the overflow section header (single-line) / the centered muted band label + collapsed-button name (classic). */
   label: string;
   /** Render the trailing divider (auto-suppressed on the last group). Default `true`. */
   withTrailingDivider?: boolean;
+  /**
+   * **classic only.** Higher collapses FIRST as the band shrinks (Word:
+   * Parágrafo before Fonte). Governs classic collapse order; **ignored in
+   * single-line** (there `RibbonItem.priority` rules). Default `0`.
+   */
+  collapsePriority?: number;
+  /** **classic only.** Icon shown on the group's collapsed dropdown button. */
+  icon?: ReactNode;
+  /**
+   * **classic only.** Dialog-launcher (↘) slot in the group's bottom-right. Pass
+   * a custom node here (full control), OR pass `onLauncherClick` for the default
+   * ↘ icon-button. `launcher` wins if both are set. Omit both for no launcher.
+   */
+  launcher?: ReactNode;
+  /** **classic only.** Sugar for the default ↘ launcher button (see `launcher`). */
+  onLauncherClick?: () => void;
+  /**
+   * Render this group only in the listed layouts (Word shows different command
+   * sets per mode). When set and the active layout isn't listed, the group
+   * renders nothing. Default: both layouts.
+   */
+  layouts?: RibbonLayout[];
 }
 
 /**
- * RibbonGroup — a logical cluster inside the row. Provides `groupId` + `label`
- * to its `RibbonItem`s via context (so each item inherits its group + section
- * header), renders them, then an `OverflowDivider`-wrapped `RibbonSeparator`
- * after the group. The divider hides itself only when the whole group is
- * overflowed (`useIsOverflowGroupVisible` → `"hidden"`), so no separator dangles
- * next to nothing. Renders no DOM element of its own (a context provider) —
- * items and the divider are flattened straight into the toolbar's flex row.
+ * RibbonGroup — a logical command cluster. Adapts to the root `layout`:
+ * - **single-line:** a context provider (no DOM box) that flattens its items +
+ *   an `OverflowDivider`-wrapped `RibbonSeparator` into the toolbar row.
+ * - **classic:** a `CollapseGroup` (C1) rendering the group's two forms — the
+ *   expanded band anatomy and the collapsed dropdown button.
+ *
+ * The `layouts` escape hatch renders nothing (and, in single-line, registers
+ * nothing) when the active layout isn't listed.
  */
-function RibbonGroup({
+function RibbonGroup(props: RibbonGroupProps) {
+  const { layout } = useRibbonContext();
+  if (props.layouts && !props.layouts.includes(layout)) return null;
+  if (layout === "classic") return <RibbonGroupClassic {...props} />;
+  return <RibbonGroupSingleLine {...props} />;
+}
+
+/**
+ * RibbonGroup (single-line) — the v1 behavior, unchanged. Provides
+ * `groupId` + `label` to its `RibbonItem`s via context (so each item inherits
+ * its group + section header), renders them, then an `OverflowDivider`-wrapped
+ * `RibbonSeparator`. The divider hides itself only when the whole group is
+ * overflowed (`useIsOverflowGroupVisible` → `"hidden"`), so no separator dangles.
+ * Renders no DOM element of its own.
+ */
+function RibbonGroupSingleLine({
   groupId,
   label,
   withTrailingDivider = true,
@@ -616,6 +747,209 @@ function RibbonGroup({
   );
 }
 
+/** Down-chevron glyph — inline SVG (no icon dependency), à la split-button. */
+function ChevronGlyph({ className = "size-3" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="M6 8l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Dialog-launcher glyph (↘) — the Fluent "open dialog" corner arrow. */
+function DialogLauncherGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="size-3.5">
+      <path
+        d="M13 5h2v2M15 5l-4 4M6 6v8h8"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * RibbonGroup (classic) — the crux. Renders a `CollapseGroup` (C1) with two form
+ * shells, both kept mounted for measurement:
+ *
+ * - **expanded:** a `role="group"` div — the horizontal cluster of children over
+ *   a centered muted `label`, an optional ↘ launcher bottom-right, and a trailing
+ *   hairline (suppressed on the last group). Children render here **only while
+ *   expanded**.
+ * - **collapsed:** a fixed-size icon + label + chevron `ToolbarButton` (a kit
+ *   `Popover` trigger, so it joins the toolbar roving-tabindex) whose flyout holds
+ *   the group's SAME children — rendered there **only while collapsed** (and the
+ *   flyout is open). The shell's size is independent of the children.
+ *
+ * **Focus-on-collapse:** if the focused control's group flips to collapsed, focus
+ * moves to that group's collapsed dropdown button — the ribbon's focus-to-trigger
+ * pattern at group level (snapshot focus during the flipping render, move it in
+ * the post-commit effect).
+ */
+function RibbonGroupClassic({
+  groupId,
+  label,
+  icon,
+  collapsePriority = 0,
+  launcher,
+  onLauncherClick,
+  withTrailingDivider = true,
+  className,
+  children,
+}: RibbonGroupProps) {
+  const groupCtx = useMemo<RibbonGroupContextValue>(
+    () => ({ groupId, groupLabel: label }),
+    [groupId, label]
+  );
+  const mode = useGroupMode(groupId);
+  const isCollapsed = mode === "collapsed";
+  const [open, setOpen] = useState(false);
+
+  const expandedShellRef = useRef<HTMLDivElement | null>(null);
+  const collapsedButtonRef = useRef<HTMLButtonElement | null>(null);
+  const heldFocusBeforeCollapseRef = useRef(false);
+
+  // Snapshot focus during the render that flips this group collapsed — the DOM
+  // is still pre-commit here (the expanded shell is visible and holds focus), so
+  // we capture "did a control in me hold focus?" before C1's `display:none` lands.
+  if (
+    isCollapsed &&
+    typeof document !== "undefined" &&
+    expandedShellRef.current &&
+    expandedShellRef.current.contains(document.activeElement)
+  ) {
+    heldFocusBeforeCollapseRef.current = true;
+  }
+
+  // After the collapse commit (expanded shell now display:none, collapsed button
+  // visible) move focus to the button so it isn't dropped to <body>.
+  useLayoutEffectSafe(() => {
+    if (isCollapsed && heldFocusBeforeCollapseRef.current) {
+      collapsedButtonRef.current?.focus();
+      heldFocusBeforeCollapseRef.current = false;
+    }
+  }, [isCollapsed]);
+
+  // Un-collapsing while the flyout is open would leave a dangling popover.
+  useEffect(() => {
+    if (!isCollapsed && open) setOpen(false);
+  }, [isCollapsed, open]);
+
+  const showSeparator = withTrailingDivider !== false;
+  const separator = showSeparator ? (
+    <span
+      aria-hidden="true"
+      data-slot="ribbon-group-separator"
+      className="my-2 w-px shrink-0 self-stretch bg-border"
+    />
+  ) : null;
+
+  const launcherNode =
+    launcher ??
+    (onLauncherClick ? (
+      <ToolbarButton
+        size="icon-sm"
+        aria-label={`${label} — mais opções`}
+        data-slot="ribbon-launcher"
+        onClick={onLauncherClick}
+        className="size-5 text-muted-foreground"
+      >
+        <DialogLauncherGlyph />
+      </ToolbarButton>
+    ) : null);
+
+  const expanded = (
+    <div
+      ref={expandedShellRef}
+      role="group"
+      aria-label={label}
+      data-slot="ribbon-group"
+      data-group-id={groupId}
+      className={cn("flex shrink-0 items-stretch", className)}
+    >
+      <div className="flex min-w-0 flex-col justify-between px-1 py-1">
+        <RibbonGroupContext.Provider value={groupCtx}>
+          <div className="flex flex-1 items-start justify-center gap-0.5">
+            {!isCollapsed ? children : null}
+          </div>
+        </RibbonGroupContext.Provider>
+        <div className="relative flex items-center justify-center pt-0.5">
+          <span className="px-1 text-[11px] leading-none text-muted-foreground">
+            {label}
+          </span>
+          {launcherNode ? (
+            <span className="absolute right-0 flex items-center">
+              {launcherNode}
+            </span>
+          ) : null}
+        </div>
+      </div>
+      {separator}
+    </div>
+  );
+
+  const collapsed = (
+    <div
+      data-slot="ribbon-group-collapsed"
+      data-group-id={groupId}
+      className="flex shrink-0 items-stretch"
+    >
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <ToolbarButton
+              ref={collapsedButtonRef}
+              variant="ghost"
+              aria-label={label}
+              data-slot="ribbon-group-trigger"
+              className="flex h-auto min-h-full w-[72px] flex-col items-center justify-center gap-1 px-1 py-1"
+            >
+              <span className="flex items-center justify-center [&_svg:not([class*='size-'])]:size-5">
+                {icon}
+              </span>
+              <span className="flex max-w-full items-center gap-0.5 text-[11px] leading-none">
+                <span className="truncate">{label}</span>
+                <ChevronGlyph />
+              </span>
+            </ToolbarButton>
+          }
+        />
+        <PopoverContent
+          aria-label={label}
+          align="start"
+          side="bottom"
+          className="w-auto min-w-56 p-2"
+        >
+          <RibbonGroupContext.Provider value={groupCtx}>
+            <div className="flex items-start gap-0.5">
+              {isCollapsed ? children : null}
+            </div>
+          </RibbonGroupContext.Provider>
+        </PopoverContent>
+      </Popover>
+      {separator}
+    </div>
+  );
+
+  return (
+    <CollapseGroup
+      groupId={groupId}
+      collapsePriority={collapsePriority}
+      expanded={expanded}
+      collapsed={collapsed}
+    />
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* RibbonItem (the crux)                                                        */
 /* -------------------------------------------------------------------------- */
@@ -627,26 +961,54 @@ export interface RibbonItemProps {
   label: string;
   /** Icon reused in the menu form. */
   icon?: ReactNode;
-  /** Higher survives longer as the row shrinks (priority beats DOM order). */
+  /**
+   * **single-line only.** Higher survives longer as the row shrinks (priority
+   * beats DOM order). **Ignored in classic** — there the group's
+   * `collapsePriority` rules and the whole group collapses together.
+   */
   priority?: number;
-  /** Never overflows (e.g. Undo, a pinned command). */
+  /**
+   * **single-line only.** Never overflows (e.g. Undo, a pinned command).
+   * **Ignored in classic** (nothing item-overflows; groups collapse whole).
+   */
   pinned?: boolean;
-  /** Custom menu form (split-button submenu, labeled combo, …). */
+  /** **single-line only.** Custom menu form (split-button submenu, labeled combo, …). */
   overflowRender?: () => ReactNode;
-  /** Fired by the default menu form (a `DropdownMenuItem`). */
+  /** **single-line only.** Fired by the default menu form (a `DropdownMenuItem`). */
   onSelect?: () => void;
-  /** The bar-form control (ToolbarButton, Toggle, SplitButton, dropdown, …). */
+  /**
+   * Render this item only in the listed layouts (Word shows different command
+   * sets per mode). When set and the active layout isn't listed, the item renders
+   * nothing — and, in single-line, does not register in the overflow menu.
+   * Default: both layouts.
+   */
+  layouts?: RibbonLayout[];
+  /** The bar-form control (ToolbarButton, Toggle, SplitButton, RibbonLargeButton, …). */
   children: ReactElement;
 }
 
 /**
- * RibbonItem — one command. Inherits `groupId`/`groupLabel` from the enclosing
- * `RibbonGroup`, wraps `children` (the bar-form control) in an `OverflowItem`,
- * and registers its menu-form metadata so `RibbonOverflowMenu` can render it when
- * hidden. Also owns the **focus-preservation** behavior: when it is pushed into
- * the "…" menu while holding focus, it moves focus to the trigger.
+ * RibbonItem — one command. Adapts to the root `layout`:
+ * - **single-line:** wraps `children` in an `OverflowItem` and registers its
+ *   menu-form metadata (`RibbonOverflowMenu` renders it when hidden); owns the
+ *   focus-preservation move to the "…" trigger. `priority`/`pinned`/`onSelect`/
+ *   `overflowRender` apply here only.
+ * - **classic:** renders `children` directly — no `OverflowItem`, no registry
+ *   ("…" doesn't exist in classic). Nothing item-overflows; the group collapses
+ *   whole (`RibbonGroup.collapsePriority`).
+ *
+ * The `layouts` escape hatch renders (and, in single-line, registers) nothing
+ * when the active layout isn't listed.
  */
-function RibbonItem({
+function RibbonItem(props: RibbonItemProps) {
+  const { layout } = useRibbonContext();
+  if (props.layouts && !props.layouts.includes(layout)) return null;
+  if (layout === "classic") return <>{props.children}</>;
+  return <RibbonItemSingleLine {...props} />;
+}
+
+/** RibbonItem's v1 (single-line) body — the OverflowItem + registry + focus move. */
+function RibbonItemSingleLine({
   id,
   label,
   icon,
@@ -748,6 +1110,90 @@ function RibbonSeparator({
     <ToolbarSeparator
       data-slot="ribbon-separator"
       className={cn(className)}
+      {...props}
+    />
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Classic form parts (RibbonLargeButton / RibbonRow / RibbonColumn)           */
+/* -------------------------------------------------------------------------- */
+
+export interface RibbonLargeButtonProps extends ComponentProps<"button"> {
+  /** The ~24px icon shown above the label. */
+  icon?: ReactNode;
+  /** Append a down chevron (for a menu/split composition — see the doc comment). */
+  chevron?: boolean;
+}
+
+/**
+ * RibbonLargeButton — the classic band's **large stacked button** (Word's
+ * "Colar"): a ~24px icon over a (possibly two-line) label, ~68px tall, Fluent
+ * *subtle* (ghost) look. A real `<button>` that forwards `ref` + props (React 19),
+ * so it composes as a menu trigger via the Base UI `render` idiom
+ * (`<DropdownMenuTrigger render={<RibbonLargeButton chevron … />} />`) or a split
+ * button — set `chevron` to show the down-caret in those compositions. Icon +
+ * label are laid out for you; pass the label as children.
+ */
+function RibbonLargeButton({
+  className,
+  icon,
+  chevron = false,
+  children,
+  ...props
+}: RibbonLargeButtonProps) {
+  return (
+    <button
+      data-slot="ribbon-large-button"
+      className={cn(
+        "flex h-[68px] w-16 shrink-0 cursor-pointer flex-col items-center justify-start gap-1 rounded-md px-1 py-1.5 text-xs font-normal text-foreground select-none",
+        "outline-none transition-colors duration-fast ease-ease",
+        "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:hover:bg-accent/50 dark:active:bg-accent/70",
+        "disabled:pointer-events-none disabled:opacity-50",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+        className
+      )}
+      {...props}
+    >
+      {icon != null ? (
+        <span className="flex items-center justify-center [&_svg:not([class*='size-'])]:size-6">
+          {icon}
+        </span>
+      ) : null}
+      <span className="flex max-w-full items-center gap-0.5 text-center leading-tight">
+        <span className="line-clamp-2">{children}</span>
+        {chevron ? <ChevronGlyph /> : null}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * RibbonRow — a tiny horizontal flex helper (`data-slot="ribbon-row"`) for
+ * composing a group's controls, e.g. one row of a 2×3 small-icon-button grid.
+ * Forwards `ref` + props (React 19).
+ */
+function RibbonRow({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="ribbon-row"
+      className={cn("flex items-center gap-0.5", className)}
+      {...props}
+    />
+  );
+}
+
+/**
+ * RibbonColumn — a tiny vertical flex helper (`data-slot="ribbon-column"`) for
+ * stacking `RibbonRow`s (the 2×3 grid) or a vertical list of medium icon+label
+ * buttons. Forwards `ref` + props (React 19).
+ */
+function RibbonColumn({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="ribbon-column"
+      className={cn("flex flex-col gap-0.5", className)}
       {...props}
     />
   );
@@ -950,4 +1396,7 @@ export {
   RibbonItem,
   RibbonOverflowMenu,
   RibbonSeparator,
+  RibbonLargeButton,
+  RibbonRow,
+  RibbonColumn,
 };

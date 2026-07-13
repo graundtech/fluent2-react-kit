@@ -5,9 +5,12 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   Ribbon,
+  RibbonColumn,
   RibbonContent,
   RibbonGroup,
   RibbonItem,
+  RibbonLargeButton,
+  RibbonRow,
   RibbonSeparator,
   RibbonTab,
   RibbonTabList,
@@ -683,6 +686,617 @@ describe("Ribbon — accessibility", () => {
     // The portalled menu lives on baseElement — scan it too. Disable the
     // page-level `region` rule: a bare component render has no landmarks (the
     // real app wraps the ribbon in one), and the menu portals to <body>.
+    await expect(baseElement).toHaveNoAxeViolations({
+      rules: { region: { enabled: false } },
+    });
+  });
+});
+
+/* ========================================================================== */
+/* CLASSIC LAYOUT (v2 phase C2)                                                */
+/* ========================================================================== */
+
+/**
+ * A classic-band getSize: the `GroupCollapse` container reports the closed-over
+ * width; every group's expanded form reports `EXPANDED`, its collapsed dropdown
+ * `COLLAPSED` (both keyed off C1's `data-collapse-form`). With gap/padding 0 in
+ * jsdom (no CSS engine), the collapse math is exact: 3 groups all-expanded =
+ * 3×EXPANDED; collapsing a group swaps EXPANDED→COLLAPSED. The manager uses the
+ * default `collapsedEstimate` (64) for a not-yet-active collapsed form.
+ */
+const EXPANDED_W = 300;
+const COLLAPSED_W = 80;
+function makeClassicGetSize(state: { width: number }) {
+  return (el: HTMLElement) => {
+    if (el.getAttribute("data-group-collapse-container") !== null)
+      return state.width;
+    const form = el.getAttribute("data-collapse-form");
+    if (form === "expanded") return EXPANDED_W;
+    if (form === "collapsed") return COLLAPSED_W;
+    return 0;
+  };
+}
+
+/**
+ * Home classic band: Clipboard (Colar, collapsePriority 10) | Font (B/I/U,
+ * priority 40, launcher) | Paragraph (bullets/align, priority 50). Paragraph
+ * collapses FIRST (highest priority), then Font — Word's order.
+ */
+function ClassicRibbon({
+  width = 1000,
+  onColar,
+  onLauncher,
+  ...ribbonProps
+}: {
+  width?: number;
+  onColar?: () => void;
+  onLauncher?: () => void;
+} & Partial<React.ComponentProps<typeof Ribbon>>) {
+  const state = { width };
+  return (
+    <Ribbon defaultValue="home" layout="classic" {...ribbonProps}>
+      <RibbonTabList aria-label="Ribbon">
+        <RibbonTab value="home">Home</RibbonTab>
+      </RibbonTabList>
+
+      <RibbonContent value="home" getSize={makeClassicGetSize(state)}>
+        <RibbonGroup
+          groupId="clipboard"
+          label="Clipboard"
+          icon={<Icon />}
+          collapsePriority={10}
+        >
+          <RibbonItem id="paste" label="Paste">
+            <RibbonLargeButton icon={<Icon />} chevron onClick={onColar}>
+              Colar
+            </RibbonLargeButton>
+          </RibbonItem>
+        </RibbonGroup>
+
+        <RibbonGroup
+          groupId="font"
+          label="Font"
+          icon={<Icon />}
+          collapsePriority={40}
+          onLauncherClick={onLauncher}
+        >
+          <RibbonRow>
+            <RibbonItem id="bold" label="Bold">
+              <ToolbarButton size="icon" aria-label="Bold">
+                B
+              </ToolbarButton>
+            </RibbonItem>
+            <RibbonItem id="italic" label="Italic">
+              <ToolbarButton size="icon" aria-label="Italic">
+                I
+              </ToolbarButton>
+            </RibbonItem>
+          </RibbonRow>
+        </RibbonGroup>
+
+        <RibbonGroup
+          groupId="paragraph"
+          label="Paragraph"
+          icon={<Icon />}
+          collapsePriority={50}
+        >
+          <RibbonColumn>
+            <RibbonItem id="bullets" label="Bullets">
+              <ToolbarButton size="icon" aria-label="Bullets">
+                •
+              </ToolbarButton>
+            </RibbonItem>
+            <RibbonItem id="align" label="Align left">
+              <ToolbarButton size="icon" aria-label="Align left">
+                L
+              </ToolbarButton>
+            </RibbonItem>
+          </RibbonColumn>
+        </RibbonGroup>
+      </RibbonContent>
+    </Ribbon>
+  );
+}
+
+/** data-mode of a group's CollapseGroup wrapper. */
+function groupMode(container: HTMLElement, groupId: string): string | null {
+  const el = container.querySelector(
+    `[data-slot="collapse-group"][data-group-id="${groupId}"]`
+  );
+  return el?.getAttribute("data-mode") ?? null;
+}
+
+describe("Ribbon classic — band anatomy", () => {
+  it("renders the band toolbar, groups with labels, and inter-group separators", () => {
+    const { container } = renderSettled(<ClassicRibbon width={1000} />);
+
+    // Same toolbar labelling wiring as single-line (aria-labelledby → tab id).
+    expect(screen.getByRole("toolbar", { name: "Home" })).toBeInTheDocument();
+
+    // The root carries data-layout="classic".
+    const root = screen
+      .getByRole("tablist")
+      .closest('[data-slot="ribbon"]') as HTMLElement;
+    expect(root).toHaveAttribute("data-layout", "classic");
+
+    // Each group's expanded shell is a role=group named by its label.
+    const font = screen.getByRole("group", { name: "Font" });
+    const paragraph = screen.getByRole("group", { name: "Paragraph" });
+    expect(font).toBeInTheDocument();
+    expect(paragraph).toBeInTheDocument();
+
+    // A non-last group carries a trailing separator; the LAST group (Paragraph)
+    // drops it (RibbonContent's last-group detection, reused from single-line).
+    expect(
+      font.querySelector('[data-slot="ribbon-group-separator"]')
+    ).not.toBeNull();
+    expect(
+      paragraph.querySelector('[data-slot="ribbon-group-separator"]')
+    ).toBeNull();
+
+    // No "…" overflow trigger exists in classic.
+    expect(
+      container.querySelector('[data-slot="ribbon-overflow-trigger"]')
+    ).toBeNull();
+  });
+
+  it("renders the group's children in the expanded band while expanded", () => {
+    renderSettled(<ClassicRibbon width={1000} />);
+    // All groups expanded → their controls are in the band, not a flyout.
+    expect(screen.getByRole("button", { name: "Colar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bold" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bullets" })).toBeInTheDocument();
+    // No collapsed dropdown buttons at full width.
+    expect(screen.queryByRole("button", { name: "Paragraph" })).toBeNull();
+  });
+
+  it("renders a default ↘ launcher button when onLauncherClick is set", async () => {
+    const user = userEvent.setup();
+    const onLauncher = vi.fn();
+    renderSettled(<ClassicRibbon width={1000} onLauncher={onLauncher} />);
+    const launcher = screen.getByRole("button", { name: /Font — mais opções/ });
+    await user.click(launcher);
+    expect(onLauncher).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Ribbon classic — collapse ladder", () => {
+  it("collapses the highest-collapsePriority group first (Paragraph before Font)", () => {
+    // ClassicRibbon closes a fresh getSize over each render's `width`, so a
+    // rerender re-points the manager at the new width.
+    const { container, rerender } = render(<ClassicRibbon width={1000} />);
+    act(() => triggerResize());
+    // Wide: everything expanded.
+    expect(groupMode(container, "clipboard")).toBe("expanded");
+    expect(groupMode(container, "font")).toBe("expanded");
+    expect(groupMode(container, "paragraph")).toBe("expanded");
+
+    // One must collapse → Paragraph (priority 50), not Font (40).
+    rerender(<ClassicRibbon width={720} />);
+    act(() => triggerResize());
+    expect(groupMode(container, "paragraph")).toBe("collapsed");
+    expect(groupMode(container, "font")).toBe("expanded");
+    expect(groupMode(container, "clipboard")).toBe("expanded");
+
+    // Two must collapse → Paragraph + Font, Clipboard survives (lowest priority).
+    rerender(<ClassicRibbon width={520} />);
+    act(() => triggerResize());
+    expect(groupMode(container, "paragraph")).toBe("collapsed");
+    expect(groupMode(container, "font")).toBe("collapsed");
+    expect(groupMode(container, "clipboard")).toBe("expanded");
+
+    // Grow back → everything expands again (un-collapse in reverse).
+    rerender(<ClassicRibbon width={1000} />);
+    act(() => triggerResize());
+    expect(groupMode(container, "paragraph")).toBe("expanded");
+    expect(groupMode(container, "font")).toBe("expanded");
+  });
+
+  it("a collapsed group renders a dropdown button whose flyout holds the same children", async () => {
+    const user = userEvent.setup();
+    const state = { width: 1000 };
+    function App({ width }: { width: number }) {
+      state.width = width;
+      return (
+        <Ribbon defaultValue="home" layout="classic">
+          <RibbonTabList aria-label="Ribbon">
+            <RibbonTab value="home">Home</RibbonTab>
+          </RibbonTabList>
+          <RibbonContent value="home" getSize={makeClassicGetSize(state)}>
+            <RibbonGroup
+              groupId="clipboard"
+              label="Clipboard"
+              icon={<Icon />}
+              collapsePriority={10}
+            >
+              <RibbonItem id="paste" label="Paste">
+                <ToolbarButton size="icon" aria-label="Paste">
+                  P
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+            <RibbonGroup
+              groupId="font"
+              label="Font"
+              icon={<Icon />}
+              collapsePriority={40}
+            >
+              <RibbonItem id="bold" label="Bold">
+                <ToolbarButton size="icon" aria-label="Bold">
+                  B
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+            <RibbonGroup
+              groupId="paragraph"
+              label="Paragraph"
+              icon={<Icon />}
+              collapsePriority={50}
+            >
+              <RibbonItem id="bullets" label="Bullets">
+                <ToolbarButton size="icon" aria-label="Bullets">
+                  •
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+          </RibbonContent>
+        </Ribbon>
+      );
+    }
+    const { container, rerender } = render(<App width={1000} />);
+    act(() => triggerResize());
+
+    rerender(<App width={720} />);
+    act(() => triggerResize());
+    expect(groupMode(container, "paragraph")).toBe("collapsed");
+
+    // The collapsed dropdown button is present; "Bullets" is NOT in the band.
+    const trigger = screen.getByRole("button", { name: "Paragraph" });
+    expect(trigger).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Bullets" })).toBeNull();
+
+    // Opening the flyout renders the group's SAME children.
+    await user.click(trigger);
+    const flyout = await screen.findByRole("dialog", { name: "Paragraph" });
+    expect(
+      within(flyout).getByRole("button", { name: "Bullets" })
+    ).toBeInTheDocument();
+  });
+
+  it("moves focus to the group's dropdown button when its focused control collapses", () => {
+    const state = { width: 1000 };
+    function App({ width }: { width: number }) {
+      state.width = width;
+      return (
+        <Ribbon defaultValue="home" layout="classic">
+          <RibbonTabList aria-label="Ribbon">
+            <RibbonTab value="home">Home</RibbonTab>
+          </RibbonTabList>
+          <RibbonContent value="home" getSize={makeClassicGetSize(state)}>
+            <RibbonGroup
+              groupId="clipboard"
+              label="Clipboard"
+              icon={<Icon />}
+              collapsePriority={10}
+            >
+              <RibbonItem id="paste" label="Paste">
+                <ToolbarButton size="icon" aria-label="Paste">
+                  P
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+            <RibbonGroup
+              groupId="font"
+              label="Font"
+              icon={<Icon />}
+              collapsePriority={40}
+            >
+              <RibbonItem id="bold" label="Bold">
+                <ToolbarButton size="icon" aria-label="Bold">
+                  B
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+            <RibbonGroup
+              groupId="paragraph"
+              label="Paragraph"
+              icon={<Icon />}
+              collapsePriority={50}
+            >
+              <RibbonItem id="bullets" label="Bullets">
+                <ToolbarButton size="icon" aria-label="Bullets">
+                  •
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+          </RibbonContent>
+        </Ribbon>
+      );
+    }
+
+    const { rerender } = render(<App width={1000} />);
+    act(() => triggerResize());
+
+    const bullets = screen.getByRole("button", { name: "Bullets" });
+    act(() => bullets.focus());
+    expect(bullets).toHaveFocus();
+
+    // Shrink so Paragraph collapses while its "Bullets" holds focus.
+    act(() => {
+      rerender(<App width={720} />);
+      triggerResize();
+    });
+
+    // Focus moved to the Paragraph dropdown button, not dropped to <body>.
+    expect(screen.getByRole("button", { name: "Paragraph" })).toHaveFocus();
+  });
+});
+
+describe("Ribbon classic — layouts escape hatch", () => {
+  it("renders a classic-only item in classic but not in single-line (and not in its overflow menu)", async () => {
+    const user = userEvent.setup();
+
+    // single-line: the classic-only command is absent from the bar AND the menu.
+    const state = { width: 150 };
+    const singleLine = render(
+      <Ribbon defaultValue="home">
+        <RibbonTabList aria-label="r">
+          <RibbonTab value="home">Home</RibbonTab>
+        </RibbonTabList>
+        <RibbonContent value="home" getSize={makeGetSize(state)} minimumVisible={0}>
+          <RibbonGroup groupId="font" label="Font">
+            <RibbonItem id="keep" label="Keep" priority={80} pinned>
+              <ToolbarButton aria-label="Keep" data-size={100}>
+                A
+              </ToolbarButton>
+            </RibbonItem>
+            {/* A normal low-priority item that DOES overflow → the "…" menu opens. */}
+            <RibbonItem id="other" label="Other" priority={20}>
+              <ToolbarButton aria-label="Other" data-size={100}>
+                O
+              </ToolbarButton>
+            </RibbonItem>
+            <RibbonItem
+              id="classic-only"
+              label="ClassicOnly"
+              priority={10}
+              layouts={["classic"]}
+            >
+              <ToolbarButton aria-label="ClassicOnly" data-size={100}>
+                C
+              </ToolbarButton>
+            </RibbonItem>
+          </RibbonGroup>
+        </RibbonContent>
+      </Ribbon>
+    );
+    act(() => triggerResize());
+    // The classic-only command never renders in single-line — bar or menu.
+    expect(screen.queryByRole("button", { name: "ClassicOnly" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: /more command/i }));
+    const menu = await screen.findByRole("menu");
+    // The normal overflowed item is in the menu; the classic-only one is not
+    // (it was never registered).
+    expect(within(menu).getByText("Other")).toBeInTheDocument();
+    expect(within(menu).queryByText("ClassicOnly")).toBeNull();
+    singleLine.unmount();
+
+    // classic: the same item renders in the band; a single-line-only group vanishes.
+    const cState = { width: 1000 };
+    render(
+      <Ribbon defaultValue="home" layout="classic">
+        <RibbonTabList aria-label="r">
+          <RibbonTab value="home">Home</RibbonTab>
+        </RibbonTabList>
+        <RibbonContent value="home" getSize={makeClassicGetSize(cState)}>
+          <RibbonGroup groupId="font" label="Font" icon={<Icon />}>
+            <RibbonItem
+              id="classic-only"
+              label="ClassicOnly"
+              layouts={["classic"]}
+            >
+              <ToolbarButton size="icon" aria-label="ClassicOnly">
+                C
+              </ToolbarButton>
+            </RibbonItem>
+          </RibbonGroup>
+          <RibbonGroup
+            groupId="sl-only"
+            label="SingleLineOnly"
+            icon={<Icon />}
+            layouts={["single-line"]}
+          >
+            <RibbonItem id="x" label="X">
+              <ToolbarButton size="icon" aria-label="X">
+                X
+              </ToolbarButton>
+            </RibbonItem>
+          </RibbonGroup>
+        </RibbonContent>
+      </Ribbon>
+    );
+    act(() => triggerResize());
+    expect(
+      screen.getByRole("button", { name: "ClassicOnly" })
+    ).toBeInTheDocument();
+    // The single-line-only group renders nothing in classic.
+    expect(screen.queryByRole("group", { name: "SingleLineOnly" })).toBeNull();
+  });
+});
+
+describe("RibbonLargeButton / RibbonRow / RibbonColumn", () => {
+  it("RibbonLargeButton renders a button with data-slot, label, icon and forwards ref", () => {
+    let node: HTMLElement | null = null;
+    render(
+      <RibbonLargeButton
+        icon={<Icon />}
+        chevron
+        ref={(el) => {
+          node = el;
+        }}
+      >
+        Paste
+      </RibbonLargeButton>
+    );
+    const button = screen.getByRole("button", { name: "Paste" });
+    expect(button).toHaveAttribute("data-slot", "ribbon-large-button");
+    expect(button.querySelector("svg")).not.toBeNull();
+    expect(node).toBeInstanceOf(HTMLButtonElement);
+  });
+
+  it("RibbonLargeButton fires onClick", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(<RibbonLargeButton onClick={onClick}>Go</RibbonLargeButton>);
+    await user.click(screen.getByRole("button", { name: "Go" }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("RibbonRow / RibbonColumn stamp their data-slot and forward ref + className", () => {
+    let rowNode: HTMLElement | null = null;
+    let colNode: HTMLElement | null = null;
+    const { container } = render(
+      <RibbonRow
+        className="custom-row"
+        ref={(el) => {
+          rowNode = el;
+        }}
+      >
+        <RibbonColumn
+          className="custom-col"
+          ref={(el) => {
+            colNode = el;
+          }}
+        >
+          <span>x</span>
+        </RibbonColumn>
+      </RibbonRow>
+    );
+    const row = container.querySelector('[data-slot="ribbon-row"]') as HTMLElement;
+    const col = container.querySelector(
+      '[data-slot="ribbon-column"]'
+    ) as HTMLElement;
+    expect(row).toHaveClass("custom-row", "flex");
+    expect(col).toHaveClass("custom-col", "flex", "flex-col");
+    expect(rowNode).toBeInstanceOf(HTMLDivElement);
+    expect(colNode).toBeInstanceOf(HTMLDivElement);
+  });
+});
+
+describe("Ribbon classic — accessibility", () => {
+  it("has no axe violations (classic expanded)", async () => {
+    const { container } = renderSettled(<ClassicRibbon width={1000} />);
+    await expect(container).toHaveNoAxeViolations();
+  });
+
+  it("has no axe violations (classic with a collapsed group)", async () => {
+    const state = { width: 1000 };
+    function App({ width }: { width: number }) {
+      state.width = width;
+      return (
+        <Ribbon defaultValue="home" layout="classic">
+          <RibbonTabList aria-label="Ribbon">
+            <RibbonTab value="home">Home</RibbonTab>
+          </RibbonTabList>
+          <RibbonContent value="home" getSize={makeClassicGetSize(state)}>
+            <RibbonGroup
+              groupId="clipboard"
+              label="Clipboard"
+              icon={<Icon />}
+              collapsePriority={10}
+            >
+              <RibbonItem id="paste" label="Paste">
+                <ToolbarButton size="icon" aria-label="Paste">
+                  P
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+            <RibbonGroup
+              groupId="font"
+              label="Font"
+              icon={<Icon />}
+              collapsePriority={40}
+            >
+              <RibbonItem id="bold" label="Bold">
+                <ToolbarButton size="icon" aria-label="Bold">
+                  B
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+            <RibbonGroup
+              groupId="paragraph"
+              label="Paragraph"
+              icon={<Icon />}
+              collapsePriority={50}
+            >
+              <RibbonItem id="bullets" label="Bullets">
+                <ToolbarButton size="icon" aria-label="Bullets">
+                  •
+                </ToolbarButton>
+              </RibbonItem>
+            </RibbonGroup>
+          </RibbonContent>
+        </Ribbon>
+      );
+    }
+    const { container, rerender } = render(<App width={1000} />);
+    act(() => triggerResize());
+    rerender(<App width={520} />);
+    act(() => triggerResize());
+    await expect(container).toHaveNoAxeViolations();
+  });
+
+  it("has no axe violations (collapsed-group flyout open)", async () => {
+    const user = userEvent.setup();
+    const state = { width: 720 };
+    const { baseElement } = render(
+      <Ribbon defaultValue="home" layout="classic">
+        <RibbonTabList aria-label="Ribbon">
+          <RibbonTab value="home">Home</RibbonTab>
+        </RibbonTabList>
+        <RibbonContent value="home" getSize={makeClassicGetSize(state)}>
+          <RibbonGroup
+            groupId="clipboard"
+            label="Clipboard"
+            icon={<Icon />}
+            collapsePriority={10}
+          >
+            <RibbonItem id="paste" label="Paste">
+              <ToolbarButton size="icon" aria-label="Paste">
+                P
+              </ToolbarButton>
+            </RibbonItem>
+          </RibbonGroup>
+          <RibbonGroup
+            groupId="font"
+            label="Font"
+            icon={<Icon />}
+            collapsePriority={40}
+          >
+            <RibbonItem id="bold" label="Bold">
+              <ToolbarButton size="icon" aria-label="Bold">
+                B
+              </ToolbarButton>
+            </RibbonItem>
+          </RibbonGroup>
+          <RibbonGroup
+            groupId="paragraph"
+            label="Paragraph"
+            icon={<Icon />}
+            collapsePriority={50}
+          >
+            <RibbonItem id="bullets" label="Bullets">
+              <ToolbarButton size="icon" aria-label="Bullets">
+                •
+              </ToolbarButton>
+            </RibbonItem>
+          </RibbonGroup>
+        </RibbonContent>
+      </Ribbon>
+    );
+    act(() => triggerResize());
+    await user.click(screen.getByRole("button", { name: "Paragraph" }));
+    await screen.findByRole("dialog", { name: "Paragraph" });
     await expect(baseElement).toHaveNoAxeViolations({
       rules: { region: { enabled: false } },
     });

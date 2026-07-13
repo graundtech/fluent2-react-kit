@@ -98,7 +98,28 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
     all collapsed + scrollMode. C2-handoff notes recorded in the plan
     (collapsed-form must be ref-forwarding DOM; focus-on-collapse is C2;
     `collapsedEstimate` default; separator modeling).
-  - **C2 (next)** — classic presentation consuming C1's snapshot.
+  - **C2 (done)** — classic presentation. `layout="classic"` is real:
+    `RibbonContent` swaps the Overflow row for a `GroupCollapse`-wrapped
+    Toolbar (~96px band, same tab labelling; no "…" menu — Word classic has
+    none, its fallback is scroll); `RibbonGroup` gains
+    `collapsePriority`/`icon`/`launcher`/`onLauncherClick` and renders the
+    classic anatomy (children cluster + centered muted label + ↘ launcher +
+    trailing hairline) with a collapsed form (icon+label+chevron
+    ToolbarButton in the roving composite) whose Popover flyout holds the
+    group's SAME children — single subtree, lives in exactly one place per
+    mode (mode flip remounts; ribbon commands are stateless, documented).
+    Group-level focus-on-collapse mirrors the v1 focus-to-trigger pattern.
+    `layouts` escape hatch on RibbonItem/RibbonGroup (per-layout content;
+    absent parts don't register in the single-line overflow registry
+    either). New parts: `RibbonLargeButton`, `RibbonRow`, `RibbonColumn`.
+    `priority`/`pinned`/`overflowRender`/`onSelect` documented as
+    single-line-only. Registry deps += popover, ribbon-collapse. 687 unit
+    tests; full e2e 136/136 with the v1 ribbon spec untouched (the one-tree
+    regression proof). Browser-verified: classic band anatomy, collapse
+    ladder by priority, collapsed-group flyout operable, classic-only
+    escape-hatch item. C3/C4 notes: classic roving skips bare (non-Toolbar)
+    buttons — consider a render-based composite variant in C4 polish; C4
+    should unify the preview's two per-layout trees into one via `layouts`.
   - **C3** — scroll fallback + tab-strip overflow + `autoAdjust`.
   - **C4** — layout switcher + validation + e2e.
   - Still backlog beyond v2: KeyTips, QAT, contextual tabs.
