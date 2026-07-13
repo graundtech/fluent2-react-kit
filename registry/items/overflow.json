@@ -1,0 +1,16 @@
+{
+  "name": "overflow",
+  "type": "registry:ui",
+  "title": "Overflow",
+  "description": "Headless priority-overflow system — the core mechanism behind a single-line Fluent 2 Ribbon. A row of controls that cannot fit hides its lowest-priority items into a '…' overflow menu and restores them (highest-priority first) as it grows. Ships a framework-agnostic manager (createOverflowManager) plus React bindings: Overflow provider, OverflowItem, OverflowDivider, and the useOverflowMenu / useIsOverflowItemVisible / useIsOverflowGroupVisible / useOverflowCount hooks. ResizeObserver-driven, priority + pinned ranking with DOM-position tie-break, size caching, group tracking, and a referentially-stable subscribe/getSnapshot store built for useSyncExternalStore. SSR-safe (everything visible until measured) and headless (no styling of its own).",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/overflow.tsx",
+      "target": "components/ui/overflow.tsx"
+    }
+  ],
+  "docs": "Headless — renders no visuals and imports no `cn`, so it has no `utils` registry dependency. Reimplements the publicly documented priority-overflow *pattern* (no Fluent UI source consulted). Wrap the measured row in `<Overflow>` (it clones its single child and merges in the container ref), wrap each item in `<OverflowItem id priority? pinned? groupId?>` (never unmounted — hidden via CSS so it stays measurable and its metadata stays readable for the overflow menu), put `<OverflowDivider groupId>` between groups (hides when its group is fully overflowed), and build the '…' trigger with `useOverflowMenu()` (attach its `ref`; the trigger's width is reserved from the budget so it never causes overflow — keep it measurable when hidden via `visibility:hidden` + out-of-flow positioning, not `display:none`). Build the overflow menu's contents from `useIsOverflowItemVisible(id)` / `useIsOverflowGroupVisible(groupId)` / `useOverflowCount()` (render only hidden items, grouped under section headers per `groupId`). Compose with the kit `Toolbar` (the row) and `DropdownMenu` (the menu). Ranking: pinned never hides, higher `priority` survives longer, DOM position breaks ties; `minimumVisible` floors the visible non-pinned count. Options on `<Overflow>`: `overflowDirection` (\"end\" default / \"start\"), `overflowAxis` (\"horizontal\" first-class / \"vertical\"), `padding`, `minimumVisible`, and an injectable `getSize`. See `overflow.tsx`'s doc comment for the full contract."
+}

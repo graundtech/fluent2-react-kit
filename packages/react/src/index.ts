@@ -96,6 +96,16 @@ export {
   MultiSelectSeparator,
 } from "./components/ui/multi-select";
 export {
+  Overflow,
+  OverflowItem,
+  OverflowDivider,
+  createOverflowManager,
+  useOverflowMenu,
+  useIsOverflowItemVisible,
+  useIsOverflowGroupVisible,
+  useOverflowCount,
+} from "./components/ui/overflow";
+export {
   Pagination,
   PaginationContent,
   PaginationItem,

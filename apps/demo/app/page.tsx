@@ -47,6 +47,7 @@ const PREVIEWS = [
   "label",
   "link",
   "multi-select",
+  "overflow",
   "pagination",
   "popover",
   "progress",

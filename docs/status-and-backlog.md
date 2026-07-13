@@ -18,10 +18,23 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
   tokens). Registry: 34 items. Known follow-ups: Playwright e2e specs for the
   three (batch precedent), and the split-button focus-ring `ring-offset`
   overlapping its joined sibling by ~2px when packed tightly.
-- **Phase 2 (next)** — headless priority-overflow manager (the single-line
-  ribbon's core): two priority queues + ResizeObserver + `useSyncExternalStore`,
-  pinned items, `groupId` tracking, hide-via-CSS-keep-measurable. Reimplements
-  the *pattern* of Fluent's priority-overflow — never its source.
+- **Phase 2 (done)** — `overflow`: headless priority-overflow system (the
+  single-line ribbon's core). Framework-agnostic `createOverflowManager`
+  (importance-ordered greedy prefix: pinned → `priority` → DOM-edge tie-break,
+  ResizeObserver, size caching that survives `display:none`, "…"-trigger
+  budget reserved only when something overflows, `minimumVisible` floor that
+  excludes pinned) + React bindings on `useSyncExternalStore`
+  (`Overflow`/`OverflowItem`/`OverflowDivider`,
+  `useOverflowMenu`/`useIsOverflowItemVisible`/`useIsOverflowGroupVisible`/
+  `useOverflowCount`) with referentially-stable snapshots and an
+  all-visible SSR path. Reimplements the *pattern* of Fluent's
+  priority-overflow — no Fluent source consulted. Registry: 35 items. The
+  `/preview/overflow` page is a working mini-ribbon proof (Toolbar + groups +
+  "…" DropdownMenu with per-group section headers). Phase-3 notes recorded by
+  the build: flex gaps are absorbed by the `padding` option (consider
+  rect-extent measuring for pixel-exact drop points), and focus should move to
+  the "…" trigger when the focused item overflows (roving tabindex +
+  `display:none` can drop focus).
 - **Phase 3** — the `ribbon` composite (single-line mode v1): Tabs + toolbar +
   overflow; items carry `icon` + `label` for dual presentation (bar form vs
   overflow-menu form); API axes `layout` / `collapsed` / `autoAdjust`.
