@@ -80,8 +80,15 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
   `getOverflowSize` + `registerDivider`/`settle()` on the manager. 639 unit
   tests, 136 e2e. Also documented: Toolbar `render`-prop
   composition caveat (outer ToolbarButton's variant/size win the merge).
-- **v2 backlog** — classic multi-row layout (staged group collapse → scroll
-  fallback → tab-strip overflow), KeyTips, QAT, contextual tabs.
+- **v2 (planned — see [`docs/design/ribbon-v2-plan.md`](design/ribbon-v2-plan.md))** —
+  classic/expanded layout in 4 phases (C1 group-collapse manager on the
+  v1.1 foundations, C2 classic presentation with one-tree/two-layouts +
+  per-layout escape hatch, C3 scroll fallback + tab-strip overflow +
+  `autoAdjust`, C4 layout switcher + validation + e2e). Scope decisions
+  locked 2026-07-13: Word-web collapse model (whole-group → dropdown; the
+  desktop per-item SizeDefinition ladder is a possible v2.1), gallery
+  deferred to a standalone future `gallery` component, single shared tree
+  across layouts. Still backlog beyond v2: KeyTips, QAT, contextual tabs.
 
 ## Current status: v0.5.1
 
