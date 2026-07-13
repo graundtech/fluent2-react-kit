@@ -55,10 +55,13 @@ const PREVIEWS = [
   "separator",
   "skeleton",
   "spinner",
+  "split-button",
   "switch",
   "tabs",
   "textarea",
   "toast",
+  "toggle",
+  "toolbar",
   "tooltip",
 ] as const;
 

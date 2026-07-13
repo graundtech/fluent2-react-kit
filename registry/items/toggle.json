@@ -1,0 +1,15 @@
+{
+  "name": "toggle",
+  "type": "registry:ui",
+  "title": "Toggle",
+  "description": "Fluent 2-styled toggle button with shadcn APIs. Two variants (default, outline) and three sizes matching Button's height scale, aria-pressed/data-pressed state via Base UI, and a Fluent double-stroke focus ring.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["class-variance-authority", "@base-ui/react"],
+  "registryDependencies": ["utils"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/toggle.tsx",
+      "target": "components/ui/toggle.tsx"
+    }
+  ]
+}

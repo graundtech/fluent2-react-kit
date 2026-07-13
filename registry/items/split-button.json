@@ -1,0 +1,15 @@
+{
+  "name": "split-button",
+  "type": "registry:ui",
+  "title": "Split Button",
+  "description": "Fluent 2-styled split button with shadcn-style APIs. Three composable parts (SplitButton, SplitButtonAction, SplitButtonTrigger) join a primary command to an icon-only chevron trigger, sharing variant/size via context and styled through buttonVariants. The chevron composes with the kit DropdownMenu via Base UI's render prop.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["class-variance-authority"],
+  "registryDependencies": ["utils", "button"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/split-button.tsx",
+      "target": "components/ui/split-button.tsx"
+    }
+  ]
+}

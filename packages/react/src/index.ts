@@ -115,6 +115,11 @@ export {
 export { Separator } from "./components/ui/separator";
 export { Skeleton } from "./components/ui/skeleton";
 export { Spinner, spinnerVariants } from "./components/ui/spinner";
+export {
+  SplitButton,
+  SplitButtonAction,
+  SplitButtonTrigger,
+} from "./components/ui/split-button";
 export { Switch } from "./components/ui/switch";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs";
 export { Textarea } from "./components/ui/textarea";
@@ -130,6 +135,15 @@ export {
   createToastManager,
   toastVariants,
 } from "./components/ui/toast";
+export { Toggle, toggleVariants } from "./components/ui/toggle";
+export {
+  Toolbar,
+  ToolbarButton,
+  ToolbarGroup,
+  ToolbarSeparator,
+  ToolbarLink,
+  ToolbarInput,
+} from "./components/ui/toolbar";
 export {
   Tooltip,
   TooltipContent,

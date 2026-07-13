@@ -1,5 +1,35 @@
 # Status and backlog
 
+## In progress: Ribbon initiative (v0.6.0-dev)
+
+An Office-style Ribbon component family, built in phases. Scope decisions and
+the live-reference workflow are documented in
+[`docs/design/ribbon-behavior-spec.md`](design/ribbon-behavior-spec.md) — the
+behavioral source of truth, captured from Word Online's real ribbon (both
+layout modes, resize ladders, overflow-menu anatomy), since Ribbon exists in
+neither the Fluent 2 Figma kit nor Fluent UI React v9.
+
+- **Phase 1 (done)** — three standalone primitives, each a full 4-artifact
+  kit item: `toolbar` (wraps `@base-ui/react/toolbar`; note Base UI does not
+  enable Home/End on its composite — arrow keys wrap instead), `toggle`
+  (shadcn `toggle` API over `@base-ui/react/toggle`, Fluent ToggleButton
+  pressed look), and `split-button` (kit-original composition over
+  `buttonVariants`, menu via DropdownMenu `render`-prop, per-variant divider
+  tokens). Registry: 34 items. Known follow-ups: Playwright e2e specs for the
+  three (batch precedent), and the split-button focus-ring `ring-offset`
+  overlapping its joined sibling by ~2px when packed tightly.
+- **Phase 2 (next)** — headless priority-overflow manager (the single-line
+  ribbon's core): two priority queues + ResizeObserver + `useSyncExternalStore`,
+  pinned items, `groupId` tracking, hide-via-CSS-keep-measurable. Reimplements
+  the *pattern* of Fluent's priority-overflow — never its source.
+- **Phase 3** — the `ribbon` composite (single-line mode v1): Tabs + toolbar +
+  overflow; items carry `icon` + `label` for dual presentation (bar form vs
+  overflow-menu form); API axes `layout` / `collapsed` / `autoAdjust`.
+- **Phase 4** — validation: report against live Word Online + Playwright e2e
+  for real resize/overflow behavior.
+- **v2 backlog** — classic multi-row layout (staged group collapse → scroll
+  fallback → tab-strip overflow), KeyTips, QAT, contextual tabs.
+
 ## Current status: v0.5.1
 
 v0.5.1 is a package-infrastructure release — no component changes — that makes the npm modality real (the README's "Option B" had never actually been published):

@@ -1,0 +1,16 @@
+{
+  "name": "toolbar",
+  "type": "registry:ui",
+  "title": "Toolbar",
+  "description": "Fluent 2-styled toolbar part family built on @base-ui/react's Toolbar for a single tab stop, roving-tabindex arrow-key navigation, and composite focus. Six parts (Toolbar, ToolbarButton, ToolbarGroup, ToolbarSeparator, ToolbarLink, ToolbarInput); ToolbarButton reuses Button's buttonVariants and defaults to Fluent's subtle (ghost) look. The foundation primitive for an Office-style Ribbon.",
+  "author": "graundtech <https://github.com/graundtech/fluent2-react-kit>",
+  "dependencies": ["@base-ui/react", "class-variance-authority"],
+  "registryDependencies": ["utils", "button"],
+  "files": [
+    {
+      "path": "packages/react/src/components/ui/toolbar.tsx",
+      "target": "components/ui/toolbar.tsx"
+    }
+  ],
+  "docs": "shadcn/ui has no Toolbar, so the API is modeled on Base UI's part family (renamed with the kit's Toolbar* convention). The root renders `role=\"toolbar\"`; consumers MUST provide an accessible name via `aria-label` or `aria-labelledby` (same requirement as PopoverContent). Base UI owns the keyboard model — one tab stop, ArrowRight/Left (ArrowUp/Down when vertical) with wrap-around at the ends, and focusable-when-disabled items reachable by arrows but not activatable (Base UI's Toolbar does not enable Home/End). Composition uses Base UI's `render` prop (e.g. `render={<Button variant=\"outline\">…</Button>}`), not Radix `asChild`. ToolbarButton reuses `buttonVariants` (default `variant=\"ghost\"`); set `size=\"icon\"` for 32px square icon buttons. See `toolbar.tsx`'s doc comment for the full mapping and a11y contract."
+}
