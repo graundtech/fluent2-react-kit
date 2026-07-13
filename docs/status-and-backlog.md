@@ -69,12 +69,16 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
   (outline pressed fill lost in dark to the resting `dark:bg-input/30` —
   now `dark:data-[pressed]:bg-secondary`), a stale smoke-test count, and
   under-reserved overflow `padding` (overflow preview now 64px and asserts
-  no clipping at every settled width). Known accepted residue: the ribbon
-  preview's dense Início row can still clip up to ~47px at some widths
-  (commands stay usable; documented in `e2e/ribbon.spec.ts`) — the
-  definitive fix is **rect-extent measuring in the overflow manager**
-  (measure the container's rendered extent instead of summing item widths),
-  the queued v1.1 improvement. Also documented: Toolbar `render`-prop
+  no clipping at every settled width). The residual clipping was
+  closed by the **overflow v1.1** follow-up: the manager now models the
+  computed flex gap, dividers (registered, measured participants), the
+  trigger's gap share, and the container's own inline padding, backed by a
+  hide-only post-layout safety net (`scrollWidth` check, oscillation-guarded,
+  capped, floor-respecting). `padding` is pure consumer slack now (default
+  0); both previews dropped their hand-tuned reserves and the ribbon e2e
+  asserts zero clipping at every settled width. New injectables `getGap`/
+  `getOverflowSize` + `registerDivider`/`settle()` on the manager. 639 unit
+  tests, 136 e2e. Also documented: Toolbar `render`-prop
   composition caveat (outer ToolbarButton's variant/size win the merge).
 - **v2 backlog** — classic multi-row layout (staged group collapse → scroll
   fallback → tab-strip overflow), KeyTips, QAT, contextual tabs.

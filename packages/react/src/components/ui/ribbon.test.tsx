@@ -415,7 +415,9 @@ describe("Ribbon — overflow integration", () => {
     expect(divider).not.toHaveAttribute("data-overflowing");
 
     // Narrow enough that Font (its single low-priority item) fully overflows.
-    rerender(<App width={200} />);
+    // (150, not 200: with the v1.1 accurate accounting `padding` defaults to 0,
+    // so 2×100px items exactly fill a 200px row — 150 forces the real drop.)
+    rerender(<App width={150} />);
     act(() => triggerResize());
     // Font's item left the row…
     expect(screen.queryByRole("button", { name: "Bold" })).toBeNull();
@@ -443,7 +445,9 @@ describe("Ribbon — menu forms", () => {
 
   it("uses a custom overflowRender for the menu form when provided", async () => {
     const user = userEvent.setup();
-    const state = { width: 200 };
+    // 150 (not 200): padding now defaults to 0, so 2×100px items exactly fill a
+    // 200px row — 150 forces Paste to genuinely overflow.
+    const state = { width: 150 };
     render(
       <Ribbon defaultValue="home">
         <RibbonTabList aria-label="r">
@@ -531,9 +535,10 @@ describe("Ribbon — focus preservation", () => {
     act(() => z.focus());
     expect(z).toHaveFocus();
 
-    // Shrink so Z (lowest priority) overflows while it holds focus.
+    // Shrink so Z (lowest priority) overflows while it holds focus. (150, not
+    // 200: padding defaults to 0 now, so 2×100px items exactly fill 200px.)
     act(() => {
-      rerender(<App width={200} />);
+      rerender(<App width={150} />);
       triggerResize();
     });
 

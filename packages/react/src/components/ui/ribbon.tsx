@@ -458,9 +458,10 @@ export interface RibbonContentProps
   extends Omit<ComponentProps<typeof TabsContent>, "value"> {
   value: string;
   /**
-   * Slack subtracted from the measured row width to account for inter-item gaps
-   * and group dividers (the `Overflow` manager sums item widths only). The "…"
-   * trigger's own width is reserved automatically. Default `16`.
+   * **Extra** slack subtracted from the measured row width, on top of the
+   * `Overflow` manager's accurate accounting (item widths + group dividers +
+   * flex gaps + the "…" trigger are all measured now — you no longer hand-tune
+   * this to cover them). Default `0`.
    */
   padding?: number;
   /** Floor on non-pinned items kept in the bar (they clip rather than vanish). Default `1`. */
@@ -484,7 +485,7 @@ export interface RibbonContentProps
 function RibbonContent({
   className,
   value,
-  padding = 16,
+  padding = 0,
   minimumVisible = 1,
   getSize,
   children,

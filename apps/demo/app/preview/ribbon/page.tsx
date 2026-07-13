@@ -258,7 +258,11 @@ function WordRibbon({
         {/* ---------------------------------------------------------------- */}
         {/* Início — the full Home tab                                        */}
         {/* ---------------------------------------------------------------- */}
-        <RibbonContent value="inicio" padding={88}>
+        {/* No `padding` reserve: the Overflow manager (v1.1) measures the flex
+            gaps, the 5 group dividers, and the "…" trigger directly, so this
+            dense 16-command row no longer clips between breakpoints (the old
+            ~47px overrun documented in e2e/ribbon.spec.ts is gone). */}
+        <RibbonContent value="inicio">
           <RibbonGroup groupId="desfazer" label="Desfazer">
             <RibbonItem id="undo" label="Desfazer" icon={<UndoIcon />} priority={100} pinned>
               <TipButton label="Desfazer">
@@ -456,7 +460,7 @@ function WordRibbon({
         {/* ---------------------------------------------------------------- */}
         {/* Inserir                                                           */}
         {/* ---------------------------------------------------------------- */}
-        <RibbonContent value="inserir" padding={48}>
+        <RibbonContent value="inserir">
           <RibbonGroup groupId="tables" label="Tabelas">
             <RibbonItem id="table" label="Tabela" icon={<TableIcon />} priority={80}>
               <TipButton label="Tabela">
@@ -490,7 +494,7 @@ function WordRibbon({
         {/* ---------------------------------------------------------------- */}
         {/* Exibir                                                            */}
         {/* ---------------------------------------------------------------- */}
-        <RibbonContent value="exibir" padding={48}>
+        <RibbonContent value="exibir">
           <RibbonGroup groupId="show" label="Mostrar">
             <RibbonItem id="ruler" label="Régua" icon={<RulerIcon />} priority={80}>
               <span className="inline-flex">

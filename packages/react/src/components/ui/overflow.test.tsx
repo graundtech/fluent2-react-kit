@@ -81,7 +81,18 @@ function makeCore(options: Partial<OverflowManagerOptions> = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
 
-  const manager = createOverflowManager({ getSize, ...options });
+  // Synthetic gap + "true rendered extent" (jsdom has no layout for either).
+  let gap = 0;
+  let scroll = 0;
+  const getGap = () => gap;
+  const getOverflowSize = () => scroll;
+
+  const manager = createOverflowManager({
+    getSize,
+    getGap,
+    getOverflowSize,
+    ...options,
+  });
   managers.push(manager);
   manager.setContainer(container);
 
@@ -90,6 +101,13 @@ function makeCore(options: Partial<OverflowManagerOptions> = {}) {
     container,
     setContainerSize(size: number) {
       sizes.set(container, size);
+    },
+    setGap(value: number) {
+      gap = value;
+    },
+    /** Sets the synthetic `scrollWidth` the safety net reads via getOverflowSize. */
+    setScroll(value: number) {
+      scroll = value;
     },
     add(id: string, opts: AddOptions) {
       const element = document.createElement("button");
@@ -103,6 +121,14 @@ function makeCore(options: Partial<OverflowManagerOptions> = {}) {
         pinned: opts.pinned,
         groupId: opts.groupId,
       });
+      return element;
+    },
+    addDivider(id: string, groupId: string, size: number) {
+      const element = document.createElement("hr");
+      element.setAttribute("data-divider", id);
+      container.appendChild(element);
+      sizes.set(element, size);
+      manager.registerDivider(id, groupId, element);
       return element;
     },
     addMenu(size: number) {
@@ -380,6 +406,163 @@ describe("createOverflowManager — store", () => {
 
     c.manager.setOptions({ minimumVisible: 2 });
     expect(visibleIds(c.manager)).toEqual(["a", "b"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Core: accurate space accounting (v1.1) — gaps, dividers, trigger gap share
+// ---------------------------------------------------------------------------
+
+describe("createOverflowManager — flex gap accounting", () => {
+  it("counts the flex gap between visible slots when deciding what fits", () => {
+    // 3×100 = 300 fits a 300 container with gap 0…
+    const noGap = makeCore();
+    noGap.setContainerSize(300);
+    noGap.add("a", { size: 100, priority: 3 });
+    noGap.add("b", { size: 100, priority: 2 });
+    noGap.add("c", { size: 100, priority: 1 });
+    noGap.manager.update();
+    expect(hiddenIds(noGap.manager)).toEqual([]);
+
+    // …but with a 20px gap the row needs 300 + 2×20 = 340 → one item must drop.
+    const withGap = makeCore();
+    withGap.setGap(20);
+    withGap.setContainerSize(300);
+    withGap.add("a", { size: 100, priority: 3 });
+    withGap.add("b", { size: 100, priority: 2 });
+    withGap.add("c", { size: 100, priority: 1 });
+    withGap.manager.update();
+    // a (100) + b (100) + one gap (20) = 220 ≤ 300; adding c needs another
+    // 100 + 20 → 340 > 300, so c overflows.
+    expect(hiddenIds(withGap.manager)).toEqual(["c"]);
+  });
+
+  it("reads the gap through the injectable getGap", () => {
+    const c = makeCore({ getGap: () => 50 });
+    c.setContainerSize(300);
+    c.add("a", { size: 100, priority: 3 });
+    c.add("b", { size: 100, priority: 2 });
+    c.add("c", { size: 100, priority: 1 });
+    c.manager.update();
+    // a + b + one 50px gap = 250 ≤ 300; c would add 100 + 50 → 400 > 300.
+    expect(hiddenIds(c.manager)).toEqual(["c"]);
+  });
+});
+
+describe("createOverflowManager — divider cost participation", () => {
+  it("counts a registered divider's width once its group has a visible item", () => {
+    // Two groups of one item each (120), a 60px divider after g1.
+    // Without the divider both fit in 300 (240). With it: 120 + 60 + 120 = 300.
+    const c = makeCore();
+    c.setContainerSize(290); // just under 300 → the divider tips it over
+    c.add("a", { size: 120, priority: 2, groupId: "g1" });
+    c.addDivider("d1", "g1", 60);
+    c.add("b", { size: 120, priority: 1, groupId: "g2" });
+    c.manager.update();
+    // a (120) + its divider (60) = 180 ≤ 290; b would add 120 → 300 > 290.
+    expect(hiddenIds(c.manager)).toEqual(["b"]);
+  });
+
+  it("does not count a divider whose group is fully hidden", () => {
+    // g1's only item is low priority; when it hides, its divider stops counting.
+    const c = makeCore();
+    c.setContainerSize(200);
+    c.add("a", { size: 120, priority: 1, groupId: "g1" }); // hides first
+    c.addDivider("d1", "g1", 60);
+    c.add("b", { size: 120, priority: 2, groupId: "g2" });
+    c.manager.update();
+    // b survives (higher priority); a overflows → g1 hidden → its divider drops.
+    expect(hiddenIds(c.manager)).toEqual(["a"]);
+    expect(visibleIds(c.manager)).toEqual(["b"]);
+  });
+});
+
+describe("createOverflowManager — trigger gap share", () => {
+  it("reserves both the trigger's width and its gap slot", () => {
+    const c = makeCore();
+    c.setGap(20);
+    c.setContainerSize(250);
+    c.add("a", { size: 100, priority: 3 });
+    c.add("b", { size: 100, priority: 2 });
+    c.add("c", { size: 100, priority: 1 });
+    c.addMenu(40);
+    c.manager.update();
+    // Overflow → trigger shows. Fitting "a" alone: 100 + trigger 40 + one gap
+    // (2 slots) 20 = 160 ≤ 250. Adding "b": 200 + 40 + 2 gaps (3 slots) 40 =
+    // 280 > 250 → only "a" fits.
+    expect(visibleIds(c.manager)).toEqual(["a"]);
+    expect(c.manager.getSnapshot().overflowCount).toBe(2);
+  });
+});
+
+describe("createOverflowManager — post-layout safety net", () => {
+  it("hides one more item when the container still truly overflows", () => {
+    const c = makeCore();
+    c.setContainerSize(300);
+    c.add("a", { size: 100, priority: 3 });
+    c.add("b", { size: 100, priority: 2 });
+    c.add("c", { size: 100, priority: 1 });
+    c.manager.update();
+    // Accounting (gap 0) says all three fit.
+    expect(hiddenIds(c.manager)).toEqual([]);
+
+    // But reality (scrollWidth) overruns by 40px → one settle step hides c.
+    c.setScroll(340);
+    c.manager.settle();
+    expect(hiddenIds(c.manager)).toEqual(["c"]);
+  });
+
+  it("is hide-only and converges, hiding one item per settle step (oscillation guard)", () => {
+    const c = makeCore();
+    c.setContainerSize(300);
+    c.add("a", { size: 100, priority: 3 });
+    c.add("b", { size: 100, priority: 2 });
+    c.add("c", { size: 100, priority: 1 });
+    c.manager.update();
+
+    c.setScroll(500); // grossly over → net keeps hiding, one per step
+    c.manager.settle();
+    expect(hiddenIds(c.manager)).toEqual(["c"]);
+    c.manager.settle();
+    expect(hiddenIds(c.manager).sort()).toEqual(["b", "c"]);
+
+    // Reality now fits → no further hiding, and it never SHOWS anything back.
+    c.setScroll(100);
+    c.manager.settle();
+    expect(hiddenIds(c.manager).sort()).toEqual(["b", "c"]);
+  });
+
+  it("never hides below the pinned / minimumVisible floor, even if still overflowing", () => {
+    const c = makeCore({ minimumVisible: 1 });
+    c.setContainerSize(300);
+    c.add("a", { size: 100, priority: 3, pinned: true });
+    c.add("b", { size: 100, priority: 2 });
+    c.manager.update();
+
+    // Reality always overruns; the net may not drop the pinned "a" nor go below
+    // the 1 non-pinned floor → "a" and "b" both stay no matter how many steps.
+    c.setScroll(9999);
+    for (let i = 0; i < 10; i++) c.manager.settle();
+    expect(visibleIds(c.manager).sort()).toEqual(["a", "b"]);
+  });
+
+  it("resets the extra-hidden count when the container size actually changes", () => {
+    const c = makeCore();
+    c.setContainerSize(300);
+    c.add("a", { size: 100, priority: 3 });
+    c.add("b", { size: 100, priority: 2 });
+    c.add("c", { size: 100, priority: 1 });
+    c.manager.update();
+
+    c.setScroll(340);
+    c.manager.settle();
+    expect(hiddenIds(c.manager)).toEqual(["c"]); // net hid one
+
+    // A real resize to a width that fits everything clears the net's extra-hide.
+    c.setContainerSize(1000);
+    c.setScroll(300);
+    c.manager.update();
+    expect(hiddenIds(c.manager)).toEqual([]);
   });
 });
 

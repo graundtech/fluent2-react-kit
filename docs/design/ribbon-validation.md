@@ -46,16 +46,16 @@ The e2e pass surfaced three additional items, all resolved or dispositioned:
   `ToolbarButton`'s variant/size win the class merge; styled toolbar items
   should set variant/size on `ToolbarButton` itself. Noted in the preview and
   here; same family as the known data-slot merge-order TODO.
-- **`padding` reserve tuning (fixed for the overflow preview; residual on
-  the ribbon preview, accepted)** — the manager sums item sizes and cannot
-  see flex gaps/dividers, so the `padding` option must cover them. The
-  overflow preview now reserves 64px and asserts `scrollWidth <=
-  clientWidth` at every settled width. The ribbon preview's dense Início row
-  still overruns by up to ~47px at some widths (commands remain usable; the
-  clipped remainder is the trailing edge before the next drop) —
-  documented in `e2e/ribbon.spec.ts`. The definitive fix is measuring the
-  container's rendered extent (rect) instead of summing item widths, queued
-  as the overflow v1.1 improvement in the backlog.
+- **`padding` reserve tuning — RESOLVED in overflow v1.1** — the manager now
+  models every real cost (computed flex gap per visible slot, dividers as
+  measured participants, the trigger's gap share, the container's own inline
+  padding) and backs it with a hide-only post-layout safety net
+  (`scrollWidth` check with an oscillation guard). `padding` is now pure
+  consumer slack, default 0 — both previews dropped their hand-tuned
+  reserves, and `e2e/ribbon.spec.ts` asserts zero clipping on the dense
+  Início row at every settled slider width (the former ~47px overrun is
+  gone; the only exclusion is the 240px floor, where `minimumVisible`
+  legitimately forces pinned Desfazer + one command past the width).
 
 ## Environment notes (for future validation passes)
 

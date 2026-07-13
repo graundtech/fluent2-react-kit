@@ -7,6 +7,7 @@ import {
   isValidElement,
   useCallback,
   useContext,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -56,28 +57,56 @@ import type { CSSProperties, ReactElement, Ref } from "react";
  * Because the visible set is always the top-K of this total order, items
  * "reappear in reverse order" of hiding for free as the container grows.
  *
- * ## Measurement & caching model
+ * ## Measurement & caching model (accurate space accounting, v1.1)
  * A `ResizeObserver` on the container drives updates. Available space =
- * container size on the overflow axis − `padding`. Occupied = Σ(visible item
- * sizes) + the "…" trigger's own size **whenever at least one item is hidden**
- * (so the trigger can never itself cause overflow). Item sizes are **cached**
- * every time an item is measured while visible; a hidden item keeps its last
- * known size, so re-showing it is accurate. Hiding is done via **CSS**
- * (`display:none` set on the item's own element through the React binding) — the
- * item is **never unmounted**, so (a) the overflow menu can still read each
- * item's React metadata, and (b) the element becomes measurable again the moment
- * it is restored. The manager measures with an injectable `getSize` (default:
+ * container size on the overflow axis − `padding` (`padding` now defaults to `0`
+ * and is pure **consumer slack**, no longer a hand-tuned reserve for costs the
+ * manager can't see). Occupied for a candidate visible set models **every** cost
+ * the flex row actually pays:
+ *   - Σ(visible item sizes);
+ *   - Σ(visible **divider** sizes) — dividers register and are measured too (see
+ *     "Group tracking"), a divider counting whenever its group has ≥1 visible
+ *     item;
+ *   - the "…" **trigger** size whenever at least one item is hidden (so the
+ *     trigger can never itself cause overflow); and
+ *   - the **flex gap**: `gap × (slots − 1)`, where `slots` = visible items +
+ *     visible dividers + the trigger (when shown). The gap is read once per
+ *     recompute from the container's computed `column-gap`/`row-gap` via an
+ *     injectable `getGap` (default: `getComputedStyle`).
+ * The greedy prefix loop tracks item size, divider cost, and slot count
+ * incrementally as it admits items in importance order, so it decides how many
+ * items fit **without** rendering hypotheses.
+ *
+ * Item/divider sizes are **cached** every time they are measured while visible; a
+ * hidden element keeps its last known size, so re-showing it is accurate. Hiding
+ * is done via **CSS** (`display:none` set through the React binding) — the element
+ * is **never unmounted**, so (a) the overflow menu can still read each item's
+ * React metadata, and (b) the element becomes measurable again the moment it is
+ * restored. Measurement uses the injectable `getSize` (default:
  * `offsetWidth`/`offsetHeight`) so the loop is testable under jsdom's zero-layout
- * DOM, and it never overwrites a good cached size with a transient `0` (which a
- * `display:none` element reports).
+ * DOM, and it never overwrites a good cached size with a transient `0`.
+ *
+ * ## Post-layout safety net
+ * Predictive accounting is now accurate, but sub-pixel rounding or an
+ * un-modelled cost could still leave a hair of overrun. After the React bindings
+ * apply a snapshot, `settle()` runs (scheduled by the binding in a layout effect,
+ * so the just-committed `display:none` is reflected): if the container **truly**
+ * overflows (`getOverflowSize` — `scrollWidth`/`scrollHeight` — exceeds the
+ * client size), it hides **one** more item and lets the next commit re-check.
+ * The net is **hide-only** within a settle sequence (an oscillation guard: it may
+ * never show), its extra-hidden count resets when the container size actually
+ * changes or items (un)register, and a hard cap (`items.size`) backstops it. It
+ * never hides below the pinned/`minimumVisible` floor.
  *
  * ## Group tracking
  * Each `groupId` derives a tri-state (`OverflowGroupState`): `"visible"` (all its
  * items shown), `"overflow"` (some shown, some hidden), `"hidden"` (all hidden).
- * `<OverflowDivider groupId>` hides itself only when its group is **fully
- * overflowed** (`"hidden"`) — a dangling separator with nothing left beside it.
- * The overflow menu renders a section (header + items) for any group whose state
- * is not `"visible"`.
+ * `<OverflowDivider groupId>` **registers its element** so its width + gap
+ * participate in the occupancy sum, and hides itself only when its group is
+ * **fully overflowed** (`"hidden"`) — a dangling separator with nothing left
+ * beside it. It is not a ranked item (it never hides by rank; its visibility is
+ * derived from its group's state). The overflow menu renders a section (header +
+ * items) for any group whose state is not `"visible"`.
  *
  * ## SSR story
  * `createOverflowManager` touches no DOM at construction (safe inside a `useState`
@@ -124,14 +153,34 @@ export type OverflowAxis = "horizontal" | "vertical";
 /** Injectable measurement fn (default reads `offsetWidth`/`offsetHeight`). */
 export type OverflowGetSize = (element: HTMLElement, axis: OverflowAxis) => number;
 
+/** Injectable flex-gap reader (default reads computed `column-gap`/`row-gap`). */
+export type OverflowGetGap = (element: HTMLElement, axis: OverflowAxis) => number;
+
+/**
+ * Injectable "true rendered extent" reader for the post-layout safety net
+ * (default reads `scrollWidth`/`scrollHeight`).
+ */
+export type OverflowGetOverflowSize = (
+  element: HTMLElement,
+  axis: OverflowAxis
+) => number;
+
 export interface OverflowManagerOptions {
   overflowDirection?: OverflowDirection;
   overflowAxis?: OverflowAxis;
-  /** Reserved slack subtracted from the container size (gaps, dividers, etc.). */
+  /**
+   * **Extra** slack the consumer wants on top of the manager's accurate space
+   * accounting (item sizes + dividers + flex gap + trigger are all modelled now).
+   * Default `0` — you no longer hand-tune this to cover gaps/dividers.
+   */
   padding?: number;
   /** Floor on the number of **non-pinned** items kept visible (pinned are always visible and never counted here). */
   minimumVisible?: number;
   getSize?: OverflowGetSize;
+  /** Reads the container's flex gap on the overflow axis (default: computed style). */
+  getGap?: OverflowGetGap;
+  /** Reads the container's true rendered extent for the safety net (default: `scrollWidth`). */
+  getOverflowSize?: OverflowGetOverflowSize;
 }
 
 /** What `<OverflowItem>` hands to the manager on register. */
@@ -157,11 +206,25 @@ export interface OverflowManager {
   register: (registration: OverflowItemRegistration) => void;
   unregister: (id: string) => void;
   setItemElement: (id: string, element: HTMLElement | null) => void;
+  /**
+   * Register a group **divider** as a measured (but non-ranked) participant. Its
+   * width + gap count toward occupancy whenever its group has a visible item; it
+   * never hides by rank (its visibility is derived from its group's state).
+   */
+  registerDivider: (id: string, groupId: string, element: HTMLElement | null) => void;
+  setDividerElement: (id: string, element: HTMLElement | null) => void;
   setContainer: (element: HTMLElement | null) => void;
   setOverflowMenu: (element: HTMLElement | null) => void;
   setOptions: (options: Partial<OverflowManagerOptions>) => void;
   /** Synchronously re-measure and recompute (used by the observer and by tests). */
   update: () => void;
+  /**
+   * One step of the post-layout safety net: if the container still truly
+   * overflows (`getOverflowSize` > client), hide one more item (hide-only,
+   * capped, never below the floor). Scheduled by the React binding after a
+   * commit that changed visibility; also callable directly in tests.
+   */
+  settle: () => void;
   /**
    * Dispose current resources (observer, listeners, items). NOT terminal: any
    * subsequent `register`/`setContainer`/`setOverflowMenu` revives the manager.
@@ -184,12 +247,49 @@ interface InternalItem {
   domIndex: number;
 }
 
+interface InternalDivider {
+  id: string;
+  groupId: string;
+  element: HTMLElement | null;
+  /** Last known measured size on the overflow axis; kept across hidden periods. */
+  size: number;
+}
+
 // compareDocumentPosition bitmask constants (avoid a `Node` global reference).
 const DOCUMENT_POSITION_PRECEDING = 2;
 const DOCUMENT_POSITION_FOLLOWING = 4;
 
+/** Slack tolerated before the safety net treats the row as truly overflowing. */
+const SAFETY_TOLERANCE = 1;
+
 const defaultGetSize: OverflowGetSize = (element, axis) =>
   axis === "horizontal" ? element.offsetWidth : element.offsetHeight;
+
+const defaultGetGap: OverflowGetGap = (element, axis) => {
+  if (typeof getComputedStyle === "undefined") return 0;
+  const style = getComputedStyle(element);
+  const raw = axis === "horizontal" ? style.columnGap : style.rowGap;
+  const value = parseFloat(raw);
+  return Number.isFinite(value) ? value : 0;
+};
+
+const defaultGetOverflowSize: OverflowGetOverflowSize = (element, axis) =>
+  axis === "horizontal" ? element.scrollWidth : element.scrollHeight;
+
+/**
+ * The container's own inline padding on the overflow axis — it eats into the
+ * space the flex children get, so it's subtracted from `available`. Read from
+ * computed style (0 under SSR / jsdom, so synthetic-size tests are unaffected).
+ */
+function readContainerPadding(element: HTMLElement, axis: OverflowAxis): number {
+  if (typeof getComputedStyle === "undefined") return 0;
+  const style = getComputedStyle(element);
+  const a = parseFloat(axis === "horizontal" ? style.paddingLeft : style.paddingTop);
+  const b = parseFloat(
+    axis === "horizontal" ? style.paddingRight : style.paddingBottom
+  );
+  return (Number.isFinite(a) ? a : 0) + (Number.isFinite(b) ? b : 0);
+}
 
 // ---------------------------------------------------------------------------
 // Core manager (framework-agnostic)
@@ -204,15 +304,25 @@ export function createOverflowManager(
     padding: initialOptions.padding ?? 0,
     minimumVisible: initialOptions.minimumVisible ?? 0,
     getSize: initialOptions.getSize ?? defaultGetSize,
+    getGap: initialOptions.getGap ?? defaultGetGap,
+    getOverflowSize: initialOptions.getOverflowSize ?? defaultGetOverflowSize,
   };
 
   const items = new Map<string, InternalItem>();
+  const dividers = new Map<string, InternalDivider>();
   const listeners = new Set<() => void>();
 
   let container: HTMLElement | null = null;
   let containerObserver: ResizeObserver | null = null;
   let overflowMenuEl: HTMLElement | null = null;
   let overflowMenuSize = 0;
+
+  // Flex gap on the overflow axis, read once per recompute.
+  let gap = 0;
+  // Post-layout safety net: extra items hidden beyond the accounted count.
+  // Hide-only within a settle sequence; reset on real size change / (un)register.
+  let extraHidden = 0;
+  let lastContainerSize = -1;
 
   let updating = false;
   let dirty = false;
@@ -285,20 +395,28 @@ export function createOverflowManager(
   }
 
   function recompute() {
-    const list = [...items.values()];
-
-    // No container, not yet measurable, or collapsed → everything visible.
+    // No container → everything visible; forget cached geometry.
     if (!container) {
+      extraHidden = 0;
+      lastContainerSize = -1;
       commit(buildAllVisible());
       return;
     }
+
     const containerSize = options.getSize(container, options.overflowAxis);
+    gap = options.getGap(container, options.overflowAxis);
+    // A real container-size change ends any settle sequence (reset the net).
+    if (containerSize !== lastContainerSize) {
+      extraHidden = 0;
+      lastContainerSize = containerSize;
+    }
+    // Not yet measurable / collapsed → everything visible.
     if (!(containerSize > 0)) {
       commit(buildAllVisible());
       return;
     }
 
-    const ordered = orderByDom(list);
+    const ordered = orderByDom([...items.values()]);
 
     // Measure only currently-visible items (a hidden `display:none` element
     // reports 0); never clobber a good cached size with a transient 0.
@@ -312,34 +430,100 @@ export function createOverflowManager(
       const measured = options.getSize(overflowMenuEl, options.overflowAxis);
       if (measured > 0) overflowMenuSize = measured;
     }
+    // Measure dividers that are currently rendered (group not fully hidden).
+    for (const divider of dividers.values()) {
+      if (
+        divider.element &&
+        snapshot.groupStates[divider.groupId] !== "hidden"
+      ) {
+        const measured = options.getSize(divider.element, options.overflowAxis);
+        if (measured > 0) divider.size = measured;
+      }
+    }
+    // Divider cost keyed by group (a group's divider is visible iff the group
+    // has ≥1 visible item).
+    const dividersByGroup = new Map<string, { size: number; count: number }>();
+    for (const divider of dividers.values()) {
+      const entry = dividersByGroup.get(divider.groupId) ?? { size: 0, count: 0 };
+      entry.size += divider.size;
+      entry.count += 1;
+      dividersByGroup.set(divider.groupId, entry);
+    }
 
-    const available = containerSize - options.padding;
+    // Flex children live inside the container's content box, so subtract its own
+    // inline padding (plus any extra consumer `padding` slack).
+    const available =
+      containerSize -
+      readContainerPadding(container, options.overflowAxis) -
+      options.padding;
 
     // Most-important first. The visible set is always a prefix of this order.
     const ranked = ordered.slice().sort((a, b) => importance(b, a));
     const n = ranked.length;
-    const totalAll = ranked.reduce((sum, item) => sum + item.size, 0);
+
+    // Floors: all pinned (front block) always visible; keep >= minimumVisible
+    // non-pinned items (they force-show and clip rather than disappear).
+    const pinnedCount = ranked.filter((item) => item.pinned).length;
+    const nonPinnedFloor = Math.min(options.minimumVisible, n - pinnedCount);
+    const floor = pinnedCount + nonPinnedFloor;
+
+    // Occupancy of the full set (no trigger): item sizes + every divider whose
+    // group is present + flex gap across all rendered slots.
+    const occupancyAll = (() => {
+      let itemSize = 0;
+      const groups = new Set<string>();
+      for (const item of ranked) {
+        itemSize += item.size;
+        if (item.groupId) groups.add(item.groupId);
+      }
+      let dividerSize = 0;
+      let dividerCount = 0;
+      for (const [groupId, entry] of dividersByGroup) {
+        if (groups.has(groupId)) {
+          dividerSize += entry.size;
+          dividerCount += entry.count;
+        }
+      }
+      const slots = n + dividerCount;
+      return itemSize + dividerSize + (slots > 0 ? gap * (slots - 1) : 0);
+    })();
 
     let visibleCount: number;
-    if (totalAll <= available) {
+    if (occupancyAll <= available) {
       visibleCount = n; // everything fits, no trigger needed
     } else {
-      // At least one item won't fit → the "…" trigger will show; reserve it.
-      const budget = available - overflowMenuSize;
-      let cumulative = 0;
+      // At least one item won't fit → the "…" trigger will show (when present);
+      // it takes both a size and a gap slot. Admit items in importance order,
+      // tracking item size, divider cost, and slot count incrementally.
+      const triggerShown = overflowMenuEl != null;
+      const triggerSize = triggerShown ? overflowMenuSize : 0;
+      let itemSize = 0;
+      let dividerSize = 0;
+      let dividerCount = 0;
+      const seenGroups = new Set<string>();
       let fit = 0;
       for (let i = 0; i < n; i++) {
-        cumulative += ranked[i]!.size;
-        if (cumulative <= budget) fit = i + 1;
+        const item = ranked[i]!;
+        itemSize += item.size;
+        if (item.groupId && !seenGroups.has(item.groupId)) {
+          seenGroups.add(item.groupId);
+          const entry = dividersByGroup.get(item.groupId);
+          if (entry) {
+            dividerSize += entry.size;
+            dividerCount += entry.count;
+          }
+        }
+        const slots = i + 1 + dividerCount + (triggerShown ? 1 : 0);
+        const gapTotal = slots > 0 ? gap * (slots - 1) : 0;
+        const occupied = itemSize + dividerSize + gapTotal + triggerSize;
+        if (occupied <= available) fit = i + 1;
         else break;
       }
-      // Floors: all pinned (front block) always visible; keep >= minimumVisible
-      // non-pinned items (they force-show and clip rather than disappear).
-      const pinnedCount = ranked.filter((item) => item.pinned).length;
-      const nonPinnedFloor = Math.min(options.minimumVisible, n - pinnedCount);
-      const floor = pinnedCount + nonPinnedFloor;
       visibleCount = Math.min(n, Math.max(fit, floor));
     }
+
+    // Post-layout safety net: hide `extraHidden` more, never below the floor.
+    visibleCount = Math.max(floor, visibleCount - extraHidden);
 
     const visibleItemIds = new Set<string>();
     const overflowItemIds = new Set<string>();
@@ -388,6 +572,26 @@ export function createOverflowManager(
     }
   }
 
+  /**
+   * One step of the post-layout safety net. Runs after a commit reflected the
+   * current visibility, so `getOverflowSize` sees the real rendered extent. Only
+   * ever hides (oscillation guard); backs off if hiding one more makes no
+   * difference (already at the floor); capped at `items.size`.
+   */
+  function settle() {
+    if (destroyed || !container) return;
+    const client = options.getSize(container, options.overflowAxis);
+    if (!(client > 0)) return;
+    const scroll = options.getOverflowSize(container, options.overflowAxis);
+    if (scroll <= client + SAFETY_TOLERANCE) return; // no true overflow
+    if (extraHidden >= items.size) return; // hard cap backstop
+    extraHidden += 1;
+    const before = snapshot;
+    recompute();
+    // No progress (floor reached) → don't creep toward the cap.
+    if (snapshot === before) extraHidden -= 1;
+  }
+
   function attachObserver() {
     if (containerObserver || !container) return;
     if (typeof ResizeObserver === "undefined") return; // SSR / unsupported
@@ -420,14 +624,35 @@ export function createOverflowManager(
         size: existing?.size ?? 0, // preserve a cached size across re-registers
         domIndex: existing?.domIndex ?? 0,
       });
+      extraHidden = 0; // membership change ends any settle sequence
       update();
     },
     unregister(id) {
-      if (items.delete(id)) update();
+      const removed = items.delete(id) || dividers.delete(id);
+      if (removed) {
+        extraHidden = 0;
+        update();
+      }
     },
     setItemElement(id, element) {
       const item = items.get(id);
       if (item) item.element = element;
+    },
+    registerDivider(id, groupId, element) {
+      destroyed = false;
+      const existing = dividers.get(id);
+      dividers.set(id, {
+        id,
+        groupId,
+        element,
+        size: existing?.size ?? 0, // preserve a cached size across re-registers
+      });
+      extraHidden = 0;
+      update();
+    },
+    setDividerElement(id, element) {
+      const divider = dividers.get(id);
+      if (divider) divider.element = element;
     },
     setContainer(element) {
       if (element) destroyed = false; // revive on re-attach (StrictMode remount)
@@ -456,15 +681,21 @@ export function createOverflowManager(
           minimumVisible: next.minimumVisible,
         }),
         ...(next.getSize !== undefined && { getSize: next.getSize }),
+        ...(next.getGap !== undefined && { getGap: next.getGap }),
+        ...(next.getOverflowSize !== undefined && {
+          getOverflowSize: next.getOverflowSize,
+        }),
       });
       update();
     },
     update,
+    settle,
     destroy() {
       destroyed = true;
       detachObserver();
       listeners.clear();
       items.clear();
+      dividers.clear();
     },
   };
 }
@@ -537,6 +768,8 @@ function Overflow({
   padding = 0,
   minimumVisible = 0,
   getSize,
+  getGap,
+  getOverflowSize,
 }: OverflowProps) {
   const [manager] = useState(() =>
     createOverflowManager({
@@ -545,6 +778,8 @@ function Overflow({
       padding,
       minimumVisible,
       getSize,
+      getGap,
+      getOverflowSize,
     })
   );
 
@@ -556,8 +791,37 @@ function Overflow({
       padding,
       minimumVisible,
       getSize,
+      getGap,
+      getOverflowSize,
     });
-  }, [manager, overflowDirection, overflowAxis, padding, minimumVisible, getSize]);
+  }, [
+    manager,
+    overflowDirection,
+    overflowAxis,
+    padding,
+    minimumVisible,
+    getSize,
+    getGap,
+    getOverflowSize,
+  ]);
+
+  // Subscribe so the provider itself re-renders on every snapshot change (the
+  // item hooks alone re-render the children, not this component) — that is what
+  // lets the safety-net layout effect below run *after* a visibility commit.
+  const snapshot = useSyncExternalStore(
+    manager.subscribe,
+    manager.getSnapshot,
+    manager.getSnapshot
+  );
+
+  // Post-commit safety net: after a commit the DOM reflects the current
+  // visibility, so a layout-effect read of the container's true extent
+  // (`scrollWidth`) is accurate. If it still overruns, `settle()` hides one more
+  // and the resulting commit re-runs this effect until the row genuinely fits
+  // (hide-only, so it converges). No-ops when nothing overflows.
+  useIsomorphicLayoutEffect(() => {
+    manager.settle();
+  }, [manager, snapshot]);
 
   // Tear the manager (and its observer) down on unmount.
   useEffect(() => () => manager.destroy(), [manager]);
@@ -662,20 +926,42 @@ export interface OverflowDividerProps {
  * `<OverflowDivider>` — renders its child (e.g. a `ToolbarSeparator`) and hides
  * itself only when its group is **fully overflowed** (`state === "hidden"`) — a
  * separator with nothing left beside it. Stamps `data-slot="overflow-divider"`.
- * The divider is presentational and is **not** measured/budgeted (its hairline
- * width is absorbed by the container `padding`).
+ * The divider **registers its element** with the manager (a non-ranked measured
+ * participant): its width + gap count toward occupancy whenever its group has a
+ * visible item, so the row's accounting is exact — no `padding` reserve needed.
  */
 function OverflowDivider({ groupId, children }: OverflowDividerProps) {
+  const manager = useOverflowContext();
   const state = useIsOverflowGroupVisible(groupId);
   const hidden = state === "hidden";
+  const id = useId();
+  const elementRef = useRef<HTMLElement | null>(null);
+
+  const captureRef = useCallback(
+    (element: HTMLElement | null) => {
+      elementRef.current = element;
+      manager.setDividerElement(id, element);
+    },
+    [manager, id]
+  );
+
+  useIsomorphicLayoutEffect(() => {
+    manager.registerDivider(id, groupId, elementRef.current);
+    return () => manager.unregister(id);
+  }, [manager, id, groupId]);
 
   const child = Children.only(children);
   if (!isValidElement(child)) {
     throw new Error("<OverflowDivider> expects a single element child.");
   }
+  const mergedRef = useMemo(
+    () => mergeRefs<HTMLElement>(getChildRef(child), captureRef),
+    [child, captureRef]
+  );
   const childStyle = getChildStyle(child);
 
   return cloneElement(child, {
+    ref: mergedRef,
     "data-slot": "overflow-divider",
     "data-overflowing": hidden ? "" : undefined,
     "aria-hidden": hidden ? true : undefined,

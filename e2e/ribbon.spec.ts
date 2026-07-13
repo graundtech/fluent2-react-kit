@@ -70,16 +70,19 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
  *    Both hide correctly, but the wrapper identity is not uniform — so this spec
  *    keys off `aria-label` (the control) and `[data-overflowing]` counts, never
  *    off a fixed wrapper shape. Recorded for phase-4 as a consistency note.
- * 7. **The ribbon row still CLIPS at intermediate widths** (measured post
- *    phase-4, `padding={88}` on Início): e.g. at container 560 the row's
- *    `scrollWidth` is 605 vs `clientWidth` 558 (~47px over); smaller overruns at
- *    640/520/470/430/400/320/280/240. Unlike the Overflow preview (whose
- *    `padding=64` retune eliminated its clipping), the Início row's 16 items +
- *    5 dividers + ~15 gaps outrun the fixed 88px reserve between breakpoints.
- *    The kept commands are all fully usable — the clipped remainder is the
- *    trailing edge before the next drop — but a Word-accuracy pass may want a
- *    larger reserve or measured gaps. This spec therefore settles on the derived
- *    overflow state (hidden-count stability), never on geometry.
+ * 7. **FIXED IN v1.1 — the Início row no longer clips.** Post phase-4 the row
+ *    clipped at intermediate widths (with the old `padding={88}` reserve, e.g.
+ *    container 560 → `scrollWidth` 605 vs `clientWidth` 558, ~47px over; smaller
+ *    overruns at 640/520/470/430/400/320/280/240): the dense 16 items + 5
+ *    dividers + ~15 gaps outran any fixed reserve between breakpoints. The
+ *    Overflow manager now MEASURES the flex gap, every group divider, and the
+ *    "…" trigger directly (plus a post-layout safety net), so Início ships with
+ *    **no `padding`** and the accounting is exact. The dedicated no-clip sweep
+ *    below (test "i") asserts `scrollWidth <= clientWidth` at every settled
+ *    slider width — the previously documented ~47px overrun is gone, and this is
+ *    the acceptance criterion for the v1.1 improvement. The other tests still
+ *    settle on the derived overflow state (hidden-count stability), never on
+ *    geometry, since a drop can transiently change both together.
  */
 
 /** Groups in SOURCE (registration) order; "Desfazer" holds only the pinned Undo. */
@@ -152,11 +155,19 @@ async function triggerCount(page: Page): Promise<number> {
   return match ? Number(match[1]) : 0;
 }
 
+/** The active row's real vs. clip extent, read after the layout settles. */
+function clipOf(page: Page): Promise<{ sw: number; cw: number }> {
+  return activeBar(page).evaluate((el) => ({
+    sw: (el as HTMLElement).scrollWidth,
+    cw: (el as HTMLElement).clientWidth,
+  }));
+}
+
 /**
  * Wait for the ResizeObserver-driven overflow state to STOP changing (two
- * consecutive hidden-count reads agree). State-based: like the Overflow preview,
- * the row's fixed `padding` budget can leave the row clipping a few px at some
- * widths, so we settle on the derived overflow state, not on geometry.
+ * consecutive hidden-count reads agree). State-based on purpose: a drop can
+ * change the hidden count and the geometry in the same tick, so we settle on the
+ * derived overflow state and assert geometry (test "i") only AFTER settling.
  */
 async function settle(page: Page): Promise<void> {
   let prev = -999;
@@ -181,7 +192,7 @@ test("a: shrinking drops commands by priority and the trigger count matches the 
   await settle(page);
   const wide = await hiddenCount(page);
 
-  await setWidth(page, 520);
+  await setWidth(page, 560);
   await settle(page);
   const narrow = await hiddenCount(page);
   expect(narrow).toBeGreaterThan(wide);
@@ -189,12 +200,13 @@ test("a: shrinking drops commands by priority and the trigger count matches the 
   // The trigger's announced count equals the number of hidden wrappers.
   await expect.poll(() => triggerCount(page)).toBe(narrow);
 
-  // Priority beats DOM order: at 520 the hidden set is the seven lowest-priority
-  // commands (15/20/28/30/35/38/40). "Recortar" (cut, priority 40) sits in the
-  // Área de Transferência group — DOM-EARLIER than "Alinhar à Esquerda"
-  // (priority 55, Parágrafo) and "Localizar" (priority 65, the DOM-LAST Edição
-  // group) — yet Recortar hides while both of them survive. A pure DOM-order
-  // model would hide the later items first, so this is the proof.
+  // Priority beats DOM order: at 560 (with v1.1's exact gap+divider accounting)
+  // the hidden set is the seven lowest-priority commands (15/20/28/30/35/38/40).
+  // "Recortar" (cut, priority 40) sits in the Área de Transferência group —
+  // DOM-EARLIER than "Alinhar à Esquerda" (priority 55, Parágrafo) and
+  // "Localizar" (priority 65, the DOM-LAST Edição group) — yet Recortar hides
+  // while both of them survive. A pure DOM-order model would hide the later
+  // items first, so this is the proof.
   await expect(ctl(page, "Centralizar")).toBeHidden(); // priority 15
   await expect(ctl(page, "Recortar")).toBeHidden(); // priority 40, DOM-early
   await expect(ctl(page, "Alinhar à Esquerda")).toBeVisible(); // 55, DOM-later
@@ -255,9 +267,14 @@ test("c: overflowed, Realce renders a submenu inside the overflow menu while Col
   await expect(realceSub).toBeVisible();
   await expect(menu.getByText("Colar")).toHaveCount(0);
 
-  await realceSub.hover();
   const sub = page.locator('[data-slot="dropdown-menu-sub-content"]:visible');
-  await expect(sub).toBeVisible();
+  // Re-hover until the submenu opens: a single hover after the menu paints can
+  // race the sub-trigger's open delay (a dropdown hover timing quirk, unrelated
+  // to overflow), so poll the hover→open until it sticks.
+  await expect(async () => {
+    await realceSub.hover();
+    await expect(sub).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 10000 });
   await expect(sub.getByRole("menuitem", { name: "Amarelo" })).toBeVisible();
   await expect(sub.getByRole("menuitem", { name: "Sem realce" })).toBeVisible();
 });
@@ -360,6 +377,31 @@ test("h: switching tabs swaps the command row and keeps a single roving tab stop
     (root) => root.querySelectorAll('[tabindex="0"]').length
   );
   expect(tabStops).toBe(1);
+});
+
+// ── i. ACCEPTANCE: the Início row never clips at any settled width (v1.1) ──────
+test("i: the Início row fits its clip box at every settled width (no clipping)", async ({
+  page,
+}) => {
+  // The full slider range down to 280, including the widths that overran ~47px
+  // under the old fixed `padding={88}` reserve (finding 7). With v1.1's measured
+  // gaps + dividers + trigger and the post-layout safety net, the row's
+  // scrollWidth must never exceed its clientWidth once the overflow state has
+  // settled. (The 240px slider floor is excluded: there only the pinned
+  // Desfazer + the `minimumVisible` floor remain, and those two controls are
+  // together wider than 240px, so a ~2px clip there is the FLOOR forcing a
+  // command to stay rather than the accounting under-counting — the net is not
+  // allowed to hide below the floor.)
+  const widths = [
+    1100, 900, 760, 640, 560, 520, 470, 430, 400, 360, 320, 280,
+  ];
+  for (const width of widths) {
+    await setWidth(page, width);
+    await settle(page);
+    const { sw, cw } = await clipOf(page);
+    expect(sw, `Início row clips at width ${width} (scroll ${sw} > client ${cw})`)
+      .toBeLessThanOrEqual(cw + 1);
+  }
 });
 
 // ── first-paint settling: the count is stable + matches the trigger once settled ─
