@@ -46,6 +46,7 @@ import {
   CollapseGroup,
   GroupCollapse,
   useGroupMode,
+  useIsScrollMode,
 } from "./ribbon-collapse";
 import type {
   CollapseGetGap,
@@ -149,10 +150,33 @@ import { Toolbar, ToolbarButton, ToolbarSeparator } from "./toolbar";
  *   from desktop Office:** desktop shows the active tab's ribbon as a temporary
  *   *overlay flyout* on click while staying collapsed; v1 simply un-collapses
  *   (no overlay), matching the simpler web model.
- * - **`autoAdjust`** — **not implemented yet (C3).** Word exposes it ("Ajustar
- *   automaticamente") to toggle the *classic* adaptive resize; single-line always
- *   adapts via `Overflow`, and classic currently always adapts via
- *   `GroupCollapse`. C3 will wire the toggle (off = straight to scroll).
+ * - **`autoAdjust`** — Word's "Ajustar automaticamente", the **classic** adaptive
+ *   resize toggle. `true` (default) is the staged group collapse then scroll
+ *   fallback; `false` skips group collapse entirely — every group stays expanded
+ *   and the band goes **straight to the horizontal-scroll UI** the moment it
+ *   overflows (implemented by not mounting the `GroupCollapse` provider and
+ *   letting the always-scrollable band's clip detection drive the edge arrows).
+ *   **Ignored in single-line** (Word only exposes it for classic; the single-line
+ *   row always adapts via `Overflow`).
+ *
+ * ## Classic fallbacks (C3)
+ * - **Horizontal scroll** — when every group has collapsed and the band still
+ *   overflows (`useIsScrollMode()`), or always once `autoAdjust={false}`, the band
+ *   scrolls horizontally (programmatic; no native scrollbar — Word's model) with
+ *   `‹`/`›` edge arrow buttons that appear only when there is clipped content on
+ *   that side. The arrows are **pointer affordances** rendered as absolute
+ *   siblings *outside* the `Toolbar` (so Base UI's roving tabindex never owns
+ *   them) and taken out of the tab order (`tabIndex={-1}`); keyboard users move
+ *   through commands with the toolbar's roving focus and the browser scrolls the
+ *   focused item into view natively (the band is a real scroll container even
+ *   though its overflow is clipped). Programmatic scroll respects
+ *   `prefers-reduced-motion` (`behavior:"auto"` instead of `"smooth"`).
+ * - **Tab-strip overflow** — the `RibbonTabList` reuses the v1 `Overflow`
+ *   machinery: each `RibbonTab` is an `OverflowItem` (its child is cloned, no
+ *   wrapper element, so `TabsList`'s roving + sliding indicator keep working) and
+ *   a `⌄` chevron menu lists the hidden (trailing) tabs; selecting one activates
+ *   it. The active tab is pinned dynamically so it can never fold. Applies to
+ *   **both** layouts (Word folds tabs in single-line too).
  *
  * ## Accessibility contract
  * There is **no ARIA "ribbon" pattern** — the composite is APG **Tabs** (from kit
@@ -286,6 +310,16 @@ type RibbonLayout = "single-line" | "classic";
 interface RibbonContextValue {
   layout: RibbonLayout;
   collapsed: boolean;
+  /**
+   * Adaptive resize in **classic** (Word's "Ajustar automaticamente"). `true`
+   * (default) = staged group collapse then scroll; `false` = no collapse,
+   * straight to the scroll UI when the band overflows. Ignored in single-line.
+   */
+  autoAdjust: boolean;
+  /** The currently-selected tab value (so `RibbonTab` can pin the active tab). */
+  activeValue?: string;
+  /** Activate a tab by value (used by the tab-strip overflow menu); un-collapses. */
+  selectValue: (value: string) => void;
   /** Un-collapse when a tab is activated (Word behavior). */
   onTabActivate: () => void;
   /** Deterministic tab-element id for a value; the row is labelled by it. */
@@ -329,6 +363,19 @@ interface RibbonGroupContextValue {
 
 const RibbonGroupContext = createContext<RibbonGroupContextValue>({});
 
+/**
+ * `RibbonTabList`-scoped registry, mirroring the `RibbonContent` item registry:
+ * each `RibbonTab` publishes `{ id: value, label, icon }` so the tab-strip
+ * overflow menu can list the tabs that folded behind its chevron.
+ */
+interface RibbonTabListContextValue {
+  registry: RibbonRegistry;
+}
+
+const RibbonTabListContext = createContext<RibbonTabListContextValue | null>(
+  null
+);
+
 /* -------------------------------------------------------------------------- */
 /* Controlled/uncontrolled helper                                              */
 /* -------------------------------------------------------------------------- */
@@ -369,6 +416,12 @@ export interface RibbonProps
   defaultCollapsed?: boolean;
   /** Called when the collapsed state changes. */
   onCollapsedChange?: (collapsed: boolean) => void;
+  /**
+   * **classic only** (Word's "Ajustar automaticamente"). `true` (default) =
+   * staged group collapse then scroll; `false` = no collapse, straight to the
+   * scroll UI when the band overflows. Accepted but ignored in single-line.
+   */
+  autoAdjust?: boolean;
 }
 
 /**
@@ -385,6 +438,7 @@ function Ribbon({
   collapsed,
   defaultCollapsed = false,
   onCollapsedChange,
+  autoAdjust = true,
   children,
   ...props
 }: RibbonProps) {
@@ -398,6 +452,23 @@ function Ribbon({
     onCollapsedChange
   );
 
+  // Own the selected tab value (controllable) so the tab-strip overflow menu can
+  // activate a folded tab and `RibbonTab` can pin the active one. External
+  // `onValueChange` still fires with Base UI's original args (value, event).
+  const [activeValue, setActiveValueInternal] = useControllableState<
+    string | undefined
+  >(value, defaultValue);
+  const handleValueChange = useCallback(
+    (next: string, ...rest: unknown[]) => {
+      setActiveValueInternal(next);
+      (onValueChange as ((v: string, ...r: unknown[]) => void) | undefined)?.(
+        next,
+        ...rest
+      );
+    },
+    [setActiveValueInternal, onValueChange]
+  );
+
   const tabId = useCallback(
     (v: unknown) => `${baseId}-tab-${String(v)}`,
     [baseId]
@@ -408,14 +479,33 @@ function Ribbon({
     setCollapsedState(false);
   }, [setCollapsedState]);
 
+  const selectValue = useCallback(
+    (next: string) => {
+      handleValueChange(next);
+      setCollapsedState(false);
+    },
+    [handleValueChange, setCollapsedState]
+  );
+
   const ctx = useMemo<RibbonContextValue>(
     () => ({
       layout: resolvedLayout,
       collapsed: collapsedState,
+      autoAdjust,
+      activeValue,
+      selectValue,
       onTabActivate,
       tabId,
     }),
-    [resolvedLayout, collapsedState, onTabActivate, tabId]
+    [
+      resolvedLayout,
+      collapsedState,
+      autoAdjust,
+      activeValue,
+      selectValue,
+      onTabActivate,
+      tabId,
+    ]
   );
 
   return (
@@ -424,9 +514,8 @@ function Ribbon({
         data-slot="ribbon"
         data-layout={resolvedLayout}
         data-collapsed={collapsedState ? "" : undefined}
-        value={value}
-        defaultValue={defaultValue}
-        onValueChange={onValueChange}
+        value={activeValue}
+        onValueChange={handleValueChange}
         className={cn("gap-0", className)}
         {...props}
       >
@@ -440,26 +529,76 @@ function Ribbon({
 /* RibbonTabList / RibbonTab                                                    */
 /* -------------------------------------------------------------------------- */
 
+export interface RibbonTabListProps extends ComponentProps<typeof TabsList> {
+  /**
+   * **Extra** slack subtracted from the measured strip width, on top of the
+   * `Overflow` manager's accurate accounting (tabs + flex gaps + the `⌄` trigger
+   * are measured). Default `0`.
+   */
+  padding?: number;
+  /**
+   * Injectable measurement fn forwarded to the tab-strip `Overflow`. Default
+   * reads `offsetWidth`. Escape hatch for tests/SSR — you rarely set this.
+   */
+  getSize?: ComponentProps<typeof Overflow>["getSize"];
+}
+
 /**
- * RibbonTabList — the guide strip. Pure composition over kit `TabsList` (the
- * Fluent sliding underline is already Figma-validated there); only stamps
+ * RibbonTabList — the guide strip. Composes kit `TabsList` (the Fluent sliding
+ * underline is Figma-validated there) and wires the v1 `Overflow` machinery so
+ * that when the strip is too narrow the **trailing** tabs fold behind a `⌄`
+ * chevron menu (Word's tab-strip overflow, captured live at ~680px). The active
+ * tab is pinned (see `RibbonTab`) so it can never fold. Stamps
  * `data-slot="ribbon-tab-list"`.
  */
 function RibbonTabList({
   className,
+  children,
+  padding = 0,
+  getSize,
   ...props
-}: ComponentProps<typeof TabsList>) {
+}: RibbonTabListProps) {
+  const [registry] = useState(() => createRibbonRegistry());
+  const tabListCtx = useMemo<RibbonTabListContextValue>(
+    () => ({ registry }),
+    [registry]
+  );
   return (
-    <TabsList
-      data-slot="ribbon-tab-list"
-      className={cn(className)}
-      {...props}
-    />
+    <RibbonTabListContext.Provider value={tabListCtx}>
+      {/* The Overflow container is a flex viewport wrapping the TabsList and the
+          `⌄` trigger. The trigger is a SIBLING of the tablist, never a child of
+          it: a non-tab button inside `role="tablist"` fails axe's
+          `aria-required-children` (tablists may contain only tabs). The tabs
+          stay inside TabsList, so its roving tabindex and sliding indicator are
+          untouched. */}
+      <Overflow padding={padding} getSize={getSize}>
+        <div
+          data-slot="ribbon-tab-list-viewport"
+          className="relative flex w-full items-center overflow-hidden"
+        >
+          <TabsList
+            data-slot="ribbon-tab-list"
+            className={cn("flex-nowrap", className)}
+            {...props}
+          >
+            {children}
+          </TabsList>
+          <RibbonTabOverflowMenu />
+        </div>
+      </Overflow>
+    </RibbonTabListContext.Provider>
   );
 }
 
 export interface RibbonTabProps extends ComponentProps<typeof TabsTrigger> {
   value: string;
+  /**
+   * Menu-form text for the tab-strip overflow menu when this tab folds. Defaults
+   * to `children` when it is a string, else `value`.
+   */
+  label?: string;
+  /** Icon shown beside the label in the tab-strip overflow menu. */
+  icon?: ReactNode;
 }
 
 /**
@@ -468,18 +607,44 @@ export interface RibbonTabProps extends ComponentProps<typeof TabsTrigger> {
  * keyboard) un-collapses a tabs-only ribbon, even when it is already the active
  * tab (Word behavior) — hence the un-collapse rides `onClick`, not just tab
  * selection.
+ *
+ * For tab-strip overflow it is wrapped in an `OverflowItem` (the child is cloned
+ * — no wrapper element — so `TabsList`'s roving tabindex and the sliding
+ * indicator keep working) and registered in the tab-list registry so the `⌄`
+ * menu can offer it while it is folded. It is **pinned while it is the active
+ * tab** (`pinned={value === activeValue}`) so the active tab can never fold; the
+ * pinned flip re-registers with the `Overflow` manager, which re-ranks, so a just
+ * -activated (previously folded) tab immediately becomes visible.
+ *
+ * `data-slot="ribbon-tab"` is applied **after** the spread so it survives the
+ * `OverflowItem` clone (which would otherwise stamp `overflow-item`).
  */
 function RibbonTab({
   className,
   value,
   id,
+  label,
+  icon,
+  children,
   onClick,
   ...props
 }: RibbonTabProps) {
-  const { tabId, onTabActivate } = useRibbonContext();
-  return (
-    <TabsTrigger
-      data-slot="ribbon-tab"
+  const { tabId, onTabActivate, activeValue } = useRibbonContext();
+  const tabListCtx = useContext(RibbonTabListContext);
+  const menuLabel =
+    label ?? (typeof children === "string" ? children : String(value));
+
+  // Publish to the tab-list registry so the overflow menu can render this tab
+  // while it is folded (mutates in place for an existing id — no snapshot churn).
+  useLayoutEffectSafe(() => {
+    tabListCtx?.registry.register({ id: value, label: menuLabel, icon });
+  });
+  useLayoutEffectSafe(() => {
+    return () => tabListCtx?.registry.unregister(value);
+  }, [tabListCtx, value]);
+
+  const trigger = (
+    <RibbonTabTrigger
       id={id ?? tabId(value)}
       value={value}
       onClick={(event) => {
@@ -491,7 +656,109 @@ function RibbonTab({
       // docs/design/ribbon-validation.md finding #1.
       className={cn("h-9", className)}
       {...props}
-    />
+    >
+      {children}
+    </RibbonTabTrigger>
+  );
+
+  // Outside a tab-list registry (defensive) there is no overflow wiring.
+  if (!tabListCtx) return trigger;
+
+  return (
+    <OverflowItem id={value} pinned={value === activeValue}>
+      {trigger}
+    </OverflowItem>
+  );
+}
+
+/**
+ * Inner tab trigger. `OverflowItem` clones its child and injects
+ * `data-slot="overflow-item"`; this wrapper re-applies `data-slot="ribbon-tab"`
+ * **after** the spread so the tab keeps its public slot (the overflow wiring —
+ * ref/style/`aria-hidden`/`data-overflowing` — still flows through the spread).
+ */
+function RibbonTabTrigger(props: ComponentProps<typeof TabsTrigger>) {
+  return <TabsTrigger {...props} data-slot="ribbon-tab" />;
+}
+
+function useRibbonTabListContext(): RibbonTabListContextValue {
+  const ctx = useContext(RibbonTabListContext);
+  if (!ctx) {
+    throw new Error("RibbonTab overflow parts must be inside a <RibbonTabList>.");
+  }
+  return ctx;
+}
+
+/**
+ * RibbonTabOverflowMenu — the `⌄` chevron + menu for folded tabs. Rendered
+ * automatically by `RibbonTabList` (you don't place it), as the last child of the
+ * `TabsList` so it stays inside the tab-strip `Overflow` context and its width is
+ * reserved from the budget (`useOverflowMenu`). It is kept measurable-but-hidden
+ * (out of flow + `visibility:hidden`) until a tab folds, then shows at the strip's
+ * end. The menu lists only the **hidden** tabs (source order); choosing one
+ * activates it via the ribbon context (which also un-collapses a tabs-only
+ * ribbon). It is a real keyboard-reachable button (the only route to folded tabs).
+ */
+function RibbonTabOverflowMenu() {
+  const { registry } = useRibbonTabListContext();
+  const { ref, isOverflowing, overflowCount } =
+    useOverflowMenu<HTMLButtonElement>();
+
+  const tabs = useSyncExternalStore(
+    registry.subscribe,
+    registry.getSnapshot,
+    registry.getServerSnapshot
+  );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            ref={ref}
+            type="button"
+            data-slot="ribbon-tab-overflow-trigger"
+            data-overflow-menu=""
+            aria-label={
+              overflowCount === 1 ? "1 guia oculta" : `${overflowCount} guias ocultas`
+            }
+            title="Mais guias"
+            className={cn(
+              "flex h-9 shrink-0 items-center justify-center rounded-md px-2 text-muted-foreground",
+              "cursor-pointer outline-none transition-colors duration-fast ease-ease",
+              "hover:bg-accent hover:text-foreground active:bg-accent/80 dark:hover:bg-accent/50",
+              "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              isOverflowing ? "ml-auto" : undefined
+            )}
+            style={isOverflowing ? undefined : HIDDEN_TRIGGER_STYLE}
+          >
+            <ChevronGlyph className="size-4" />
+          </button>
+        }
+      />
+      <DropdownMenuContent
+        align="end"
+        className="min-w-40"
+        data-slot="ribbon-tab-overflow-menu"
+      >
+        {tabs.map((tab) => (
+          <RibbonHiddenTabRow key={tab.id} meta={tab} />
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** One folded tab, rendered only while it is hidden from the strip. */
+function RibbonHiddenTabRow({ meta }: { meta: RibbonItemMeta }) {
+  const { selectValue } = useRibbonContext();
+  const visible = useIsOverflowItemVisible(meta.id);
+  if (visible) return null;
+  return (
+    <DropdownMenuItem onClick={() => selectValue(meta.id)}>
+      {meta.icon}
+      {meta.label}
+    </DropdownMenuItem>
   );
 }
 
@@ -559,7 +826,7 @@ function RibbonContent({
   children,
   ...props
 }: RibbonContentProps) {
-  const { tabId, collapsed, layout } = useRibbonContext();
+  const { tabId, collapsed, layout, autoAdjust } = useRibbonContext();
   const isClassic = layout === "classic";
   const [registry] = useState(() => createRibbonRegistry());
   const overflowTriggerRef = useRef<HTMLElement | null>(null);
@@ -619,27 +886,18 @@ function RibbonContent({
         */}
         <div hidden={collapsed || undefined}>
           {isClassic ? (
-            <GroupCollapse
+            <ClassicBand
+              value={value}
+              tabId={tabId}
+              autoAdjust={autoAdjust}
               collapsedEstimate={collapsedEstimate}
               padding={padding}
               getSize={getSize as CollapseGetSize | undefined}
               getGap={getGap}
               getOverflowSize={getOverflowSize}
             >
-              <Toolbar
-                aria-labelledby={tabId(value)}
-                className={cn(
-                  // ~96px two-row classic band: content area + group labels row.
-                  // `items-stretch` so each group form fills the band height and
-                  // can pin its label to the bottom; clip residuals so the C1
-                  // accounting + settle net see a real overrun.
-                  "relative h-24 w-full flex-nowrap items-stretch overflow-hidden",
-                  "border-b border-border bg-background px-1"
-                )}
-              >
-                {preparedChildren}
-              </Toolbar>
-            </GroupCollapse>
+              {preparedChildren}
+            </ClassicBand>
           ) : (
             <Overflow
               padding={padding}
@@ -662,6 +920,257 @@ function RibbonContent({
         </div>
       </RibbonContentContext.Provider>
     </TabsContent>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Classic band + horizontal-scroll fallback (C3)                              */
+/* -------------------------------------------------------------------------- */
+
+interface ClassicBandProps {
+  value: string;
+  tabId: (value: unknown) => string;
+  autoAdjust: boolean;
+  collapsedEstimate: number;
+  padding: number;
+  getSize?: CollapseGetSize;
+  getGap?: CollapseGetGap;
+  getOverflowSize?: CollapseGetOverflowSize;
+  children: ReactNode;
+}
+
+/**
+ * ClassicBand — the classic command band plus its C3 horizontal-scroll fallback.
+ *
+ * The `Toolbar` is always a real (clipped) horizontal scroll container. Two paths:
+ * - **`autoAdjust` (default):** the band is wrapped in the `GroupCollapse`
+ *   provider (staged group collapse). A zero-DOM `ScrollModeReporter` inside the
+ *   band lifts `useIsScrollMode()` up here, so the edge arrows only arm once every
+ *   group has collapsed and the band *still* overflows (the terminal scroll
+ *   fallback) — no arrow flicker during collapse.
+ * - **`autoAdjust={false}`:** no `GroupCollapse` at all — every group stays
+ *   expanded (see `RibbonGroupClassicStatic`) and the arrows are always armed, so
+ *   the band goes straight to scroll the moment it overflows.
+ *
+ * The `‹`/`›` buttons are absolute siblings of the `Toolbar` (outside it, so Base
+ * UI's roving tabindex never owns them) inside a `relative` wrapper; each shows
+ * only when there is clipped content on its side.
+ */
+function ClassicBand({
+  value,
+  tabId,
+  autoAdjust,
+  collapsedEstimate,
+  padding,
+  getSize,
+  getGap,
+  getOverflowSize,
+  children,
+}: ClassicBandProps) {
+  const bandRef = useRef<HTMLElement | null>(null);
+  const [scrollMode, setScrollMode] = useState(false);
+
+  // Non-adaptive: no collapse, so arm the arrows whenever content clips.
+  // Adaptive: arm only in the terminal scroll fallback (all groups collapsed).
+  const armed = autoAdjust ? scrollMode : true;
+  const { left, right } = useScrollAffordance(bandRef, armed);
+
+  const toolbar = (
+    <Toolbar
+      ref={bandRef as Ref<HTMLDivElement>}
+      aria-labelledby={tabId(value)}
+      className={cn(
+        // ~96px two-row classic band: content area + group labels row.
+        // `items-stretch` so each group form fills the band height and can pin
+        // its label to the bottom; `overflow-hidden` clips residuals so the C1
+        // accounting + settle net see a real overrun AND makes the band a
+        // programmatic (scrollbar-less) horizontal scroll container — Word's model.
+        "relative h-24 w-full flex-nowrap items-stretch overflow-hidden",
+        "border-b border-border bg-background px-1"
+      )}
+    >
+      {children}
+      {autoAdjust ? <ScrollModeReporter onChange={setScrollMode} /> : null}
+    </Toolbar>
+  );
+
+  return (
+    <div data-slot="ribbon-classic-band" className="relative">
+      {autoAdjust ? (
+        <GroupCollapse
+          collapsedEstimate={collapsedEstimate}
+          padding={padding}
+          getSize={getSize}
+          getGap={getGap}
+          getOverflowSize={getOverflowSize}
+        >
+          {toolbar}
+        </GroupCollapse>
+      ) : (
+        toolbar
+      )}
+      {left ? (
+        <ClassicScrollButton
+          direction="left"
+          onClick={() => scrollBandBy(bandRef.current, "left")}
+        />
+      ) : null}
+      {right ? (
+        <ClassicScrollButton
+          direction="right"
+          onClick={() => scrollBandBy(bandRef.current, "right")}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * ScrollModeReporter — a zero-DOM child that lives inside the `GroupCollapse`
+ * context, reads `useIsScrollMode()`, and lifts it to `ClassicBand`. Rendering it
+ * inside the band (rather than reading scroll mode outside `GroupCollapse`, where
+ * the context is unavailable) keeps the arrows fully driven by the C1 snapshot
+ * while staying siblings of the `Toolbar`. Returns `null`, so it neither joins the
+ * roving order nor contributes to measurement.
+ */
+function ScrollModeReporter({
+  onChange,
+}: {
+  onChange: (scrollMode: boolean) => void;
+}) {
+  const scrollMode = useIsScrollMode();
+  useEffect(() => {
+    onChange(scrollMode);
+  }, [onChange, scrollMode]);
+  return null;
+}
+
+/** Does the user prefer reduced motion? (SSR-safe.) */
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+/** Scroll a band by ~half its visible width toward `direction` (motion-aware). */
+function scrollBandBy(el: HTMLElement | null, direction: "left" | "right") {
+  if (!el) return;
+  const amount = Math.max(1, Math.floor(el.clientWidth / 2));
+  el.scrollBy({
+    left: direction === "left" ? -amount : amount,
+    behavior: prefersReducedMotion() ? "auto" : "smooth",
+  });
+}
+
+/**
+ * useScrollAffordance — tracks whether the band has clipped content on each edge.
+ * `left` when `scrollLeft > 0`; `right` when there is more scrollable extent past
+ * the right edge (with a 1px tolerance). Re-measures on scroll, on container
+ * resize (`ResizeObserver`), and whenever `enabled` flips. State only changes when
+ * a boolean actually flips, so it settles without loops (showing/hiding an
+ * absolute arrow never resizes the observed band).
+ */
+function useScrollAffordance(
+  ref: { current: HTMLElement | null },
+  enabled: boolean
+): { left: boolean; right: boolean } {
+  const [state, setState] = useState({ left: false, right: false });
+
+  const measure = useCallback(() => {
+    const el = ref.current;
+    if (!el || !enabled) {
+      setState((prev) =>
+        prev.left || prev.right ? { left: false, right: false } : prev
+      );
+      return;
+    }
+    const left = el.scrollLeft > 0;
+    const right = el.scrollWidth - el.clientWidth - el.scrollLeft > 1;
+    setState((prev) =>
+      prev.left === left && prev.right === right ? prev : { left, right }
+    );
+  }, [ref, enabled]);
+
+  useLayoutEffectSafe(() => {
+    measure();
+    const el = ref.current;
+    if (!el) return;
+    el.addEventListener("scroll", measure, { passive: true });
+    let observer: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => measure());
+      observer.observe(el);
+    }
+    return () => {
+      el.removeEventListener("scroll", measure);
+      observer?.disconnect();
+    };
+  }, [measure]);
+
+  return state;
+}
+
+/** Left/right chevron glyph for the scroll arrows (inline SVG, breadcrumb style). */
+function ScrollChevron({ direction }: { direction: "left" | "right" }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="size-4">
+      <path
+        d={direction === "left" ? "M12 5l-5 5 5 5" : "M8 5l5 5-5 5"}
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * ClassicScrollButton — one edge arrow. A real `<button>` with an `aria-label`
+ * (NOT `aria-hidden` — it is an interactive control), but taken out of the tab
+ * order (`tabIndex={-1}`): it is a **pointer affordance**, since keyboard users
+ * reach clipped commands through the toolbar's roving focus, which scrolls the
+ * focused item into view natively. Absolute-positioned over the band edge with a
+ * token-driven gradient fade. Stamps `data-slot="ribbon-scroll-button"`.
+ */
+function ClassicScrollButton({
+  direction,
+  onClick,
+}: {
+  direction: "left" | "right";
+  onClick: () => void;
+}) {
+  const isLeft = direction === "left";
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      data-slot="ribbon-scroll-button"
+      data-direction={direction}
+      aria-label={
+        isLeft
+          ? "Rolar comandos para a esquerda"
+          : "Rolar comandos para a direita"
+      }
+      onClick={onClick}
+      className={cn(
+        "absolute inset-y-px z-10 flex w-11 items-center from-background from-45% to-transparent outline-none",
+        isLeft
+          ? "left-0 justify-start bg-gradient-to-r pl-0.5"
+          : "right-0 justify-end bg-gradient-to-l pr-0.5"
+      )}
+    >
+      <span
+        className={cn(
+          "flex size-7 items-center justify-center rounded-md border border-border bg-background text-muted-foreground shadow-8",
+          "transition-colors duration-fast ease-ease hover:bg-accent hover:text-foreground active:bg-accent/80 dark:hover:bg-accent/50"
+        )}
+      >
+        <ScrollChevron direction={direction} />
+      </span>
+    </button>
   );
 }
 
@@ -711,9 +1220,19 @@ export interface RibbonGroupProps extends ComponentProps<"div"> {
  * nothing) when the active layout isn't listed.
  */
 function RibbonGroup(props: RibbonGroupProps) {
-  const { layout } = useRibbonContext();
+  const { layout, autoAdjust } = useRibbonContext();
   if (props.layouts && !props.layouts.includes(layout)) return null;
-  if (layout === "classic") return <RibbonGroupClassic {...props} />;
+  if (layout === "classic") {
+    // `autoAdjust={false}` → no GroupCollapse provider is mounted, so the group
+    // must NOT call `useGroupMode`/render a `CollapseGroup` (both need that
+    // context). It renders its expanded form only; the band goes straight to
+    // scroll when it overflows.
+    return autoAdjust ? (
+      <RibbonGroupClassic {...props} />
+    ) : (
+      <RibbonGroupClassicStatic {...props} />
+    );
+  }
   return <RibbonGroupSingleLine {...props} />;
 }
 
@@ -947,6 +1466,80 @@ function RibbonGroupClassic({
       expanded={expanded}
       collapsed={collapsed}
     />
+  );
+}
+
+/**
+ * RibbonGroupClassicStatic — the `autoAdjust={false}` classic group: the expanded
+ * band anatomy only, always showing its children. It calls **no** collapse hooks
+ * and renders no `CollapseGroup` (there is no `GroupCollapse` provider in this
+ * mode), so the band never collapses — it simply overflows into the scroll UI.
+ * `collapsePriority`/`icon` are irrelevant here (nothing collapses) and ignored.
+ */
+function RibbonGroupClassicStatic({
+  groupId,
+  label,
+  launcher,
+  onLauncherClick,
+  withTrailingDivider = true,
+  className,
+  children,
+}: RibbonGroupProps) {
+  const groupCtx = useMemo<RibbonGroupContextValue>(
+    () => ({ groupId, groupLabel: label }),
+    [groupId, label]
+  );
+
+  const separator =
+    withTrailingDivider !== false ? (
+      <span
+        aria-hidden="true"
+        data-slot="ribbon-group-separator"
+        className="my-2 w-px shrink-0 self-stretch bg-border"
+      />
+    ) : null;
+
+  const launcherNode =
+    launcher ??
+    (onLauncherClick ? (
+      <ToolbarButton
+        size="icon-sm"
+        aria-label={`${label} — mais opções`}
+        data-slot="ribbon-launcher"
+        onClick={onLauncherClick}
+        className="size-5 text-muted-foreground"
+      >
+        <DialogLauncherGlyph />
+      </ToolbarButton>
+    ) : null);
+
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      data-slot="ribbon-group"
+      data-group-id={groupId}
+      className={cn("flex shrink-0 items-stretch", className)}
+    >
+      <div className="flex min-w-0 flex-col justify-between px-1 py-1">
+        <RibbonGroupContext.Provider value={groupCtx}>
+          <div className="flex flex-1 items-start justify-center gap-0.5">
+            {children}
+          </div>
+        </RibbonGroupContext.Provider>
+        <div className="relative flex items-center justify-center pt-0.5">
+          <span className="px-1 text-[11px] leading-none text-muted-foreground">
+            {label}
+          </span>
+          {launcherNode ? (
+            <span className="absolute right-0 flex items-center">
+              {launcherNode}
+            </span>
+          ) : null}
+        </div>
+      </div>
+      {separator}
+    </div>
   );
 }
 

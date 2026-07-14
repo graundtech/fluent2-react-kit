@@ -388,10 +388,12 @@ function WordRibbon({
   layout,
   collapsed,
   onCollapsedChange,
+  autoAdjust,
 }: {
   layout: "single-line" | "classic";
   collapsed: boolean;
   onCollapsedChange: (next: boolean) => void;
+  autoAdjust: boolean;
 }) {
   return (
     <TooltipProvider>
@@ -400,11 +402,17 @@ function WordRibbon({
         layout={layout}
         collapsed={collapsed}
         onCollapsedChange={onCollapsedChange}
+        autoAdjust={autoAdjust}
       >
+        {/* Six tabs so the guide strip itself overflows at narrow widths: the
+            trailing tabs fold behind a `⌄` chevron menu (Word at ~680px). */}
         <RibbonTabList aria-label="Faixa de Opções">
           <RibbonTab value="inicio">Início</RibbonTab>
           <RibbonTab value="inserir">Inserir</RibbonTab>
           <RibbonTab value="exibir">Exibir</RibbonTab>
+          <RibbonTab value="referencias">Referências</RibbonTab>
+          <RibbonTab value="revisao">Revisão</RibbonTab>
+          <RibbonTab value="ajuda">Ajuda</RibbonTab>
         </RibbonTabList>
 
         {/* ---------------------------------------------------------------- */}
@@ -692,6 +700,54 @@ function WordRibbon({
             </RibbonItem>
           </RibbonGroup>
         </RibbonContent>
+
+        {/* ---------------------------------------------------------------- */}
+        {/* Referências / Revisão / Ajuda — light content; these mostly exist */}
+        {/* so the guide strip overflows. They render in both layouts.        */}
+        {/* ---------------------------------------------------------------- */}
+        <RibbonContent value="referencias">
+          <RibbonGroup groupId="toc" label="Sumário" collapsePriority={20}>
+            <RibbonItem id="toc" label="Sumário" icon={<StyleIcon />}>
+              <TipButton label="Sumário">
+                <StyleIcon />
+              </TipButton>
+            </RibbonItem>
+          </RibbonGroup>
+          <RibbonGroup groupId="footnotes" label="Notas de Rodapé" collapsePriority={10}>
+            <RibbonItem id="footnote" label="Inserir Nota" icon={<NumbersIcon />}>
+              <TipButton label="Inserir Nota">
+                <NumbersIcon />
+              </TipButton>
+            </RibbonItem>
+          </RibbonGroup>
+        </RibbonContent>
+
+        <RibbonContent value="revisao">
+          <RibbonGroup groupId="proofing" label="Revisão de Texto">
+            <RibbonItem id="spelling" label="Ortografia" icon={<FindIcon />}>
+              <TipButton label="Ortografia">
+                <FindIcon />
+              </TipButton>
+            </RibbonItem>
+          </RibbonGroup>
+          <RibbonGroup groupId="comments-r" label="Comentários">
+            <RibbonItem id="new-comment" label="Novo Comentário" icon={<CommentIcon />}>
+              <TipButton label="Novo Comentário">
+                <CommentIcon />
+              </TipButton>
+            </RibbonItem>
+          </RibbonGroup>
+        </RibbonContent>
+
+        <RibbonContent value="ajuda">
+          <RibbonGroup groupId="help" label="Ajuda">
+            <RibbonItem id="help" label="Ajuda" icon={<FindIcon />}>
+              <TipButton label="Ajuda">
+                <FindIcon />
+              </TipButton>
+            </RibbonItem>
+          </RibbonGroup>
+        </RibbonContent>
       </Ribbon>
     </TooltipProvider>
   );
@@ -707,6 +763,7 @@ function RibbonDemo() {
   const [layout, setLayout] = useState<"single-line" | "classic">(
     "single-line"
   );
+  const [autoAdjust, setAutoAdjust] = useState(true);
 
   return (
     <div className="space-y-4">
@@ -753,6 +810,18 @@ function RibbonDemo() {
         >
           Mostrar apenas as guias
         </Toggle>
+
+        {/* autoAdjust is classic-only: off = groups never collapse, the band
+            goes straight to horizontal scroll (with `‹›` arrows) when it
+            overflows. Ignored in single-line. */}
+        <Toggle
+          size="sm"
+          pressed={autoAdjust}
+          onPressedChange={setAutoAdjust}
+          aria-label="Ajustar automaticamente"
+        >
+          Ajustar automaticamente
+        </Toggle>
       </div>
 
       <div
@@ -763,6 +832,7 @@ function RibbonDemo() {
           layout={layout}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
+          autoAdjust={autoAdjust}
         />
       </div>
 

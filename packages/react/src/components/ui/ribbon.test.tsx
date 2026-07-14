@@ -1302,3 +1302,294 @@ describe("Ribbon classic — accessibility", () => {
     });
   });
 });
+
+/* ========================================================================== */
+/* CLASSIC HORIZONTAL-SCROLL FALLBACK (v2 phase C3)                            */
+/* ========================================================================== */
+
+/** The classic band's scroll container (the measured Toolbar). */
+function classicBand(container: HTMLElement): HTMLElement {
+  return container.querySelector(
+    '[data-slot="ribbon-classic-band"] [role="toolbar"]'
+  ) as HTMLElement;
+}
+
+/** Force synthetic scroll geometry on the band (jsdom has no layout). */
+function mockScrollGeom(
+  el: HTMLElement,
+  geom: { scrollLeft?: number; clientWidth: number; scrollWidth: number }
+) {
+  Object.defineProperty(el, "clientWidth", {
+    configurable: true,
+    get: () => geom.clientWidth,
+  });
+  Object.defineProperty(el, "scrollWidth", {
+    configurable: true,
+    get: () => geom.scrollWidth,
+  });
+  Object.defineProperty(el, "scrollLeft", {
+    configurable: true,
+    writable: true,
+    value: geom.scrollLeft ?? 0,
+  });
+}
+
+function scrollBtn(
+  container: HTMLElement,
+  direction: "left" | "right"
+): HTMLElement | null {
+  return container.querySelector(
+    `[data-slot="ribbon-scroll-button"][data-direction="${direction}"]`
+  );
+}
+
+describe("Ribbon classic — horizontal-scroll fallback (C3)", () => {
+  it("arms the scroll UI in scroll mode and shows an edge arrow only where content is clipped", () => {
+    // width 100: all 3 groups collapse (3×80 collapsed) and STILL overflow →
+    // useIsScrollMode() is true → the arrows arm.
+    const { container } = renderSettled(<ClassicRibbon width={100} />);
+    const band = classicBand(container);
+
+    // Clipped on the right only (scrollLeft 0).
+    act(() => {
+      mockScrollGeom(band, { scrollLeft: 0, clientWidth: 200, scrollWidth: 600 });
+      band.dispatchEvent(new Event("scroll"));
+    });
+    expect(scrollBtn(container, "right")).not.toBeNull();
+    expect(scrollBtn(container, "left")).toBeNull();
+
+    // Scrolled to the middle → clipped on BOTH sides.
+    act(() => {
+      (band as unknown as { scrollLeft: number }).scrollLeft = 200;
+      band.dispatchEvent(new Event("scroll"));
+    });
+    expect(scrollBtn(container, "left")).not.toBeNull();
+    expect(scrollBtn(container, "right")).not.toBeNull();
+
+    // Scrolled to the end → clipped on the left only.
+    act(() => {
+      (band as unknown as { scrollLeft: number }).scrollLeft = 400;
+      band.dispatchEvent(new Event("scroll"));
+    });
+    expect(scrollBtn(container, "left")).not.toBeNull();
+    expect(scrollBtn(container, "right")).toBeNull();
+  });
+
+  it("clicking an arrow scrolls the band ~half its width in that direction", async () => {
+    const user = userEvent.setup();
+    const { container } = renderSettled(<ClassicRibbon width={100} />);
+    const band = classicBand(container);
+    const scrollBy = vi.fn();
+    (band as unknown as { scrollBy: unknown }).scrollBy = scrollBy;
+
+    act(() => {
+      mockScrollGeom(band, { scrollLeft: 100, clientWidth: 200, scrollWidth: 600 });
+      band.dispatchEvent(new Event("scroll"));
+    });
+
+    await user.click(scrollBtn(container, "right")!);
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+    expect(scrollBy.mock.calls[0]![0].left).toBe(100); // +clientWidth/2, rightward
+
+    await user.click(scrollBtn(container, "left")!);
+    expect(scrollBy.mock.calls[1]![0].left).toBe(-100); // leftward
+  });
+
+  it("shows no arrows when not in scroll mode, even if geometry looks clipped", () => {
+    // width 1000: nothing collapses, scrollMode is false → arrows never arm.
+    const { container } = renderSettled(<ClassicRibbon width={1000} />);
+    const band = classicBand(container);
+    act(() => {
+      mockScrollGeom(band, { scrollLeft: 0, clientWidth: 200, scrollWidth: 600 });
+      band.dispatchEvent(new Event("scroll"));
+    });
+    expect(
+      container.querySelector('[data-slot="ribbon-scroll-button"]')
+    ).toBeNull();
+  });
+
+  it("has no axe violations (scroll-mode band with arrows shown)", async () => {
+    const { container } = renderSettled(<ClassicRibbon width={100} />);
+    const band = classicBand(container);
+    act(() => {
+      mockScrollGeom(band, { scrollLeft: 200, clientWidth: 200, scrollWidth: 600 });
+      band.dispatchEvent(new Event("scroll"));
+    });
+    // Both arrows present.
+    expect(scrollBtn(container, "left")).not.toBeNull();
+    expect(scrollBtn(container, "right")).not.toBeNull();
+    await expect(container).toHaveNoAxeViolations();
+  });
+});
+
+/* ========================================================================== */
+/* autoAdjust (v2 phase C3)                                                    */
+/* ========================================================================== */
+
+describe("Ribbon classic — autoAdjust", () => {
+  it("autoAdjust=false keeps every group expanded (no collapse) and enables scroll", () => {
+    // width 520: with autoAdjust ON this collapses Paragraph + Font (see the
+    // collapse-ladder test). With it OFF, nothing collapses.
+    const { container } = renderSettled(
+      <ClassicRibbon width={520} autoAdjust={false} />
+    );
+
+    // No CollapseGroup machinery and no collapsed dropdown buttons.
+    expect(
+      container.querySelector('[data-slot="collapse-group"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-slot="ribbon-group-collapsed"]')
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Paragraph" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Font" })).toBeNull();
+
+    // All groups stay as expanded shells with their children in the band.
+    expect(screen.getByRole("group", { name: "Font" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Paragraph" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bold" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bullets" })).toBeInTheDocument();
+
+    // The scroll path is armed straight away: clipped geometry shows an arrow.
+    const band = classicBand(container);
+    act(() => {
+      mockScrollGeom(band, { scrollLeft: 0, clientWidth: 200, scrollWidth: 600 });
+      band.dispatchEvent(new Event("scroll"));
+    });
+    expect(scrollBtn(container, "right")).not.toBeNull();
+  });
+
+  it("is ignored in single-line (row still adapts via Overflow, no band/arrows)", () => {
+    const { container } = renderSettled(
+      <HomeRibbon width={260} autoAdjust={false} />
+    );
+    // Single-line always adapts: the "…" trigger still appears.
+    expect(
+      screen.getByRole("button", { name: /more command/i })
+    ).toBeInTheDocument();
+    // No classic band and no scroll buttons exist in single-line.
+    expect(
+      container.querySelector('[data-slot="ribbon-classic-band"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-slot="ribbon-scroll-button"]')
+    ).toBeNull();
+  });
+});
+
+/* ========================================================================== */
+/* TAB-STRIP OVERFLOW (v2 phase C3)                                            */
+/* ========================================================================== */
+
+/** A tab-strip getSize: tablist reports the closed-over width, tabs 100, ⌄ 30. */
+function makeTabGetSize(state: { width: number }) {
+  return (el: HTMLElement) => {
+    if (el.getAttribute("data-overflow-container") !== null) return state.width;
+    if (el.getAttribute("data-slot") === "ribbon-tab-overflow-trigger") return 30;
+    if (el.getAttribute("data-slot") === "ribbon-tab") return 100;
+    return 0;
+  };
+}
+
+/** Four-tab ribbon whose strip width is injectable (drives tab-strip overflow). */
+function TabRibbon({
+  tabWidth = 250,
+  ...ribbonProps
+}: { tabWidth?: number } & Partial<React.ComponentProps<typeof Ribbon>>) {
+  const state = { width: tabWidth };
+  const contentSize = makeGetSize({ width: 1000 });
+  const simple = (value: string, label: string) => (
+    <RibbonContent value={value} getSize={contentSize}>
+      <RibbonGroup groupId={`g-${value}`} label={label}>
+        <RibbonItem id={`i-${value}`} label={label}>
+          <ToolbarButton size="icon" aria-label={label} data-size={50}>
+            {label[0]}
+          </ToolbarButton>
+        </RibbonItem>
+      </RibbonGroup>
+    </RibbonContent>
+  );
+  return (
+    <Ribbon defaultValue="a" {...ribbonProps}>
+      <RibbonTabList aria-label="Ribbon" getSize={makeTabGetSize(state)}>
+        <RibbonTab value="a">Alpha</RibbonTab>
+        <RibbonTab value="b">Bravo</RibbonTab>
+        <RibbonTab value="c">Charlie</RibbonTab>
+        <RibbonTab value="d">Delta</RibbonTab>
+      </RibbonTabList>
+      {simple("a", "Alpha")}
+      {simple("b", "Bravo")}
+      {simple("c", "Charlie")}
+      {simple("d", "Delta")}
+    </Ribbon>
+  );
+}
+
+describe("Ribbon — tab-strip overflow (C3)", () => {
+  it("folds trailing tabs behind the ⌄ menu and lists the hidden ones", async () => {
+    const user = userEvent.setup();
+    // width 250: Alpha (active, pinned) + Bravo fit; Charlie + Delta fold.
+    renderSettled(<TabRibbon tabWidth={250} />);
+
+    // The chevron trigger is visible and announces the hidden count.
+    const trigger = screen.getByRole("button", { name: /guias ocultas/ });
+    expect(trigger).toBeInTheDocument();
+
+    // Folded tabs are hidden from the strip (display:none + aria-hidden).
+    expect(screen.queryByRole("tab", { name: "Charlie" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Delta" })).toBeNull();
+    // Survivors are still tabs.
+    expect(screen.getByRole("tab", { name: "Alpha" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Bravo" })).toBeInTheDocument();
+
+    // The menu lists the hidden tabs, not the visible ones.
+    await user.click(trigger);
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Charlie" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Delta" })).toBeInTheDocument();
+    expect(within(menu).queryByRole("menuitem", { name: "Alpha" })).toBeNull();
+    expect(within(menu).queryByRole("menuitem", { name: "Bravo" })).toBeNull();
+  });
+
+  it("selecting a folded tab activates it, and the active tab is never hidden", async () => {
+    const user = userEvent.setup();
+    renderSettled(<TabRibbon tabWidth={250} />);
+
+    // Charlie is folded; activate it from the menu.
+    await user.click(screen.getByRole("button", { name: /guias ocultas/ }));
+    await user.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Charlie",
+      })
+    );
+    act(() => triggerResize());
+
+    // Charlie is now the active tab AND visible (pinned → can never fold).
+    const charlie = screen.getByRole("tab", { name: "Charlie" });
+    expect(charlie).toHaveAttribute("data-active");
+    expect(charlie).not.toHaveAttribute("aria-hidden");
+    // Its command row is now the active one.
+    expect(screen.getByRole("button", { name: "Charlie" })).toBeInTheDocument();
+  });
+
+  it("keeps only the active tab when the strip is very narrow (active pinned)", () => {
+    // width 130: exactly one tab + the ⌄ trigger fit → only the active tab shows.
+    renderSettled(<TabRibbon tabWidth={130} defaultValue="c" />);
+    const charlie = screen.getByRole("tab", { name: "Charlie" });
+    expect(charlie).toBeInTheDocument(); // active, pinned → visible
+    expect(charlie).not.toHaveAttribute("aria-hidden");
+    // The others folded.
+    expect(screen.queryByRole("tab", { name: "Alpha" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Delta" })).toBeNull();
+  });
+
+  it("has no axe violations (tab-strip overflow menu open)", async () => {
+    const user = userEvent.setup();
+    const { baseElement } = renderSettled(<TabRibbon tabWidth={250} />);
+    await user.click(screen.getByRole("button", { name: /guias ocultas/ }));
+    await screen.findByRole("menu");
+    await expect(baseElement).toHaveNoAxeViolations({
+      rules: { region: { enabled: false } },
+    });
+  });
+});

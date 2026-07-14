@@ -120,8 +120,27 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
     escape-hatch item. C3/C4 notes: classic roving skips bare (non-Toolbar)
     buttons — consider a render-based composite variant in C4 polish; C4
     should unify the preview's two per-layout trees into one via `layouts`.
-  - **C3** — scroll fallback + tab-strip overflow + `autoAdjust`.
-  - **C4** — layout switcher + validation + e2e.
+  - **C3 (done)** — the fallbacks. (1) Classic **scroll UI**: when
+    `useIsScrollMode()` fires (all groups collapsed, band still overflows),
+    the band scrolls horizontally with edge `‹ ›` arrow buttons (rendered
+    OUTSIDE the Toolbar so they stay out of the roving order; aria-labelled
+    "Rolar comandos para a esquerda/direita"; appear only when that side is
+    clipped; smooth scrollBy, reduced-motion aware). (2) **Tab-strip
+    overflow**: `RibbonTabList` reuses the v1 Overflow machinery — trailing
+    tabs fold behind a `⌄` chevron menu listing the hidden tabs; the active
+    tab is pinned so it never folds. The chevron is a SIBLING of the
+    `role="tablist"` (a non-tab child fails axe `aria-required-children`) —
+    the tablist wraps in a flex viewport that is the measured Overflow
+    container. Applies to both layouts. (3) `autoAdjust` (classic-only,
+    default true): `false` = no group collapse, straight to scroll.
+    Browser-verified: tab fold at 420px (Ajuda → "1 guia oculta" menu),
+    classic scroll arrow at 260px (all groups collapsed), autoAdjust-off
+    keeps groups expanded and scrolls. 697 unit tests; full e2e 136/136
+    untouched. (Solo Opus builder hit a session limit mid-run; orchestrator
+    finished the two unfinished test typecheck spots, the axe fix moving the
+    chevron out of the tablist, and the preview autoAdjust toggle + 3 tabs.)
+  - **C4 (next)** — RibbonLayoutSwitcher + one-tree preview + classic roving
+    polish + live-Word validation + e2e.
   - Still backlog beyond v2: KeyTips, QAT, contextual tabs.
 
 ## Current status: v0.5.1
