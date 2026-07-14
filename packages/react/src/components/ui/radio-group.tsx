@@ -110,9 +110,14 @@ function RadioGroupItem({
     <Radio.Root
       data-slot="radio-group-item"
       className={cn(
-        // layout — Fluent 16px circle. `group` lets the checked dot (a child
-        // span) pick up the root's hover/press to ramp alongside the ring.
-        "group aspect-square size-4 shrink-0 cursor-pointer rounded-full border bg-background",
+        // layout — Fluent 16px circle. The Root itself flex-centers the
+        // indicator on BOTH axes: Base UI's `Radio.Root` renders a `display:
+        // block` <span>, so without this the indicator (an 8px-tall block-level
+        // flex box that stretches to the content width) sits flush against the
+        // top of the circle — horizontally centered but ~3px high on the
+        // vertical. `group` lets the checked dot (a child span) pick up the
+        // root's hover/press to ramp alongside the ring.
+        "group flex aspect-square size-4 shrink-0 cursor-pointer items-center justify-center rounded-full border bg-background",
         // motion
         "outline-none transition-colors duration-fast ease-ease",
         // unchecked — Fluent NeutralStrokeAccessible rest/hover/pressed ramp

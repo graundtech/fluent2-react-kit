@@ -482,14 +482,89 @@ checks are flagged as open follow-ups rather than silently assumed.
 
 ## Open follow-ups (Figma MCP rate-limited before capture)
 
-- **Chip dismiss ✕ hover tint** — kit uses `hover:text-destructive`; Fluent's
-  `.Secondary action` Hover state (`9112:11155`) was not captured. Re-check
-  when quota resets; if Fluent keeps it neutral, decide keep-vs-align.
-- **Populated tag-picker field layout** — no sampled `TagPicker` symbol shows
-  chips inside the field (all render placeholder text only); the kit's
-  `flex-wrap gap-1 py-1` in-field spacing is unverified. Hunt for a composed
-  populated example in the file on a future pass.
+**Both closed in Pass 4 (2026-07-14) — see below.**
+
+- ~~**Chip dismiss ✕ hover tint**~~ — **RESOLVED (P4-M2):** kit used
+  `hover:text-destructive`; Fluent's `.Secondary action` Hover state
+  (`9112:11155`) is brand glyph (`NeutralForeground2.BrandHover` #0f6cbd) over a
+  subtle neutral fill (`NeutralBackground3.Hover` #ebebeb), NOT neutral and NOT
+  red — aligned to `hover:bg-accent hover:text-primary`.
+- ~~**Populated tag-picker field layout**~~ — **VERIFIED (P4):** the expanded
+  `TagPicker` symbols (e.g. `9064:14120`) do populate the field; in-field spacing
+  reads `spacingHorizontalXS`/`spacingVerticalXS` = **4px** (= kit `gap-1`) and
+  `Corner-radius/Input/Medium` = **4px** (= `rounded-md`). Match. The field
+  content padding (`Spacing/Input/Content/Medium` = 10px) is looser than the kit
+  chips-field wrapper's `px-1.5` (6px) — kept: the chips supply their own
+  padding and the 6px wrapper reads correctly against the tag row (a documented
+  minor divergence, not a defect).
 - Scope gaps (documented, not defects): Fluent Tag ships XS/S/M sizes ×
   Brand/Outline/Filled styles — kit chip matches Small/Filled only; Fluent's
   dismiss hit-target is an invisible 32×32 overflow area vs the kit's snug
   16px button.
+
+# Pass 4 — filter-list follow-ups + form-control geometry re-pass (2026-07-14)
+
+**Trigger:** a user-reported visual bug — the `RadioGroupItem` checked dot looked
+"off-center" — turned out to be real (browser-measured **−3px** vertical). That
+exposed a blind spot: passes 1–3 compared **color/token/elevation** but never
+**measured pixel geometry**, so a centering bug slipped through. This pass (a)
+fixes the radio, (b) re-checks the other form controls' geometry the same way,
+and (c) closes Pass 3's two rate-limited follow-ups now that the Figma MCP quota
+is available.
+
+**Method:** browser geometry measurement (computed `getBoundingClientRect` deltas
+of the indicator vs its control on the live preview) for the form controls, plus
+Figma Dev Mode MCP (`get_variable_defs`/`get_screenshot`) for the two filter-list
+follow-ups. Kit at v0.6.0.
+
+## Summary
+
+| Area | Reference | Verdict (pre-fix) | Finding | Status |
+|---|---|---|---|---|
+| Radio Group dot centering | universal radio spec + `9121:4036` (centered dot) | MAJOR (1) | Checked dot sat −3px high — `Radio.Root` was `display:block`, never flex-centered the indicator (the `items-center` lived on the 8px indicator only). Horizontal was fine. | **Fixed** (P4-M1) |
+| Checkbox glyph centering | — (live measure) | MATCH | 16px box / 12px glyph, offset `0/0`. Root already `inline-flex items-center justify-center`. | No change |
+| Switch thumb centering | — (live measure) | MATCH | 40×20 track / 14px thumb, `vOffset 0`, symmetric 3px inset, 20px travel. | No change |
+| Input geometry | `8934:4` "Input" (pass-1) | MATCH | h-8 (32px), px-3, radius 4px, border-bottom `#616161` / border-top `#d1d1d1`. | No change |
+| Multi Select chip ✕ hover | `9112:11155` Tag `.Secondary action` Hover | MINOR (1) | `hover:text-destructive` had no Fluent precedent; Fluent = brand glyph + subtle neutral fill. | **Fixed** (P4-M2) |
+| Multi Select chip in-field spacing | `9064:14120` populated TagPicker | MATCH | gap 4px = `gap-1`, radius 4px = `rounded-md`. | No change |
+| Combobox | `8911:3194` "Dropdown" | MATCH | Reconfirmed: copies pass-1-validated Input field + Select popup recipes; no Combobox symbol in the Fluent kit. | No change |
+
+## Fixes applied
+
+- **P4-M1 Radio dot centering** — `radio-group.tsx` item Root gained
+  `flex items-center justify-center` so it centers `Radio.Indicator` on BOTH
+  axes. Base UI's `Radio.Root` renders a `display:block` `<span>`; the indicator
+  is a block-level flex box that stretches to the content width but is only as
+  tall as the 8px dot, so it sat flush to the top of the 16px ring — the
+  `items-center`/`justify-center` on the *indicator* only centered the dot within
+  its own 8px box, never within the ring. Re-measured `0/0` both axes; the Figma
+  checked-rest node `9121:4036` confirms a centered dot. This was an isolated
+  inconsistency: `Checkbox` (`checkbox.tsx` `inline-flex items-center
+  justify-center`) and `Switch` (track `items-center`) already flex-centered
+  their Roots — Radio alone had missed it.
+- **P4-M2 Multi Select chip ✕ hover** — `multi-select.tsx` `ChipRemove`
+  `hover:text-destructive` → `hover:bg-accent hover:text-primary`, matching Fluent
+  Tag's `.Secondary action` Hover (`9112:11155`): `--primary` (#0f6cbd) is an
+  exact match for Fluent's `NeutralForeground2.BrandHover`; `--accent` (#f0f0f0)
+  is the kit's nearest neutral-hover surface to Fluent's `NeutralBackground3.Hover`
+  (#ebebeb). The provisional destructive-red (chosen while Pass 3 was
+  rate-limited) is retired — tag dismiss is a reversible micro-action Fluent
+  treats as a normal interactive control, and the DismissRegular glyph still
+  carries the "remove" meaning (conventions §5).
+
+## Verification
+
+- Live geometry re-measured after each fix: radio dot `0/0`, checkbox `0/0`,
+  switch `vOffset 0`, input 32px — all in the running dev server.
+- Chip ✕ hover utilities confirmed compiled and the tokens resolved in-browser
+  (`--primary` #0f6cbd, `--accent` #f0f0f0); rest color `#616161`.
+- Unit tests: radio-group / multi-select / combobox / command / checkbox / switch
+  = **98/98**; `pnpm typecheck` clean.
+
+## Takeaway for future passes
+
+Add a **geometry lane** to the validation method: measure the indicator-vs-control
+offset (`getBoundingClientRect` centers) for every control that centers a child
+(radio dot, checkbox glyph, switch thumb, chip ✕). Token/screenshot comparison
+alone missed a −3px centering bug that a one-line measurement catches
+deterministically.

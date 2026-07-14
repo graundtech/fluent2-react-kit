@@ -69,9 +69,14 @@ import {
  *    `bg-secondary` `text-foreground-2`, `rounded-md`, `h-6`, `px-1.5`, `text-xs` — the
  *    neutral filled look of `Badge variant="secondary"` but sized for an inline
  *    token (Badge is a static 20px caption chip; a removable token needs the extra
- *    height + a trailing dismiss target). The remove button hover is
- *    `text-destructive` to signal "this deletes", paired with the `DismissRegular`
- *    glyph (not color alone — conventions §5).
+ *    height + a trailing dismiss target). The remove button hover matches Fluent
+ *    Tag's `.Secondary action` Hover (node `9112:11155`, captured in the Figma
+ *    re-pass 2026-07-14): brand glyph (`--primary`) over a subtle neutral fill
+ *    (`--accent`), NOT destructive-red — Fluent treats tag dismiss as a normal,
+ *    reversible interactive control; the `DismissRegular` glyph carries the meaning
+ *    (conventions §5). (The earlier `text-destructive` was a provisional choice
+ *    kept while Pass 3's Figma read was rate-limited; the reference now adjudicates
+ *    it.)
  *
  * ## Chips wiring — what Base UI provides vs what is wired here
  * The chip flow is rendered from `Combobox.Value`'s render-function child, which
@@ -138,8 +143,13 @@ function MultiSelectChip({
         aria-label="Remove"
         className={cn(
           "-mr-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm text-muted-foreground outline-none",
-          // hover reads destructive — this action deletes (paired with the glyph, not color alone)
-          "transition-colors duration-fast ease-ease hover:text-destructive",
+          // hover — Fluent Tag `.Secondary action` Hover (node 9112:11155): the
+          // dismiss glyph goes brand (`NeutralForeground2.BrandHover` #0f6cbd ==
+          // --primary) over a subtle neutral fill (`NeutralBackground3.Hover`
+          // #ebebeb ≈ --accent #f0f0f0). NOT destructive-red — removing a tag is a
+          // reversible micro-action, and Fluent treats it as a normal interactive
+          // control; the DismissRegular glyph carries the "remove" meaning (§5).
+          "transition-colors duration-fast ease-ease hover:bg-accent hover:text-primary",
           "focus-visible:ring-2 focus-visible:ring-ring",
           "[&_svg]:pointer-events-none [&_svg]:size-3"
         )}
