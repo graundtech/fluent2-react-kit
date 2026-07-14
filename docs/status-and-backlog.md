@@ -165,8 +165,11 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
     switcher copy/position/a11y all match; finding #10 CLOSED; two cosmetic
     divergences documented+kept (radio-dot vs Word's checkmark, stays-open vs
     Word's close-on-select — kit-idiom precedent, same as the 2px underline).
-    **The Ribbon v2 (classic layout) cycle is complete.** Optional deferred
-    nicety: a fresh live-Word dark-mode pixel pass of the classic band.
+    **The Ribbon v2 (classic layout) cycle is complete.** Dark-mode live-Word
+    pixel pass done (validation doc): dark classic band matches Word on
+    surface (#242424 vs Word's near-black), 96px height, centered 11px muted
+    label, and 1px hairline separators; the only diff (Word's per-icon accent
+    colors) is a demo placeholder-icon artifact, not a component trait.
   - Still backlog beyond v2: KeyTips, QAT, contextual tabs.
 
 ## Current status: v0.5.1

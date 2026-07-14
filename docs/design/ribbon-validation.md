@@ -84,9 +84,28 @@ Two cosmetic divergences (C-5 radio-dot vs checkmark; C-6 stays-open vs
 closes) are the only gaps, both deliberate and consistent with the kit's own
 idioms — the same "kit truth wins over literal Word mimicry, documented"
 stance taken for the 2px underline (#8) and the auto-hiding trigger (#9).
-Finding #10 is closed. A fresh live-Word **dark-mode** pixel comparison of the
-classic band is the one nicety deferred (the classic anatomy is already
-validated structurally and against the phase-0 live capture).
+Finding #10 is closed.
+
+### Dark-mode pixel pass (2026-07-14)
+
+Done live: Word Online switched to **dark mode + classic** (window frontmost),
+its classic band captured by zoomed screenshot; the kit's dark classic band
+read via `getComputedStyle` on `/preview/ribbon`'s Dark panel (Playwright-style
+DOM reads, since the embedded pane freezes screenshots/scroll under rAF
+suspension — computed values are exact and screenshot-independent).
+
+| Aspect | Word dark (observed) | Kit dark (computed) | Verdict |
+|---|---|---|---|
+| Band surface | near-black, same as the window chrome (~`#1b1b1b`–`#202020`) | band is transparent over the panel's `--background` = `rgb(36,36,36)` (`#242424`) | Match (a hair lighter, same near-black family) |
+| Band height | ~96px | `96px` | Match |
+| Group label | centered under the group, muted grey, ~11px | centered via flex `justify-center`, `rgb(173,173,173)`, `11px`, weight 400 | Match |
+| Group separator | 1px subtle vertical hairline, slightly lighter than the band | `1px`, `rgb(82,82,82)` | Match |
+| Icon color | monochrome light-grey glyphs **with preserved accents** (blue sub/superscript numerals, yellow highlighter swatch, red font-color underline, blue Editor/Ditar) | monochrome `currentColor` stroke glyphs (the demo's inline SVGs carry no accent fills) | **Demo-content artifact** — a real consumer using colored Fluent icons gets Word's accents; the component imposes no monochrome constraint |
+
+Dark classic matches Word on every structural/token dimension (surface,
+height, label, separator). The only visible difference — Word's per-icon
+accent colors — comes from the demo's single-stroke placeholder icons, not the
+Ribbon component. **The dark-mode nicety is now done; nothing outstanding.**
 
 ## Environment notes (for future validation passes)
 
