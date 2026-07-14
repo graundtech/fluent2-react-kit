@@ -1,6 +1,6 @@
 # Status and backlog
 
-## In progress: Ribbon initiative (v0.6.0-dev)
+## Shipped in v0.6.0: Ribbon initiative
 
 An Office-style Ribbon component family, built in phases. Scope decisions and
 the live-reference workflow are documented in
@@ -172,7 +172,18 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
     colors) is a demo placeholder-icon artifact, not a component trait.
   - Still backlog beyond v2: KeyTips, QAT, contextual tabs.
 
-## Current status: v0.5.1
+## Current status: v0.6.0
+
+v0.6.0 ships the **Ribbon initiative** — the kit's flagship Office-style Ribbon and the primitives it stands on, built across the phases detailed in the section above. This is the largest feature release since the foundation. What's new since v0.5.1:
+
+- **6 new registry items** (31 → 37): `toolbar`, `toggle`, `split-button` (Phase 1 primitives), `overflow` (Phase 2 headless priority-overflow, refined to exact space accounting in v1.1), `ribbon-collapse` (v2 C1 headless group-collapse manager), and the `ribbon` composite itself (single-line **and** classic layouts, `RibbonLayoutSwitcher`, `layouts` escape hatch).
+- **The Ribbon** is genuinely novel in the OSS React space (no production-grade counterpart exists; Fluent UI v9 has none): single-line mode (priority overflow into a "…" menu) and classic/expanded mode (whole-group collapse → dropdown flyout → horizontal scroll → tab-strip overflow), one shared component tree across both, validated live against Word Online in light and dark ([`docs/design/ribbon-validation.md`](design/ribbon-validation.md)).
+- **707 unit tests + 142 Playwright e2e**, all green; full build + registry pipeline unchanged.
+- A real Toggle dark-mode bug and the overflow manager's padding-reserve guesswork were both found and fixed along the way (see the phase notes).
+
+Publish path is unchanged from v0.5.1: a GitHub release tagged `v0.6.0` triggers `.github/workflows/publish.yml`, which publishes to npm via OIDC trusted publishing.
+
+### Prior: v0.5.1
 
 v0.5.1 is a package-infrastructure release — no component changes — that makes the npm modality real (the README's "Option B" had never actually been published):
 

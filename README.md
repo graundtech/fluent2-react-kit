@@ -95,7 +95,7 @@ The Playwright suite needs a one-time Chromium install (`pnpm exec playwright in
 
 ## Component status
 
-All items below are at **v0.5.0**.
+All items below are at **v0.6.0**.
 
 | Item | Type | Notes |
 | --- | --- | --- |
@@ -117,21 +117,27 @@ All items below are at **v0.5.0**.
 | `label` | component | Native `<label>`, optional `required` asterisk |
 | `link` | component | 2 variants (default, inline), `asChild` |
 | `multi-select` | component | Tags-picker combobox with a chips field, reuses the `combobox` popup parts |
+| `overflow` | primitive (headless) | Priority-overflow system (ResizeObserver + exact space accounting) — the single-line Ribbon's core, reusable standalone |
 | `pagination` | component | Page navigation styled via `buttonVariants`, Server Component-safe |
 | `popover` | component | Anchored non-modal surface (`w-72`, `shadow-16`), built on `@base-ui/react/popover` |
 | `progress` | component | Fluent-thin (2px) determinate/indeterminate bar, built on `@base-ui/react/progress` |
 | `radio-group` | component | Roving-tabindex radio group (`RadioGroup`, `RadioGroupItem`), built on `@base-ui/react/radio-group` |
+| `ribbon` | component | Office-style Ribbon — single-line (priority overflow) **and** classic (group collapse → flyout → scroll) layouts on one tree, `RibbonLayoutSwitcher`; composes Tabs + Toolbar + Overflow |
+| `ribbon-collapse` | primitive (headless) | Group-collapse manager (per-group expand/collapse + scroll escalation) — the classic Ribbon's core |
 | `select` | component | 9-part composable select (trigger, popup, groups, scroll buttons), built on `@base-ui/react/select` |
 | `separator` | component | Horizontal/vertical divider |
 | `skeleton` | component | Loading placeholder, `animate-pulse` fill |
 | `spinner` | component | Fluent arc-style loading indicator, 4 sizes |
+| `split-button` | component | Primary action joined to a chevron menu trigger (Fluent SplitButton), composes `DropdownMenu` |
 | `switch` | component | Fluent Toggle Switch look (outlined unchecked track), built on `@base-ui/react/switch` |
 | `tabs` | component | Fluent underline TabList with sliding brand indicator, built on `@base-ui/react/tabs` |
 | `textarea` | component | Multi-line text field, matches `input`'s focus treatment |
 | `toast` | component | Manager-driven notifications, 5 status variants, built on `@base-ui/react/toast` |
+| `toggle` | component | Pressed/unpressed toggle button (Fluent ToggleButton), built on `@base-ui/react/toggle` |
+| `toolbar` | component | APG toolbar with roving tabindex (`Toolbar`, `ToolbarButton`, `ToolbarGroup`, …), built on `@base-ui/react/toolbar` |
 | `tooltip` | component | Neutral elevated surface (Fluent style, not an inverted bubble), built on `@base-ui/react/tooltip` |
 
-That's **29 components + `utils` + `theme`**, all documented in the live demo (`pnpm demo:dev` → `/preview/<name>`). Naming and API conventions are normative in [`docs/component-conventions.md`](docs/component-conventions.md).
+That's **33 components + 2 headless primitives (`overflow`, `ribbon-collapse`) + `utils` + `theme`** (37 registry items), all documented in the live demo (`pnpm demo:dev` → `/preview/<name>`). Naming and API conventions are normative in [`docs/component-conventions.md`](docs/component-conventions.md).
 
 For what's planned next — more components, known TODOs, and open backlog — see [`docs/status-and-backlog.md`](docs/status-and-backlog.md).
 
