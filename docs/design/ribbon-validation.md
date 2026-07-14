@@ -23,7 +23,7 @@ Figma entry, so live Word is the visual reference of record (see
 | 7 | OK | Overflow ranking | Priority beats DOM position (e.g. font combos drop before N/I/S despite sitting to their left) | Same (`priority` > DOM tie-break) | Match |
 | 8 | minor, documented | Active-tab underline | ≈3px brand underline | 2px (kit `Tabs` indicator, per the Fluent 2 Figma validation) | Keep 2px — Figma token truth wins for kit-wide consistency; divergence noted |
 | 9 | minor, documented | "…" trigger steady state | Permanently visible (some commands never fit, e.g. Suplementos) | Hidden when nothing overflows | Same mechanism, different steady state; a consumer reproducing Word exactly can add a permanent low-priority tail group |
-| 10 | documented | Layout switcher | Chevron pinned at the ribbon's far right (outside the overflow budget), opening layout + show-mode options | Not shipped in v1 — `collapsed`/`onCollapsedChange` are exposed for consumers to build one | Intentional v1 scope (see backlog: v2 classic mode) |
+| 10 | **RESOLVED (v2 C4)** | Layout switcher | Chevron pinned at the ribbon's far right (outside the overflow budget), opening layout + show-mode options | `RibbonLayoutSwitcher` ships (v2 C4): far-right pinned chevron, exact pt-BR copy, via `RibbonTabList`'s `actions` slot (outside the tablist + outside the overflow budget). Two cosmetic divergences documented below. | Closed — see the v2 classic-mode validation section |
 
 ## Fix status
 
@@ -56,6 +56,37 @@ The e2e pass surfaced three additional items, all resolved or dispositioned:
   Início row at every settled slider width (the former ~47px overrun is
   gone; the only exclusion is the 240px floor, where `minimumVisible`
   legitimately forces pinned Desfazer + one command past the width).
+
+## v2 classic-mode validation (phase C4, 2026-07-14)
+
+Validation of the classic (expanded) layout + `RibbonLayoutSwitcher` against
+the documented live-Word ground truth (the classic band anatomy + resize
+ladder captured live in `ribbon-behavior-spec.md`, and the layout-switcher
+menu captured live during phase-0 recon). Kit side driven on the demo
+`/preview/ribbon`; classic interactive behavior (collapse ladder, flyout,
+scroll, switcher round-trip) is proven by `e2e/ribbon-classic.spec.ts` in real
+Chromium — the embedded browser pane suspends rAF, freezing Base UI menu
+interactions and layout reads, so Playwright is the source of truth for
+geometry and menu behavior (a recurring caveat across every phase).
+
+| # | Severity | Area | Word (documented) | Kit | Verdict |
+|---|---|---|---|---|---|
+| C-1 | OK | Switcher copy | Two sections: "Layout da Faixa de Opções" (Faixa de Opções Clássica / Faixa de Opções de Linha Única); "Mostrar Faixa de Opções" (Sempre mostrar faixa de opções / Mostrar apenas as guias / Ajustar automaticamente) | Byte-identical copy, both section headers, all 5 items (verified in the demo menu) | Match |
+| C-2 | OK | Switcher position | Chevron pinned far-right of the tab strip, outside the overflow budget | `RibbonTabList` `actions` slot: far-right, outside `role="tablist"`, outside the `flex-1 min-w-0` Overflow viewport so tabs fold before colliding | Match |
+| C-3 | OK (better) | Switcher a11y | (native desktop control) | Proper ARIA: `menuitemradio ×4` + `menuitemcheckbox ×1`, trigger is a labelled button OUTSIDE the tablist (axe `aria-required-children` clean) | Kit is more semantic than a checkmark list |
+| C-4 | OK | autoAdjust exposure | "Ajustar automaticamente" is a classic-only option | The checkbox item is **disabled in single-line** (Word only exposes it for classic) | Match |
+| C-5 | minor, documented | Active-item indicator | Checkmark (✓) on the active layout item AND on Ajustar automaticamente | Radio-dot (●) on the layout/show radios; checkmark (✓) on the autoAdjust checkbox | **Keep** — the kit's `DropdownMenuRadioItem` renders a radio marker (semantically correct for a mutually-exclusive choice), consistent kit-wide; Word's checkmark-on-radio is a Word-ism. Same precedent as finding #8. |
+| C-6 | minor, documented | Menu on select | Word **closes** the menu when a layout is picked | The switcher menu **stays open** (`closeOnClick=false`, settings-panel idiom) so layout + show-options can be adjusted together | **Keep for now** — a defensible UX improvement; possible future refinement to close-on-layout-select. Divergence noted. |
+| C-7 | OK | Classic band anatomy | ~96px band; groups = controls over a centered muted label, ↘ launcher, hairline separators; whole groups collapse to a labelled dropdown that opens the group in a flyout | Same (C2): `~h-24` band, `RibbonGroup` classic anatomy + `collapsePriority` collapse to a dropdown whose `Popover` flyout holds the group's same children | Match (structural; live pixel/dark-mode pass optional) |
+| C-8 | OK | Collapse ladder order | Parágrafo collapses before Fonte; scroll fallback after group collapse exhausts; tab strip folds at extreme widths | Same — `collapsePriority` order proven, scroll arrows + tab-strip overflow proven (`e2e/ribbon-classic.spec.ts`). Demo's compact groups stage the ladder in a tighter width band than Word's wider groups (a demo-content artifact, not a component trait). | Match |
+
+Two cosmetic divergences (C-5 radio-dot vs checkmark; C-6 stays-open vs
+closes) are the only gaps, both deliberate and consistent with the kit's own
+idioms — the same "kit truth wins over literal Word mimicry, documented"
+stance taken for the 2px underline (#8) and the auto-hiding trigger (#9).
+Finding #10 is closed. A fresh live-Word **dark-mode** pixel comparison of the
+classic band is the one nicety deferred (the classic anatomy is already
+validated structurally and against the phase-0 live capture).
 
 ## Environment notes (for future validation passes)
 

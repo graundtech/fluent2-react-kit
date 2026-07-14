@@ -80,7 +80,7 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
   `getOverflowSize` + `registerDivider`/`settle()` on the manager. 639 unit
   tests, 136 e2e. Also documented: Toolbar `render`-prop
   composition caveat (outer ToolbarButton's variant/size win the merge).
-- **v2 (in progress — see [`docs/design/ribbon-v2-plan.md`](design/ribbon-v2-plan.md))** —
+- **v2 (done — see [`docs/design/ribbon-v2-plan.md`](design/ribbon-v2-plan.md))** —
   classic/expanded layout in 4 phases. Scope decisions locked 2026-07-13:
   Word-web collapse model (whole-group → dropdown; the desktop per-item
   SizeDefinition ladder is a possible v2.1), gallery deferred to a
@@ -161,9 +161,12 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
     replaced by the switcher. New `e2e/ribbon-classic.spec.ts` (6 tests):
     collapse ladder, flyout, scroll arrows, tab overflow, switcher round-trip,
     autoAdjust off. 707 unit tests; full e2e **142/142** (136 untouched + 6).
-    Orchestrator cross-checks queued for the live-Word pass: checkmark vs
-    radio-dot indicator, close-on-select vs stays-open, actual collapse
-    breakpoint widths.
+    Live-Word validation done (docs/design/ribbon-validation.md v2 section):
+    switcher copy/position/a11y all match; finding #10 CLOSED; two cosmetic
+    divergences documented+kept (radio-dot vs Word's checkmark, stays-open vs
+    Word's close-on-select — kit-idiom precedent, same as the 2px underline).
+    **The Ribbon v2 (classic layout) cycle is complete.** Optional deferred
+    nicety: a fresh live-Word dark-mode pixel pass of the classic band.
   - Still backlog beyond v2: KeyTips, QAT, contextual tabs.
 
 ## Current status: v0.5.1
