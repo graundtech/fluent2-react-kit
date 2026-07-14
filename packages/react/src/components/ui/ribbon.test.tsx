@@ -10,6 +10,7 @@ import {
   RibbonGroup,
   RibbonItem,
   RibbonLargeButton,
+  RibbonLayoutSwitcher,
   RibbonRow,
   RibbonSeparator,
   RibbonTab,
@@ -1121,6 +1122,289 @@ describe("Ribbon classic — layouts escape hatch", () => {
     ).toBeInTheDocument();
     // The single-line-only group renders nothing in classic.
     expect(screen.queryByRole("group", { name: "SingleLineOnly" })).toBeNull();
+  });
+});
+
+/* ========================================================================== */
+/* CONTROLLABLE LAYOUT + RibbonLayoutSwitcher (v2 phase C4)                    */
+/* ========================================================================== */
+
+/**
+ * A ribbon with the far-right RibbonLayoutSwitcher, one single-line-only group
+ * and one classic-only group, so a layout flip is observable both by the root's
+ * `data-layout` and by which group's content is in the tree. `getSize` isn't
+ * injected — the switcher and layout axis don't depend on measured overflow.
+ */
+function SwitcherRibbon(
+  ribbonProps: Partial<React.ComponentProps<typeof Ribbon>> = {}
+) {
+  return (
+    <Ribbon defaultValue="home" {...ribbonProps}>
+      <RibbonTabList aria-label="Ribbon" actions={<RibbonLayoutSwitcher />}>
+        <RibbonTab value="home">Home</RibbonTab>
+      </RibbonTabList>
+      <RibbonContent value="home">
+        <RibbonGroup
+          groupId="c"
+          label="ClassicGroup"
+          icon={<Icon />}
+          layouts={["classic"]}
+        >
+          <RibbonItem id="cx" label="ClassicCmd">
+            <ToolbarButton size="icon" aria-label="ClassicCmd">
+              C
+            </ToolbarButton>
+          </RibbonItem>
+        </RibbonGroup>
+        <RibbonGroup groupId="s" label="SingleGroup" layouts={["single-line"]}>
+          <RibbonItem id="sx" label="SingleCmd">
+            <ToolbarButton size="icon" aria-label="SingleCmd">
+              S
+            </ToolbarButton>
+          </RibbonItem>
+        </RibbonGroup>
+      </RibbonContent>
+    </Ribbon>
+  );
+}
+
+function ribbonRoot(): HTMLElement {
+  return screen
+    .getByRole("tablist")
+    .closest('[data-slot="ribbon"]') as HTMLElement;
+}
+
+const SWITCHER_TRIGGER = "Opções de exibição da faixa";
+
+describe("Ribbon — controllable layout", () => {
+  it("uncontrolled: honours defaultLayout and flips via the switcher (single-line → classic)", async () => {
+    const user = userEvent.setup();
+    render(<SwitcherRibbon defaultLayout="single-line" />);
+    expect(ribbonRoot()).toHaveAttribute("data-layout", "single-line");
+    // single-line projection: the single-line group's command is present; the
+    // classic-only group renders nothing.
+    expect(screen.getByRole("button", { name: "SingleCmd" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "ClassicCmd" })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: SWITCHER_TRIGGER }));
+    await user.click(
+      await screen.findByRole("menuitemradio", {
+        name: "Faixa de Opções Clássica",
+      })
+    );
+    act(() => triggerResize());
+
+    // Now classic: root re-labels and the classic-only group's command appears.
+    expect(ribbonRoot()).toHaveAttribute("data-layout", "classic");
+    expect(screen.getByRole("button", { name: "ClassicCmd" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "SingleCmd" })).toBeNull();
+  });
+
+  it("controlled: the layout prop owns the state; onLayoutChange fires without self-updating", async () => {
+    const user = userEvent.setup();
+    const onLayoutChange = vi.fn();
+    render(
+      <SwitcherRibbon layout="single-line" onLayoutChange={onLayoutChange} />
+    );
+    expect(ribbonRoot()).toHaveAttribute("data-layout", "single-line");
+
+    await user.click(screen.getByRole("button", { name: SWITCHER_TRIGGER }));
+    await user.click(
+      await screen.findByRole("menuitemradio", {
+        name: "Faixa de Opções Clássica",
+      })
+    );
+
+    // The callback fired with the new layout…
+    expect(onLayoutChange).toHaveBeenCalledWith("classic");
+    // …but a controlled ribbon whose parent ignored the change stays single-line.
+    expect(ribbonRoot()).toHaveAttribute("data-layout", "single-line");
+  });
+
+  it("normalises an unknown controlled layout to single-line", () => {
+    render(<SwitcherRibbon layout={"space-age" as never} />);
+    expect(ribbonRoot()).toHaveAttribute("data-layout", "single-line");
+  });
+});
+
+describe("RibbonLayoutSwitcher", () => {
+  it("trigger has an accessible name and opens the two labeled Word sections", async () => {
+    const user = userEvent.setup();
+    render(<SwitcherRibbon />);
+    const trigger = screen.getByRole("button", { name: SWITCHER_TRIGGER });
+    expect(trigger).toBeInTheDocument();
+
+    await user.click(trigger);
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByText("Layout da Faixa de Opções")).toBeInTheDocument();
+    expect(within(menu).getByText("Mostrar Faixa de Opções")).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("menuitemradio", { name: "Faixa de Opções Clássica" })
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("menuitemradio", {
+        name: "Faixa de Opções de Linha Única",
+      })
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("menuitemradio", {
+        name: "Sempre mostrar faixa de opções",
+      })
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("menuitemradio", { name: "Mostrar apenas as guias" })
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("menuitemcheckbox", {
+        name: "Ajustar automaticamente",
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("marks the active layout (aria-checked) and moves the mark on selection", async () => {
+    const user = userEvent.setup();
+    render(<SwitcherRibbon />); // uncontrolled → single-line
+    await user.click(screen.getByRole("button", { name: SWITCHER_TRIGGER }));
+    let menu = await screen.findByRole("menu");
+    expect(
+      within(menu).getByRole("menuitemradio", {
+        name: "Faixa de Opções de Linha Única",
+      })
+    ).toBeChecked();
+    expect(
+      within(menu).getByRole("menuitemradio", { name: "Faixa de Opções Clássica" })
+    ).not.toBeChecked();
+
+    await user.click(
+      within(menu).getByRole("menuitemradio", { name: "Faixa de Opções Clássica" })
+    );
+    menu = screen.getByRole("menu"); // stays open (closeOnClick=false)
+    expect(
+      within(menu).getByRole("menuitemradio", { name: "Faixa de Opções Clássica" })
+    ).toBeChecked();
+  });
+
+  it("drives the collapsed (tabs-only) axis via context", async () => {
+    const user = userEvent.setup();
+    const onCollapsedChange = vi.fn();
+    render(
+      <SwitcherRibbon collapsed={false} onCollapsedChange={onCollapsedChange} />
+    );
+    await user.click(screen.getByRole("button", { name: SWITCHER_TRIGGER }));
+    await user.click(
+      await screen.findByRole("menuitemradio", {
+        name: "Mostrar apenas as guias",
+      })
+    );
+    expect(onCollapsedChange).toHaveBeenCalledWith(true);
+  });
+
+  it("Ajustar automaticamente is disabled in single-line and enabled in classic, and drives autoAdjust", async () => {
+    const user = userEvent.setup();
+    const onAutoAdjustChange = vi.fn();
+
+    // single-line: the autoAdjust checkbox is present but disabled (classic-only).
+    const singleLine = render(<SwitcherRibbon layout="single-line" />);
+    await user.click(screen.getByRole("button", { name: SWITCHER_TRIGGER }));
+    expect(
+      within(await screen.findByRole("menu")).getByRole("menuitemcheckbox", {
+        name: "Ajustar automaticamente",
+      })
+    ).toHaveAttribute("data-disabled");
+    singleLine.unmount();
+
+    // classic: it is enabled and toggling it drives the axis.
+    render(
+      <SwitcherRibbon
+        layout="classic"
+        autoAdjust
+        onAutoAdjustChange={onAutoAdjustChange}
+      />
+    );
+    act(() => triggerResize());
+    await user.click(screen.getByRole("button", { name: SWITCHER_TRIGGER }));
+    const item = within(await screen.findByRole("menu")).getByRole(
+      "menuitemcheckbox",
+      { name: "Ajustar automaticamente" }
+    );
+    expect(item).not.toHaveAttribute("data-disabled");
+    expect(item).toBeChecked();
+    await user.click(item);
+    expect(onAutoAdjustChange).toHaveBeenCalledWith(false);
+  });
+
+  it("has no axe violations (switcher menu open) and the trigger is not a tab", async () => {
+    const user = userEvent.setup();
+    const { container, baseElement } = render(<SwitcherRibbon />);
+    // The trigger is a sibling of the tablist, never a tab (axe aria-required-children).
+    const trigger = screen.getByRole("button", { name: SWITCHER_TRIGGER });
+    expect(trigger.closest('[role="tablist"]')).toBeNull();
+
+    await user.click(trigger);
+    await screen.findByRole("menu");
+    await expect(container).toHaveNoAxeViolations();
+    await expect(baseElement).toHaveNoAxeViolations({
+      rules: { region: { enabled: false } },
+    });
+  });
+});
+
+describe("Ribbon classic — roving reaches a composed RibbonLargeButton", () => {
+  it("arrow-roving moves from a small toolbar button to a RibbonLargeButton rendered as a Toolbar item", async () => {
+    const user = userEvent.setup();
+    const state = { width: 1000 };
+    render(
+      <Ribbon defaultValue="home" layout="classic">
+        <RibbonTabList aria-label="Ribbon">
+          <RibbonTab value="home">Home</RibbonTab>
+        </RibbonTabList>
+        <RibbonContent value="home" getSize={makeClassicGetSize(state)}>
+          <RibbonGroup
+            groupId="clipboard"
+            label="Clipboard"
+            icon={<Icon />}
+            collapsePriority={10}
+          >
+            <RibbonRow>
+              <RibbonItem id="cut" label="Cut">
+                <ToolbarButton size="icon" aria-label="Cut">
+                  X
+                </ToolbarButton>
+              </RibbonItem>
+              {/* The large button joins roving only because it renders THROUGH a
+                  ToolbarButton (Toolbar.Button composite item); a bare <button>
+                  would be skipped by Base UI's roving-tabindex. */}
+              <RibbonItem id="paste" label="Paste">
+                <RibbonLargeButton
+                  icon={<Icon />}
+                  render={<ToolbarButton variant="ghost" />}
+                >
+                  Colar
+                </RibbonLargeButton>
+              </RibbonItem>
+            </RibbonRow>
+          </RibbonGroup>
+        </RibbonContent>
+      </Ribbon>
+    );
+    act(() => triggerResize());
+
+    const cut = screen.getByRole("button", { name: "Cut" });
+    act(() => cut.focus());
+    expect(cut).toHaveFocus();
+
+    await user.keyboard("{ArrowRight}");
+    const large = screen.getByRole("button", { name: "Colar" });
+    expect(large).toHaveFocus();
+    // It kept the large-button identity even when composed as a Toolbar item.
+    expect(large).toHaveAttribute("data-slot", "ribbon-large-button");
+  });
+
+  it("a bare (default) RibbonLargeButton still renders a plain button with its data-slot", () => {
+    render(<RibbonLargeButton icon={<Icon />}>Plain</RibbonLargeButton>);
+    const button = screen.getByRole("button", { name: "Plain" });
+    expect(button).toHaveAttribute("data-slot", "ribbon-large-button");
+    expect(button.tagName).toBe("BUTTON");
   });
 });
 

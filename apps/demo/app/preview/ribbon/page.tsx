@@ -42,6 +42,7 @@ import {
   RibbonGroup,
   RibbonItem,
   RibbonLargeButton,
+  RibbonLayoutSwitcher,
   RibbonRow,
   RibbonTab,
   RibbonTabList,
@@ -238,13 +239,6 @@ function TipButton({
 /* The single-line ribbon (Início / Inserir / Exibir)                          */
 /* -------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------- */
-/* Classic Início — Word's two-row band (same tabs, layout-specific content).   */
-/* Exercises RibbonLargeButton (Colar), 2×3 / vertical grids via RibbonRow +    */
-/* RibbonColumn, a dialog launcher (Fonte), collapsePriority (Parágrafo 50      */
-/* collapses before Fonte 40), and one `layouts`-escape-hatch command.          */
-/* -------------------------------------------------------------------------- */
-
 /** A small classic icon button (Fluent subtle) — 24px, participates in roving. */
 function SmallCmd({
   label,
@@ -260,153 +254,41 @@ function SmallCmd({
   );
 }
 
-function ClassicInicio() {
-  return (
-    <RibbonContent value="inicio">
-      <RibbonGroup
-        groupId="clipboard"
-        label="Área de Transferência"
-        icon={<PasteIcon />}
-        collapsePriority={10}
-      >
-        {/* Large stacked "Colar" with a paste-options dropdown. */}
-        <RibbonItem id="paste" label="Colar">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <RibbonLargeButton icon={<PasteIcon />} chevron>
-                  Colar
-                </RibbonLargeButton>
-              }
-            />
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem>Manter formatação original</DropdownMenuItem>
-              <DropdownMenuItem>Mesclar formatação</DropdownMenuItem>
-              <DropdownMenuItem>Manter somente texto</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </RibbonItem>
-        {/* A small vertical list of the remaining clipboard commands. */}
-        <RibbonColumn>
-          <SmallCmd label="Recortar">
-            <CutIcon />
-          </SmallCmd>
-          <SmallCmd label="Copiar">
-            <CopyIcon />
-          </SmallCmd>
-          <SmallCmd label="Pincel de Formatação">
-            <PainterIcon />
-          </SmallCmd>
-        </RibbonColumn>
-      </RibbonGroup>
-
-      <RibbonGroup
-        groupId="font"
-        label="Fonte"
-        icon={<BoldIcon />}
-        collapsePriority={40}
-        onLauncherClick={() => {}}
-      >
-        {/* 2×3 grid of small icon buttons. */}
-        <RibbonColumn>
-          <RibbonRow>
-            <SmallCmd label="Negrito">
-              <BoldIcon />
-            </SmallCmd>
-            <SmallCmd label="Itálico">
-              <ItalicIcon />
-            </SmallCmd>
-            <SmallCmd label="Sublinhado">
-              <UnderlineIcon />
-            </SmallCmd>
-          </RibbonRow>
-          <RibbonRow>
-            <SmallCmd label="Realce">
-              <HighlightIcon />
-            </SmallCmd>
-            <SmallCmd label="Cor da Fonte">
-              <ColorIcon />
-            </SmallCmd>
-            <SmallCmd label="Estilo">
-              <StyleIcon />
-            </SmallCmd>
-          </RibbonRow>
-        </RibbonColumn>
-      </RibbonGroup>
-
-      <RibbonGroup
-        groupId="paragraph"
-        label="Parágrafo"
-        icon={<BulletsIcon />}
-        collapsePriority={50}
-      >
-        {/* 2×2 grid. Parágrafo has the highest collapsePriority → collapses first. */}
-        <RibbonColumn>
-          <RibbonRow>
-            <SmallCmd label="Marcadores">
-              <BulletsIcon />
-            </SmallCmd>
-            <SmallCmd label="Numeração">
-              <NumbersIcon />
-            </SmallCmd>
-          </RibbonRow>
-          <RibbonRow>
-            <SmallCmd label="Alinhar à Esquerda">
-              <AlignLeftIcon />
-            </SmallCmd>
-            <SmallCmd label="Centralizar">
-              <AlignCenterIcon />
-            </SmallCmd>
-          </RibbonRow>
-        </RibbonColumn>
-      </RibbonGroup>
-
-      <RibbonGroup
-        groupId="editing"
-        label="Edição"
-        icon={<FindIcon />}
-        collapsePriority={20}
-      >
-        <RibbonColumn>
-          <SmallCmd label="Localizar">
-            <FindIcon />
-          </SmallCmd>
-          <SmallCmd label="Substituir">
-            <ReplaceIcon />
-          </SmallCmd>
-        </RibbonColumn>
-        {/* Escape hatch: a large "Ditar" command that exists ONLY in classic. */}
-        <RibbonItem id="dictate" label="Ditar" layouts={["classic"]}>
-          <RibbonLargeButton icon={<CommentIcon />}>Ditar</RibbonLargeButton>
-        </RibbonItem>
-      </RibbonGroup>
-    </RibbonContent>
-  );
-}
-
 function WordRibbon({
   layout,
+  onLayoutChange,
   collapsed,
   onCollapsedChange,
   autoAdjust,
+  onAutoAdjustChange,
 }: {
   layout: "single-line" | "classic";
+  onLayoutChange: (next: "single-line" | "classic") => void;
   collapsed: boolean;
   onCollapsedChange: (next: boolean) => void;
   autoAdjust: boolean;
+  onAutoAdjustChange: (next: boolean) => void;
 }) {
   return (
     <TooltipProvider>
       <Ribbon
         defaultValue="inicio"
         layout={layout}
+        onLayoutChange={onLayoutChange}
         collapsed={collapsed}
         onCollapsedChange={onCollapsedChange}
         autoAdjust={autoAdjust}
+        onAutoAdjustChange={onAutoAdjustChange}
       >
         {/* Six tabs so the guide strip itself overflows at narrow widths: the
-            trailing tabs fold behind a `⌄` chevron menu (Word at ~680px). */}
-        <RibbonTabList aria-label="Faixa de Opções">
+            trailing tabs fold behind a `⌄` chevron menu (Word at ~680px). The
+            RibbonLayoutSwitcher is pinned far-right (Word's finding #10 position)
+            via the tab strip's `actions` slot — outside the tablist AND the tab
+            overflow budget. */}
+        <RibbonTabList
+          aria-label="Faixa de Opções"
+          actions={<RibbonLayoutSwitcher />}
+        >
           <RibbonTab value="inicio">Início</RibbonTab>
           <RibbonTab value="inserir">Inserir</RibbonTab>
           <RibbonTab value="exibir">Exibir</RibbonTab>
@@ -416,20 +298,161 @@ function WordRibbon({
         </RibbonTabList>
 
         {/* ---------------------------------------------------------------- */}
-        {/* Início — the Home tab. The command SET differs per layout (Word    */}
-        {/* parity), so the single-line row (unchanged v1 content — the e2e    */}
-        {/* regression proof drives it) and the classic band render distinct   */}
-        {/* trees. C4 will fold them into one tree via the `layouts` escape    */}
-        {/* hatch; the mechanism is proven in ribbon.test.tsx.                  */}
+        {/* Início — ONE tree, both layouts (C4). The command SET differs per   */}
+        {/* layout (Word parity), so the `layouts` escape hatch scopes each     */}
+        {/* group: the classic groups (layouts=["classic"]) render only the     */}
+        {/* two-row band, the single-line groups (layouts=["single-line"]) only */}
+        {/* the v1 command row. In single-line the classic groups return null   */}
+        {/* (and register nothing), so the single-line projection is byte-       */}
+        {/* identical to v1 — the e2e regression guard (ribbon.spec.ts) drives   */}
+        {/* it. Classic groups come FIRST so the single-line "Edição" stays the  */}
+        {/* last rendered child and auto-drops its trailing divider exactly as   */}
+        {/* v1; the last classic group sets withTrailingDivider={false} itself.  */}
         {/* ---------------------------------------------------------------- */}
-        {layout === "classic" ? <ClassicInicio /> : null}
-        {/* No `padding` reserve: the Overflow manager (v1.1) measures the flex
-            gaps, the 5 group dividers, and the "…" trigger directly, so this
-            dense 16-command row no longer clips between breakpoints (the old
-            ~47px overrun documented in e2e/ribbon.spec.ts is gone). */}
-        {layout === "classic" ? null : (
         <RibbonContent value="inicio">
-          <RibbonGroup groupId="desfazer" label="Desfazer">
+          {/* == classic-only groups (Word's two-row band) ================== */}
+          <RibbonGroup
+            groupId="clipboard"
+            label="Área de Transferência"
+            icon={<PasteIcon />}
+            collapsePriority={10}
+            layouts={["classic"]}
+          >
+            {/* Large stacked "Colar" with a paste-options dropdown. Composed
+                through ToolbarButton → DropdownMenuTrigger so the large button
+                JOINS the band's arrow-roving order (classic-roving fix, C4). */}
+            <RibbonItem id="paste" label="Colar">
+              <DropdownMenu>
+                <RibbonLargeButton
+                  icon={<PasteIcon />}
+                  chevron
+                  render={
+                    <ToolbarButton
+                      variant="ghost"
+                      render={<DropdownMenuTrigger />}
+                    />
+                  }
+                >
+                  Colar
+                </RibbonLargeButton>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem>Manter formatação original</DropdownMenuItem>
+                  <DropdownMenuItem>Mesclar formatação</DropdownMenuItem>
+                  <DropdownMenuItem>Manter somente texto</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </RibbonItem>
+            {/* A small vertical list of the remaining clipboard commands. */}
+            <RibbonColumn>
+              <SmallCmd label="Recortar">
+                <CutIcon />
+              </SmallCmd>
+              <SmallCmd label="Copiar">
+                <CopyIcon />
+              </SmallCmd>
+              <SmallCmd label="Pincel de Formatação">
+                <PainterIcon />
+              </SmallCmd>
+            </RibbonColumn>
+          </RibbonGroup>
+
+          <RibbonGroup
+            groupId="font"
+            label="Fonte"
+            icon={<BoldIcon />}
+            collapsePriority={40}
+            onLauncherClick={() => {}}
+            layouts={["classic"]}
+          >
+            {/* 2×3 grid of small icon buttons. */}
+            <RibbonColumn>
+              <RibbonRow>
+                <SmallCmd label="Negrito">
+                  <BoldIcon />
+                </SmallCmd>
+                <SmallCmd label="Itálico">
+                  <ItalicIcon />
+                </SmallCmd>
+                <SmallCmd label="Sublinhado">
+                  <UnderlineIcon />
+                </SmallCmd>
+              </RibbonRow>
+              <RibbonRow>
+                <SmallCmd label="Realce">
+                  <HighlightIcon />
+                </SmallCmd>
+                <SmallCmd label="Cor da Fonte">
+                  <ColorIcon />
+                </SmallCmd>
+                <SmallCmd label="Estilo">
+                  <StyleIcon />
+                </SmallCmd>
+              </RibbonRow>
+            </RibbonColumn>
+          </RibbonGroup>
+
+          <RibbonGroup
+            groupId="paragraph"
+            label="Parágrafo"
+            icon={<BulletsIcon />}
+            collapsePriority={50}
+            layouts={["classic"]}
+          >
+            {/* 2×2 grid. Parágrafo has the highest collapsePriority → collapses first. */}
+            <RibbonColumn>
+              <RibbonRow>
+                <SmallCmd label="Marcadores">
+                  <BulletsIcon />
+                </SmallCmd>
+                <SmallCmd label="Numeração">
+                  <NumbersIcon />
+                </SmallCmd>
+              </RibbonRow>
+              <RibbonRow>
+                <SmallCmd label="Alinhar à Esquerda">
+                  <AlignLeftIcon />
+                </SmallCmd>
+                <SmallCmd label="Centralizar">
+                  <AlignCenterIcon />
+                </SmallCmd>
+              </RibbonRow>
+            </RibbonColumn>
+          </RibbonGroup>
+
+          <RibbonGroup
+            groupId="editing"
+            label="Edição"
+            icon={<FindIcon />}
+            collapsePriority={20}
+            withTrailingDivider={false}
+            layouts={["classic"]}
+          >
+            <RibbonColumn>
+              <SmallCmd label="Localizar">
+                <FindIcon />
+              </SmallCmd>
+              <SmallCmd label="Substituir">
+                <ReplaceIcon />
+              </SmallCmd>
+            </RibbonColumn>
+            {/* Escape hatch: a large "Ditar" command that exists ONLY in classic.
+                render={<ToolbarButton/>} makes the large button a roving item. */}
+            <RibbonItem id="dictate" label="Ditar" layouts={["classic"]}>
+              <RibbonLargeButton
+                icon={<CommentIcon />}
+                render={<ToolbarButton variant="ghost" />}
+              >
+                Ditar
+              </RibbonLargeButton>
+            </RibbonItem>
+          </RibbonGroup>
+
+          {/* == single-line-only groups (v1 command row — UNCHANGED) ======= */}
+          {/* No `padding` reserve: the Overflow manager (v1.1) measures the flex
+              gaps, the 5 group dividers, and the "…" trigger directly, so this
+              dense 16-command row no longer clips between breakpoints (the old
+              ~47px overrun documented in e2e/ribbon.spec.ts is gone). */}
+          <RibbonGroup groupId="desfazer" label="Desfazer" layouts={["single-line"]}>
             <RibbonItem id="undo" label="Desfazer" icon={<UndoIcon />} priority={100} pinned>
               <TipButton label="Desfazer">
                 <UndoIcon />
@@ -437,7 +460,11 @@ function WordRibbon({
             </RibbonItem>
           </RibbonGroup>
 
-          <RibbonGroup groupId="clipboard" label="Área de Transferência">
+          <RibbonGroup
+            groupId="clipboard"
+            label="Área de Transferência"
+            layouts={["single-line"]}
+          >
             <RibbonItem
               id="paste"
               label="Colar"
@@ -491,7 +518,7 @@ function WordRibbon({
             </RibbonItem>
           </RibbonGroup>
 
-          <RibbonGroup groupId="font" label="Fonte">
+          <RibbonGroup groupId="font" label="Fonte" layouts={["single-line"]}>
             <RibbonItem id="bold" label="Negrito" icon={<BoldIcon />} priority={90}>
               <span className="inline-flex">
                 <Tooltip>
@@ -578,7 +605,7 @@ function WordRibbon({
             </RibbonItem>
           </RibbonGroup>
 
-          <RibbonGroup groupId="paragraph" label="Parágrafo">
+          <RibbonGroup groupId="paragraph" label="Parágrafo" layouts={["single-line"]}>
             <RibbonItem id="bullets" label="Marcadores" icon={<BulletsIcon />} priority={60}>
               <TipButton label="Marcadores">
                 <BulletsIcon />
@@ -601,7 +628,7 @@ function WordRibbon({
             </RibbonItem>
           </RibbonGroup>
 
-          <RibbonGroup groupId="styles" label="Estilos">
+          <RibbonGroup groupId="styles" label="Estilos" layouts={["single-line"]}>
             <RibbonItem id="style" label="Estilo" icon={<StyleIcon />} priority={58}>
               <TipButton label="Estilo">
                 <StyleIcon />
@@ -609,7 +636,7 @@ function WordRibbon({
             </RibbonItem>
           </RibbonGroup>
 
-          <RibbonGroup groupId="editing" label="Edição">
+          <RibbonGroup groupId="editing" label="Edição" layouts={["single-line"]}>
             <RibbonItem id="find" label="Localizar" icon={<FindIcon />} priority={65}>
               <TipButton label="Localizar">
                 <FindIcon />
@@ -622,7 +649,6 @@ function WordRibbon({
             </RibbonItem>
           </RibbonGroup>
         </RibbonContent>
-        )}
 
         {/* ---------------------------------------------------------------- */}
         {/* Inserir                                                           */}
@@ -790,18 +816,10 @@ function RibbonDemo() {
           </span>
         </div>
 
-        {/* Local layout switch (the real RibbonLayoutSwitcher is C4). */}
-        <Toggle
-          size="sm"
-          pressed={layout === "classic"}
-          onPressedChange={(next) =>
-            setLayout(next ? "classic" : "single-line")
-          }
-          aria-label="Faixa de Opções Clássica"
-        >
-          Faixa Clássica
-        </Toggle>
-
+        {/* The layout switch now lives in the ribbon's own far-right
+            RibbonLayoutSwitcher chevron (Word's affordance). These toggles stay
+            as convenience controls and expose the same axes through the
+            controlled props, so the switcher and the toggles stay in sync. */}
         <Toggle
           size="sm"
           pressed={collapsed}
@@ -830,14 +848,21 @@ function RibbonDemo() {
       >
         <WordRibbon
           layout={layout}
+          onLayoutChange={setLayout}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
           autoAdjust={autoAdjust}
+          onAutoAdjustChange={setAutoAdjust}
         />
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Toggle <em>Faixa Clássica</em> to switch layouts on the same tabs. In{" "}
+        Open the far-right <em>display-options chevron</em> (Word&apos;s{" "}
+        <strong className="font-medium text-foreground">
+          RibbonLayoutSwitcher
+        </strong>
+        ) to switch <em>Clássica ↔ Linha Única</em> on the same tabs — the active
+        tab is preserved. In{" "}
         <strong className="font-medium text-foreground">single-line</strong>,{" "}
         <strong className="font-medium text-foreground">Desfazer</strong> is
         pinned and commands drop by{" "}

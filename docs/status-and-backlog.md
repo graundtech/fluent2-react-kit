@@ -139,8 +139,31 @@ neither the Fluent 2 Figma kit nor Fluent UI React v9.
     untouched. (Solo Opus builder hit a session limit mid-run; orchestrator
     finished the two unfinished test typecheck spots, the axe fix moving the
     chevron out of the tablist, and the preview autoAdjust toggle + 3 tabs.)
-  - **C4 (next)** — RibbonLayoutSwitcher + one-tree preview + classic roving
-    polish + live-Word validation + e2e.
+  - **C4 (code done; live-Word validation pending)** — `layout` is now
+    controllable (`defaultLayout`/`onLayoutChange`, mirroring `collapsed`;
+    `autoAdjust` made controllable too), and **`RibbonLayoutSwitcher`** ships:
+    a far-right pinned chevron opening a DropdownMenu with Word's two pt-BR
+    sections — "Layout da Faixa de Opções" (radio: Clássica / Linha Única) and
+    "Mostrar Faixa de Opções" (radio on `collapsed`: Sempre mostrar / Mostrar
+    apenas as guias, + an "Ajustar automaticamente" checkbox on `autoAdjust`,
+    disabled in single-line). Placed via a new `RibbonTabList` `actions` slot
+    that renders far-right OUTSIDE the `role="tablist"` (axe) and OUTSIDE the
+    tab-overflow budget (the Overflow viewport is `flex-1 min-w-0`), so tabs
+    fold before colliding with it — exactly Word's pinned chevron. Closes
+    validation finding #10. Classic roving fixed: `RibbonLargeButton` gained a
+    `render` prop so `render={<ToolbarButton variant="ghost"/>}` makes it a
+    composite item arrow-roving reaches (can't be automatic — the same element
+    also renders inside a collapsed-group Popover flyout where a hard
+    Toolbar.Button dep would throw). Preview unified into ONE Início tree
+    (classic-only groups `layouts={["classic"]}` + the verbatim v1 single-line
+    groups `layouts={["single-line"]}`, so the single-line projection is
+    byte-identical and `e2e/ribbon.spec.ts` stays green); local layout toggle
+    replaced by the switcher. New `e2e/ribbon-classic.spec.ts` (6 tests):
+    collapse ladder, flyout, scroll arrows, tab overflow, switcher round-trip,
+    autoAdjust off. 707 unit tests; full e2e **142/142** (136 untouched + 6).
+    Orchestrator cross-checks queued for the live-Word pass: checkmark vs
+    radio-dot indicator, close-on-select vs stays-open, actual collapse
+    breakpoint widths.
   - Still backlog beyond v2: KeyTips, QAT, contextual tabs.
 
 ## Current status: v0.5.1

@@ -26,10 +26,13 @@ import type {
 import { cn } from "../../lib/utils";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
@@ -307,6 +310,11 @@ function createRibbonRegistry(): RibbonRegistry {
 
 type RibbonLayout = "single-line" | "classic";
 
+/** Normalise any layout input to a known `RibbonLayout` (unknown → single-line). */
+function normalizeLayout(value: RibbonLayout | (string & {})): RibbonLayout {
+  return value === "classic" ? "classic" : "single-line";
+}
+
 interface RibbonContextValue {
   layout: RibbonLayout;
   collapsed: boolean;
@@ -324,6 +332,12 @@ interface RibbonContextValue {
   onTabActivate: () => void;
   /** Deterministic tab-element id for a value; the row is labelled by it. */
   tabId: (value: unknown) => string;
+  /** Set the layout (used by `RibbonLayoutSwitcher`; honours controlled `layout`). */
+  setLayout: (layout: RibbonLayout) => void;
+  /** Set the tabs-only axis (used by `RibbonLayoutSwitcher`; honours controlled `collapsed`). */
+  setCollapsed: (collapsed: boolean) => void;
+  /** Set the classic adaptive-resize axis (used by `RibbonLayoutSwitcher`; honours controlled `autoAdjust`). */
+  setAutoAdjust: (autoAdjust: boolean) => void;
 }
 
 const RibbonContext = createContext<RibbonContextValue | null>(null);
@@ -404,8 +418,16 @@ function useControllableState<T>(
 
 export interface RibbonProps
   extends Omit<ComponentProps<typeof Tabs>, "value" | "defaultValue"> {
-  /** `"single-line"` (default) or `"classic"` (Word's two-row band). Unknown values degrade to single-line. */
+  /**
+   * `"single-line"` or `"classic"` (Word's two-row band) — **controlled**. Unknown
+   * values degrade to single-line. Pair with `onLayoutChange` for a controlled
+   * layout; omit it and use `defaultLayout` for the uncontrolled form.
+   */
   layout?: RibbonLayout | (string & {});
+  /** Initial layout (uncontrolled). Default `"single-line"`. Unknown values degrade to single-line. */
+  defaultLayout?: RibbonLayout | (string & {});
+  /** Called when the layout changes (e.g. via `RibbonLayoutSwitcher`). */
+  onLayoutChange?: (layout: RibbonLayout) => void;
   /** Selected tab value (controlled). */
   value?: string;
   /** Initially-selected tab value (uncontrolled). */
@@ -417,11 +439,16 @@ export interface RibbonProps
   /** Called when the collapsed state changes. */
   onCollapsedChange?: (collapsed: boolean) => void;
   /**
-   * **classic only** (Word's "Ajustar automaticamente"). `true` (default) =
+   * **classic only** (Word's "Ajustar automaticamente") — **controlled**. `true` =
    * staged group collapse then scroll; `false` = no collapse, straight to the
-   * scroll UI when the band overflows. Accepted but ignored in single-line.
+   * scroll UI when the band overflows. Accepted but ignored in single-line. Pair
+   * with `onAutoAdjustChange`, or use `defaultAutoAdjust` for the uncontrolled form.
    */
   autoAdjust?: boolean;
+  /** Initial classic adaptive-resize state (uncontrolled). Default `true`. */
+  defaultAutoAdjust?: boolean;
+  /** Called when the `autoAdjust` axis changes (e.g. via `RibbonLayoutSwitcher`). */
+  onAutoAdjustChange?: (autoAdjust: boolean) => void;
 }
 
 /**
@@ -431,25 +458,45 @@ export interface RibbonProps
  */
 function Ribbon({
   className,
-  layout = "single-line",
+  layout,
+  defaultLayout = "single-line",
+  onLayoutChange,
   value,
   defaultValue,
   onValueChange,
   collapsed,
   defaultCollapsed = false,
   onCollapsedChange,
-  autoAdjust = true,
+  autoAdjust,
+  defaultAutoAdjust = true,
+  onAutoAdjustChange,
   children,
   ...props
 }: RibbonProps) {
   const baseId = useId();
-  const resolvedLayout: RibbonLayout =
-    layout === "classic" ? "classic" : "single-line";
+
+  // Controllable `layout`, mirroring `collapsed`. Unknown values are normalised
+  // to single-line at the boundary (both the controlled prop and the default), so
+  // the resolved layout — and the value passed to `onLayoutChange` — is always a
+  // clean `RibbonLayout`, and a forward-compat caller never breaks.
+  const [resolvedLayout, setLayout] = useControllableState<RibbonLayout>(
+    layout === undefined ? undefined : normalizeLayout(layout),
+    normalizeLayout(defaultLayout),
+    onLayoutChange
+  );
 
   const [collapsedState, setCollapsedState] = useControllableState(
     collapsed,
     defaultCollapsed,
     onCollapsedChange
+  );
+
+  // Controllable `autoAdjust`, same pattern — so `RibbonLayoutSwitcher` can drive
+  // it through the context while a controlled caller keeps ownership.
+  const [autoAdjustState, setAutoAdjust] = useControllableState(
+    autoAdjust,
+    defaultAutoAdjust,
+    onAutoAdjustChange
   );
 
   // Own the selected tab value (controllable) so the tab-strip overflow menu can
@@ -491,20 +538,26 @@ function Ribbon({
     () => ({
       layout: resolvedLayout,
       collapsed: collapsedState,
-      autoAdjust,
+      autoAdjust: autoAdjustState,
       activeValue,
       selectValue,
       onTabActivate,
       tabId,
+      setLayout,
+      setCollapsed: setCollapsedState,
+      setAutoAdjust,
     }),
     [
       resolvedLayout,
       collapsedState,
-      autoAdjust,
+      autoAdjustState,
       activeValue,
       selectValue,
       onTabActivate,
       tabId,
+      setLayout,
+      setCollapsedState,
+      setAutoAdjust,
     ]
   );
 
@@ -541,6 +594,15 @@ export interface RibbonTabListProps extends ComponentProps<typeof TabsList> {
    * reads `offsetWidth`. Escape hatch for tests/SSR — you rarely set this.
    */
   getSize?: ComponentProps<typeof Overflow>["getSize"];
+  /**
+   * Content pinned to the **far right** of the tab strip — Word's home for the
+   * `RibbonLayoutSwitcher` chevron (validation finding #10). Rendered as a sibling
+   * *outside* both the `role="tablist"` (so a non-tab control never trips axe's
+   * `aria-required-children`) **and** the tab-strip `Overflow` budget (so the
+   * switcher never folds and the trailing tabs overflow *before* reaching it, just
+   * like Word). Pass `<RibbonLayoutSwitcher />` here, or any consumer affordance.
+   */
+  actions?: ReactNode;
 }
 
 /**
@@ -550,12 +612,22 @@ export interface RibbonTabListProps extends ComponentProps<typeof TabsList> {
  * chevron menu (Word's tab-strip overflow, captured live at ~680px). The active
  * tab is pinned (see `RibbonTab`) so it can never fold. Stamps
  * `data-slot="ribbon-tab-list"`.
+ *
+ * ### Far-right `actions` (the layout switcher's home)
+ * The optional `actions` slot renders far-right, *outside* the `Overflow` viewport
+ * so it is never part of the tab-strip budget — the tabs overflow into the `⌄`
+ * menu before they'd ever collide with it (Word's pinned switcher position). The
+ * `Overflow` viewport is `flex-1 min-w-0`, so `actions` genuinely reserves its
+ * width from the strip. Placement decision (see the file doc comment / the
+ * `RibbonLayoutSwitcher` note): the switcher is composable either here or
+ * standalone; here mirrors Word.
  */
 function RibbonTabList({
   className,
   children,
   padding = 0,
   getSize,
+  actions,
   ...props
 }: RibbonTabListProps) {
   const [registry] = useState(() => createRibbonRegistry());
@@ -565,27 +637,37 @@ function RibbonTabList({
   );
   return (
     <RibbonTabListContext.Provider value={tabListCtx}>
-      {/* The Overflow container is a flex viewport wrapping the TabsList and the
-          `⌄` trigger. The trigger is a SIBLING of the tablist, never a child of
-          it: a non-tab button inside `role="tablist"` fails axe's
-          `aria-required-children` (tablists may contain only tabs). The tabs
-          stay inside TabsList, so its roving tabindex and sliding indicator are
-          untouched. */}
-      <Overflow padding={padding} getSize={getSize}>
-        <div
-          data-slot="ribbon-tab-list-viewport"
-          className="relative flex w-full items-center overflow-hidden"
-        >
-          <TabsList
-            data-slot="ribbon-tab-list"
-            className={cn("flex-nowrap", className)}
-            {...props}
+      <div data-slot="ribbon-tab-list-row" className="flex w-full items-center">
+        {/* The Overflow container is a flex viewport wrapping the TabsList and the
+            `⌄` trigger. The trigger is a SIBLING of the tablist, never a child of
+            it: a non-tab button inside `role="tablist"` fails axe's
+            `aria-required-children` (tablists may contain only tabs). The tabs
+            stay inside TabsList, so its roving tabindex and sliding indicator are
+            untouched. `flex-1 min-w-0` leaves room for the far-right `actions`. */}
+        <Overflow padding={padding} getSize={getSize}>
+          <div
+            data-slot="ribbon-tab-list-viewport"
+            className="relative flex min-w-0 flex-1 items-center overflow-hidden"
           >
-            {children}
-          </TabsList>
-          <RibbonTabOverflowMenu />
-        </div>
-      </Overflow>
+            <TabsList
+              data-slot="ribbon-tab-list"
+              className={cn("flex-nowrap", className)}
+              {...props}
+            >
+              {children}
+            </TabsList>
+            <RibbonTabOverflowMenu />
+          </div>
+        </Overflow>
+        {actions ? (
+          <div
+            data-slot="ribbon-tab-list-actions"
+            className="flex shrink-0 items-center"
+          >
+            {actions}
+          </div>
+        ) : null}
+      </div>
     </RibbonTabListContext.Provider>
   );
 }
@@ -1687,6 +1769,118 @@ function RibbonItemSingleLine({
 }
 
 /* -------------------------------------------------------------------------- */
+/* RibbonLayoutSwitcher (Word's far-right display-options chevron)             */
+/* -------------------------------------------------------------------------- */
+
+export interface RibbonLayoutSwitcherProps {
+  /** Extra classes for the chevron trigger button. */
+  className?: string;
+}
+
+/**
+ * RibbonLayoutSwitcher — Word's far-right **display-options** control (validation
+ * finding #10): a pinned chevron icon-button opening a menu with two sections that
+ * mirror Word's own (pt-BR copy), driven entirely through the ribbon context:
+ *
+ * - **"Layout da Faixa de Opções"** — a radio pair, *Faixa de Opções Clássica* /
+ *   *Faixa de Opções de Linha Única*; the active `layout` carries the marker
+ *   (`menuitemradio` + `aria-checked`) and selecting one calls `setLayout` (honours
+ *   a controlled `layout`).
+ * - **"Mostrar Faixa de Opções"** — a radio pair on the `collapsed` axis, *Sempre
+ *   mostrar faixa de opções* (`collapsed=false`) / *Mostrar apenas as guias*
+ *   (`collapsed=true`), plus *Ajustar automaticamente* — a checkbox on the
+ *   **classic-only** `autoAdjust` axis, rendered **disabled in single-line** (Word
+ *   only exposes it for classic; kept visible-but-disabled so its existence is
+ *   discoverable rather than silently missing).
+ *
+ * ## Placement (decision)
+ * Designed to sit at the **end of the tab strip** (Word's position) via
+ * `RibbonTabList`'s `actions` prop — which renders it *outside* the `role="tablist"`
+ * (so it never trips axe's `aria-required-children`, the same lesson as the
+ * tab-strip `⌄`) **and** outside the tab-strip overflow budget (so it never folds).
+ * It also works **standalone** anywhere inside a `<Ribbon>` (it only reads context).
+ * Both keep axe green — the trigger is an icon-only `<button>` with an `aria-label`
+ * ("Opções de exibição da faixa"); it is never a tab.
+ *
+ * The menu **stays open** on selection (checkbox/radio `closeOnClick` defaults to
+ * `false`), so a user can flip several display options at once (a settings-panel
+ * idiom) and watch the markers update; Escape / outside-click dismiss it.
+ */
+function RibbonLayoutSwitcher({ className }: RibbonLayoutSwitcherProps) {
+  const { layout, collapsed, autoAdjust, setLayout, setCollapsed, setAutoAdjust } =
+    useRibbonContext();
+  const isClassic = layout === "classic";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            data-slot="ribbon-layout-switcher-trigger"
+            aria-label="Opções de exibição da faixa"
+            title="Opções de exibição da faixa"
+            className={cn(
+              "flex h-9 shrink-0 items-center justify-center rounded-md px-2 text-muted-foreground",
+              "cursor-pointer outline-none transition-colors duration-fast ease-ease",
+              "hover:bg-accent hover:text-foreground active:bg-accent/80 dark:hover:bg-accent/50",
+              "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              className
+            )}
+          >
+            <ChevronGlyph className="size-4" />
+          </button>
+        }
+      />
+      <DropdownMenuContent
+        align="end"
+        className="min-w-64"
+        data-slot="ribbon-layout-switcher-menu"
+      >
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Layout da Faixa de Opções</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={layout}
+            onValueChange={(value) => setLayout(normalizeLayout(value as string))}
+          >
+            <DropdownMenuRadioItem value="classic">
+              Faixa de Opções Clássica
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="single-line">
+              Faixa de Opções de Linha Única
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Mostrar Faixa de Opções</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={collapsed ? "tabs-only" : "shown"}
+            onValueChange={(value) => setCollapsed(value === "tabs-only")}
+          >
+            <DropdownMenuRadioItem value="shown">
+              Sempre mostrar faixa de opções
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="tabs-only">
+              Mostrar apenas as guias
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+          <DropdownMenuCheckboxItem
+            checked={autoAdjust}
+            disabled={!isClassic}
+            onCheckedChange={(next) => setAutoAdjust(next)}
+          >
+            Ajustar automaticamente
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* RibbonSeparator                                                              */
 /* -------------------------------------------------------------------------- */
 
@@ -1717,6 +1911,20 @@ export interface RibbonLargeButtonProps extends ComponentProps<"button"> {
   icon?: ReactNode;
   /** Append a down chevron (for a menu/split composition — see the doc comment). */
   chevron?: boolean;
+  /**
+   * Base UI-style **element override** — swap the underlying `<button>` for
+   * another element/component while `RibbonLargeButton` keeps ownership of the
+   * large-stacked styling and content. This is the **classic-roving** hook: pass
+   * `render={<ToolbarButton variant="ghost" />}` so the large button becomes a
+   * `Toolbar.Button` composite item and joins the band's arrow-roving order (a
+   * bare `<button>` is skipped by Base UI's roving-tabindex). Chain it for a
+   * roving menu trigger: `render={<ToolbarButton render={<DropdownMenuTrigger />} />}`.
+   * `RibbonLargeButton`'s classes are applied **last** in the merge, so they win
+   * over the target's own (e.g. `ToolbarButton`'s `ghost` `h-8`). Default: a plain
+   * `<button>` (works anywhere — a collapsed-group flyout, a menu trigger, or
+   * standalone — where a hard `Toolbar.Button` dependency would throw).
+   */
+  render?: ReactElement;
 }
 
 /**
@@ -1727,28 +1935,42 @@ export interface RibbonLargeButtonProps extends ComponentProps<"button"> {
  * (`<DropdownMenuTrigger render={<RibbonLargeButton chevron … />} />`) or a split
  * button — set `chevron` to show the down-caret in those compositions. Icon +
  * label are laid out for you; pass the label as children.
+ *
+ * ## Classic roving (C4)
+ * A bare `<button>` sitting in the classic `Toolbar` is **not** a Base UI
+ * `Toolbar.Button` composite item, so the toolbar's arrow-key roving skips it and
+ * it becomes a stray extra tab stop (breaking the single-tab-stop APG contract).
+ * The fix is the `render` prop: `render={<ToolbarButton variant="ghost" />}` makes
+ * this element a composite item so arrow keys reach it, while the large styling
+ * still wins the class merge. This can't be automatic — the SAME element renders
+ * inside a collapsed group's `Popover` flyout too, and a hard `Toolbar.Button`
+ * dependency throws outside a `Toolbar.Root` — so composition is opt-in (the
+ * `Toolbar` context flows through the flyout portal, so the composed form is safe
+ * in both the band and the flyout). See the preview and `ribbon.test.tsx`.
  */
 function RibbonLargeButton({
   className,
   icon,
   chevron = false,
   children,
+  render,
   ...props
 }: RibbonLargeButtonProps) {
-  return (
-    <button
-      data-slot="ribbon-large-button"
-      className={cn(
-        "flex h-[68px] w-16 shrink-0 cursor-pointer flex-col items-center justify-start gap-1 rounded-md px-1 py-1.5 text-xs font-normal text-foreground select-none",
-        "outline-none transition-colors duration-fast ease-ease",
-        "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:hover:bg-accent/50 dark:active:bg-accent/70",
-        "disabled:pointer-events-none disabled:opacity-50",
-        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
-        className
-      )}
-      {...props}
-    >
+  // Large classes come LAST so they win the tailwind-merge over a composed
+  // target's own look (e.g. ToolbarButton's ghost `h-8`); the caller's own
+  // `className` still overrides via `cn` order below.
+  const classes = cn(
+    "flex h-[68px] w-16 shrink-0 cursor-pointer flex-col items-center justify-start gap-1 rounded-md px-1 py-1.5 text-xs font-normal text-foreground select-none",
+    "outline-none transition-colors duration-fast ease-ease",
+    "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:hover:bg-accent/50 dark:active:bg-accent/70",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+    className
+  );
+
+  const content = (
+    <>
       {icon != null ? (
         <span className="flex items-center justify-center [&_svg:not([class*='size-'])]:size-6">
           {icon}
@@ -1758,6 +1980,35 @@ function RibbonLargeButton({
         <span className="line-clamp-2">{children}</span>
         {chevron ? <ChevronGlyph /> : null}
       </span>
+    </>
+  );
+
+  // `render` = element override (Base UI idiom). Clone it with our styling +
+  // props + the stacked content, merging its own ref/className. The target (e.g.
+  // ToolbarButton) applies our `classes` LAST in its own `cn`, so they win.
+  if (render && isValidElement(render)) {
+    const renderProps = render.props as {
+      className?: string;
+      ref?: PossibleRef<HTMLElement>;
+    };
+    return cloneElement(
+      render,
+      {
+        ...props,
+        "data-slot": "ribbon-large-button",
+        className: cn(renderProps.className, classes),
+        ref: mergeRefs<HTMLElement>(
+          renderProps.ref,
+          (props as { ref?: PossibleRef<HTMLElement> }).ref
+        ),
+      } as Record<string, unknown>,
+      content
+    );
+  }
+
+  return (
+    <button data-slot="ribbon-large-button" className={classes} {...props}>
+      {content}
     </button>
   );
 }
@@ -1988,6 +2239,7 @@ export {
   RibbonGroup,
   RibbonItem,
   RibbonOverflowMenu,
+  RibbonLayoutSwitcher,
   RibbonSeparator,
   RibbonLargeButton,
   RibbonRow,

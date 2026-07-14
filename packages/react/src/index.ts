@@ -132,6 +132,7 @@ export {
   RibbonGroup,
   RibbonItem,
   RibbonOverflowMenu,
+  RibbonLayoutSwitcher,
   RibbonSeparator,
   RibbonLargeButton,
   RibbonRow,
