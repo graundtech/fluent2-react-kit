@@ -16,7 +16,7 @@
  *
  * Zero npm dependencies — Node built-ins only. Run via `pnpm build:registry`.
  * Must run *before* `next build` so the generated JSON lands in
- * apps/demo/public/ and gets deployed by Vercel (see VERCEL_PIPELINE.md).
+ * apps/demo/public/ and gets deployed by Vercel.
  *
  * Fails loudly (non-zero exit) on invalid fragments, duplicate item names,
  * or source files that don't exist.

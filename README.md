@@ -169,7 +169,7 @@ For what's planned next — more components, known TODOs, and open backlog — s
 └── vercel.json                      # Release pipeline config (root-directory build)
 ```
 
-The Vercel release pipeline depends on this exact layout — read [`VERCEL_PIPELINE.md`](VERCEL_PIPELINE.md) before restructuring folders.
+The Vercel release pipeline (Root Directory `apps/demo`, pnpm workspace install, `vercel.json`) depends on this exact layout — restructuring these folders will break the deploy.
 
 ## Documentation
 
@@ -183,7 +183,6 @@ The Vercel release pipeline depends on this exact layout — read [`VERCEL_PIPEL
 | [`docs/component-conventions.md`](docs/component-conventions.md) | The normative authoring contract every component follows |
 | [`docs/design/tokens-research.md`](docs/design/tokens-research.md) | Token research and provenance (Fluent 2 → shadcn mapping decisions) |
 | [`registry/items/README.md`](registry/items/README.md) | Registry fragment schema reference |
-| [`VERCEL_PIPELINE.md`](VERCEL_PIPELINE.md) | The Vercel deployment pipeline and required folder structure |
 
 ## License
 

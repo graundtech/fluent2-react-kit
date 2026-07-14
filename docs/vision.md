@@ -41,7 +41,7 @@ This ordering is why, for example, `Button`'s variant *names* come from shadcn (
 - **Client-safe by default.** Every component that is pure markup + classes (the majority) ships with no `"use client"` directive and no client-only React features, so it can be dropped into a React Server Component tree unchanged.
 - **`"use client"` only when required.** The directive is added only to files that genuinely need client-only React (state, effects, refs for imperative DOM work, context, or a Base UI primitive that manages open/close/focus state internally). A caller passing an `onClick` prop does not, by itself, force a component to be client-only.
 - **No RSC dependency.** The kit does not assume React Server Components exist. Every component works identically in a plain client-rendered React tree (Vite SPA, React Router library mode) — RSC support is a bonus property of writing plain, hook-free components, not a requirement placed on consumers.
-- **No Vercel assumption for consumers.** The Vercel release pipeline (documented in [`VERCEL_PIPELINE.md`](../VERCEL_PIPELINE.md)) is this *repository's* deployment choice for its demo/registry host — it has no bearing on how a consuming application is built or deployed. Nothing in `packages/react` references Vercel, Next.js-only APIs, or any hosting assumption.
+- **No Vercel assumption for consumers.** The Vercel release pipeline is this *repository's* deployment choice for its demo/registry host — it has no bearing on how a consuming application is built or deployed. Nothing in `packages/react` references Vercel, Next.js-only APIs, or any hosting assumption.
 
 ## Related docs
 

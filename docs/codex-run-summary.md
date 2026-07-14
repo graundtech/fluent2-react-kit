@@ -7,7 +7,7 @@
 
 ## 1. What was implemented
 
-- **Monorepo foundation** on the pre-existing Vercel-safe scaffold (`apps/demo` + `packages/react`, pnpm workspaces, tsup, TypeScript 6 strict). All pipeline invariants from `VERCEL_PIPELINE.md` were preserved; the build chain gained a registry step (package → registry → demo).
+- **Monorepo foundation** on the pre-existing Vercel-safe scaffold (`apps/demo` + `packages/react`, pnpm workspaces, tsup, TypeScript 6 strict). All Vercel pipeline invariants were preserved; the build chain gained a registry step (package → registry → demo).
 - **Fluent 2-derived token system** (`packages/react/src/styles/tokens.css`, 430+ lines): shadcn-compatible core set + brand ramp `--brand-10..160` + status extensions, radius/shadow/typography/motion/focus scales, `.dark`, `.light` (re-scope), `.high-contrast`, `forced-colors`, `color-scheme`, `prefers-reduced-motion`, and a Tailwind v4 `@theme inline` bridge. Exported as `@graundtech/fluent2-react-kit/tokens.css` and as the `theme` registry item.
 - **shadcn-compatible registry**: per-item fragments (`registry/items/*.json`) merged by a zero-dependency build script (`scripts/build-registry.mjs`) into schema-conformant JSON served from `apps/demo/public/r/` (11 items). The script inlines source, rewrites `../../lib/utils` → `@/lib/utils` (so the shadcn CLI's alias transform works in consumer projects), and rewrites bare `registryDependencies` into absolute URLs (so dependencies resolve against *this* registry, not ui.shadcn.com).
 - **9 components** (see §3) + `cn()` utility, all exported from the package barrel (`v0.1.0`).
@@ -76,7 +76,7 @@ A high-effort multi-agent review (8 finder angles → 5 verifier agents, every v
 5. Spinner `label=""` produced an unnamed `role="status"` region → `||` fallback + regression test.
 6. Preview "Light" panels rendered dark under the global dark theme → `.light` re-scope class + dark-variant exclusion.
 7. Theme toggle used `aria-pressed` for a one-of-N choice → proper radiogroup with roving tabindex.
-8–10. Theme-constants duplication (single-sourced in `apps/demo/lib/theme.ts`), `Panel` copy-paste across 9 preview pages (deduplicated into `PreviewPanel`), stale `index.tsx` in `VERCEL_PIPELINE.md` (corrected). Registry homepage drift and build-script double-reads were also fixed.
+8–10. Theme-constants duplication (single-sourced in `apps/demo/lib/theme.ts`), `Panel` copy-paste across 9 preview pages (deduplicated into `PreviewPanel`), stale `index.tsx` reference in the Vercel pipeline doc (corrected). Registry homepage drift and build-script double-reads were also fixed.
 
 ## 7. Issues / TODOs created
 

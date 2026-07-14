@@ -33,7 +33,7 @@ A fragment is a hand-written, minimal description of one registry item — its m
 
 The script fails loudly (non-zero exit, every problem listed) on invalid fragments, name collisions, or a referenced source file that doesn't exist — nothing partial gets written.
 
-`apps/demo/public/r/` is **generated and gitignored**; it's rebuilt fresh on every `pnpm build`. This step must run *before* `next build`, because Next only serves what already exists in `public/` at build time — see [`VERCEL_PIPELINE.md`](../VERCEL_PIPELINE.md) for why this ordering matters in the deploy pipeline.
+`apps/demo/public/r/` is **generated and gitignored**; it's rebuilt fresh on every `pnpm build`. This step must run *before* `next build`, because Next only serves what already exists in `public/` at build time — on Vercel, the demo's `build` script runs the registry step first for exactly this reason.
 
 ### 3. Serving
 
@@ -169,5 +169,4 @@ Once the kit has a stable production deployment, the natural next step is submit
 
 - [`registry/items/README.md`](../registry/items/README.md) — the fragment schema reference (required when adding an item).
 - [`docs/component-conventions.md`](component-conventions.md) — the full checklist for adding a component, including its registry fragment.
-- [`VERCEL_PIPELINE.md`](../VERCEL_PIPELINE.md) — why `build:registry` must run before `next build`, and the deploy pipeline this all feeds.
 - [`docs/status-and-backlog.md`](status-and-backlog.md) — tracks the `REGISTRY_BASE_URL` TODO and the directory submission step.
